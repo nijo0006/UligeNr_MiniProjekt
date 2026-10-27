@@ -1,695 +1,683 @@
 # Feature Specification: Hotel Operations and Performance Insights
 
-**Feature Branch**: Ingen ny branch oprettet; der er ikke konfigureret nogen branch-hook.
+**Feature Branch**: `001-hotel-operations`
 
 **Feature Directory**: `specs/001-hotel-operations`
 
 **Created**: 2026-10-27
 
-**Last Updated**: 2026-10-27 — opdateret ud fra opgavebeskrivelsen og Excel-arbejdsbogen.
+**Last Updated**: 2026-10-27 — team clarification answers Q1–Q20 integrated.
 
-**Status**: Draft — klar til `/speckit-clarify`; forretningsdefinitioner afventer de åbne spørgsmål.
+**Status**: Draft — confirmed answers incorporated; remaining business decisions are listed below.
 
-**Input**: Brugerens beskrivelse (`/speckit-specify`):
+**Input**: The assignment, workbook, existing specification, and the team's clarification answers.
+Describe user goals and verifiable behavior without selecting an implementation technology.
+The existing stories and their identifiers are retained; Story 19 adds the daily bar-sales
+registration confirmed in Q8. The English story form is “As <role>, I want <goal>, so that <reason>.”
 
-Læs opgavebeskrivelsen og Excel-filen. Beskriv hvad systemet skal kunne, uden teknologivalg.
-Brugere: hoteladministrator/beslutningstager, receptionist, Helene Christine (bar) og hotellets
-eksisterende bookingsystem. Funktioner: (1) oprette, rette og slette bookinger via en
-browserfrontend og via API'et; (2) data opdateres løbende, så nøgletallene viser aktuelle tal og
-ikke kun historiske; (3) nøgletal: gæster pr. land, indtjening pr. værelsestype pr. sæson,
-indtjening pr. land, hvilke værelser og lande der tjener mest, årets indtjening, belægningsgrad og
-kundetilfredshed; (4) cocktailbar: samlet salg for året, omsætning pr. drink, procentfordeling
-mellem cocktails og kaffe; (5) data til et interaktivt Tableau-dashboard via API'et. User stories
-skrives som "Som [brugerrolle] ønsker jeg [mål], så [begrundelse]", efter INVEST, prioriteret med
-MoSCoW og struktureret efter The Three Cs. Alt, der ikke står i materialet, markeres som antagelse
-eller åbent spørgsmål. Gruppen vælger selv et ekstra nøgletal.
+## Source Basis and Scope
 
-## Kildegrundlag og afgrænsning
+- **K1 — Assignment**: `E26 Tværfaglig Opgave Hotel Kong Arthur.pdf`, read in full.
+- **K2 — Supplementary questions**: `Tillægsspørgsmål_swa.pdf`, read in full.
+  Architecture explanations and technical choices belong in Plan.
+- **K3 — Workbook**: `Hotel_Kong_Arthur_data-1.xlsx`, inspected read-only. Sheets:
+  Oversigt, Bookinger, Bar - Drinks, Værelsestyper, Hotelinfo, Indtjening pr. værelse,
+  Indtjening pr. land, Noter. Source formulas and underlying totals were checked.
+- **K4 — Constitution**: `.specify/memory/constitution.md`, v1.0.0, read.
+  Its five principles remain applicable; no language or additional technology is chosen here.
+- **K5 — Team clarifications**: The Q1–Q20 answers supplied on 2026-10-27 below.
+  Explicit team decisions supersede the previous draft's assumptions, including the
+  one-year dataset assumption and the unspecified seasonal month boundaries.
+- Browser booking maintenance, API booking access, and an interactive Tableau dashboard
+  are requirements from K1 and the current specification, not technology choices made here.
+- Scope now includes daily closing-shift bar-sales registration, multiple guests and rooms
+  per booking, room inventory by type, and questionnaire-based satisfaction linked to rooms.
+- No different access rights are required for the named actors (Q6). This does not decide
+  whether login is required or select an authentication mechanism.
 
-- **K1 — Opgavebeskrivelse**: `E26 Tværfaglig Opgave Hotel Kong Arthur.pdf` (læst).
-- **K2 — Tillægsspørgsmål**: `Tillægsspørgsmål_swa.pdf` (læst). Handler om arkitektur og
-  fremlæggelse; tilføjer ingen funktionelle krav, men spørgsmål 9 bekræfter kravet om løbende data.
-- **K3 — Excel-arbejdsbog**: `Hotel_Kong_Arthur_data-1.xlsx` (læst), ark: Oversigt, Bookinger
-  (1.000 bookinger), Bar - Drinks (30 drinks), Værelsestyper, Hotelinfo, Indtjening pr. værelse,
-  Indtjening pr. land, Noter.
-- **K4 — Constitution**: `.specify/memory/constitution.md` v1.0.0. Dens arkitektur- og
-  driftskrav gælder; denne spec træffer ingen nye teknologivalg.
-- Kildefilerne ligger i repo-roden, ikke i en `docs/`-mappe som nævnt i input.
-- Browserfrontend, API-adgang og Tableau-dashboard er eksplicitte krav i opgaven (K1), ikke
-  teknologivalg truffet her. Endpoints, dataformat og datamodel hører til Plan.
+**Source limitations and reference values**:
 
-**Vigtige begrænsninger i datagrundlaget (K3)**:
+- K3 contains 1,000 bookings and 30 drinks (20 cocktails, 10 coffees), but no stay dates,
+  individual room numbers, guest counts per booking, or satisfaction responses.
+- A source booking names one guest and one country and records room type, nights,
+  season (`low`/`mid`/`high`), and total price. Future bookings can contain multiple guests
+  and rooms (Q9). Source booking counts MUST NOT be presented as verified person counts.
+- Bar source data are undated totals per drink; there is no daily history to reconstruct.
+- K5 requires arrival and departure for all bookings and states that the data cover three
+  years (Q2, Q12). Exact years and historical date assignment remain unresolved (R2).
+  No historical dates, room assignments, or questionnaire responses are fabricated.
+- Workbook labels such as “annual revenue” use a one-year assumption that K5 replaces.
+  Workbook totals remain whole-source reconciliation values, not verified annual totals.
+- Historical prices can fall outside K1's approximate price ranges. Original source
+  amounts are reference evidence; no new seasonal tariff is inferred from those ranges.
+- Reference checks below apply only to the unchanged source dataset, before generated
+  dates, extra guests/rooms, cancellations, or new transactions affect the result.
 
-- Bookingdata har **ingen datoer** (hverken ankomst, afrejse eller bookingdato) og **ingen
-  værelsesnumre**. Sæson er angivet direkte som `low`/`mid`/`high`.
-- Der findes **ingen data om kundetilfredshed**.
-- Der er **ikke angivet antal personer pr. booking**; arbejdsbogen tæller "gæster" som bookinger.
-- Bardata har **ingen datoer**; det er én samlet opgørelse pr. drink (pris × solgte enheder).
-  Opgaven nævner vin og øl, men data indeholder kun cocktails (20) og kaffe (10).
-- Nogle faktiske nattepriser ligger uden for opgavens prisintervaller (fx Standard Single op til
-  1.498 DKK mod opgavens 900–1.200 DKK).
+## Clarifications
+
+### Session 2026-10-27
+
+The team supplied all 20 answers together; no new questions were asked in this session.
+Numbering matches the questions in the previous specification.
+
+- Q: Q1 — Which booking fields are supplied and generated? → A: First name, last name,
+  country, room type, and nights are supplied; the system creates BookingID, price based
+  on season and room type, and arrival/departure dates. The date-generation basis remains R2.
+- Q: Q2 — Do bookings require arrival and departure dates? → A: Yes, all bookings do.
+- Q: Q3 — How is season determined? → A: From the date: high = June, July, August;
+  mid = April, May, September, October, November, December; low = January, February, March.
+- Q: Q4 — What happens to deleted/cancelled bookings? → A: They can be deleted/cancelled
+  and need not appear in indicators. This specification excludes them from indicator inputs;
+  physical deletion versus retained cancellation is not prescribed.
+- Q: Q5 — How are input, price, and duplicates handled? → A: No manual typing; choose only
+  valid options through controls such as dropdowns. Prices cannot be entered manually and
+  are calculated from room type and nights, with season from Q1/Q3. BookingID is the unique
+  primary identifier. Repeated submissions with different IDs remain unresolved (R7).
+- Q: Q6 — Are different permissions needed? → A: No different rights are required.
+- Q: Q7 — What does live mean? → A: Dynamic data; the booking page refreshes after every
+  new booking. No maximum indicator/dashboard refresh delay was specified (R9).
+- Q: Q8 — How is bar sales data updated? → A: Once daily, recorded by the closing shift,
+  preserving the sales day so sales can later be measured by day.
+- Q: Q9 — What can a booking contain and what should be counted? → A: Both bookings and
+  guests; a booking may include multiple guests and rooms and is in one guest's name.
+  Country attribution for groups is not defined (R4).
+- Q: Q10 — What does total price include, and is bar revenue included? → A: Total price
+  includes everything; yes to including the bar in the hotel's total revenue. Booking
+  revenue is summed from booking total prices; bar revenue is added separately for the same period.
+- Q: Q11 — How are rooms identified? → A: Room numbers are categorized by room type so
+  the system knows which numbers belong to which type. “Small = rooms 1, 2, 3” is an
+  example, not the actual inventory to load.
+- Q: Q12 — What period do the data cover? → A: Three years. Exact years and allocation
+  of undated source records were not provided (R2).
+- Q: Q13 — Which occupancy formula and period apply? → A: Use the stated formula,
+  sold room-nights / (214 × 365), for one year. A percentage is this ratio × 100.
+- Q: Q14 — Where does satisfaction come from? → A: Questionnaires linked to rooms,
+  allowing satisfaction to be viewed for each room. Scale and aggregation remain R6.
+- Q: Q15 — Which extra indicator is selected? → A: An overview of room types and the
+  number of rooms of each type. Earlier average-price and average-stay candidates are replaced.
+- Q: Q16 — How should bar measures and other drinks be treated? → A: Total sales should
+  show both units and revenue; the cocktail/coffee split uses revenue. Drinks outside
+  those categories need their own category treatment; wine/beer grouping remains R8.
+- Q: Q17 — Who sees bar results? → A: Helene Christine and the administrator both do.
+- Q: Q18 — Which dashboard interactions are required? → A: Try different interactions;
+  choose later. Interaction design is deliberately deferred for exploration.
+- Q: Q19 — What are empty results and rounding? → A: No data is represented as `null`;
+  displayed amounts and percentages use one decimal place. Zero-denominator detail remains R10.
+- Q: Q20 — Is high bar revenue a data error? → A: No. Bar sales can come from people
+  without a hotel booking. Such sales must not be discarded or require a booking link.
 
 ## User Scenarios & Testing *(mandatory)*
 
-Hver story er struktureret efter **The Three Cs**:
+Stories retain **The Three Cs**: Card, Conversation, Confirmation. MoSCoW priorities remain
+proposals (A1); no new priorities are claimed to be specified in the assignment. Each story
+provides a distinct outcome and can be checked independently with a known fixture.
+Calculations with unresolved rules use approved test fixtures once those rules are agreed;
+those stories are not yet fully estimable under INVEST. Source reconciliation tests never
+invent person counts, room assignments, or annual allocations missing from K3.
 
-- **Card**: selve storyen, kort nok til en post-it.
-- **Conversation**: detaljer, antagelser (A#) og åbne spørgsmål (Q#), som gruppen skal afklare.
-- **Confirmation**: acceptkriterier, der kan tjekkes, og som bruges i Converge til at afgøre, om
-  storyen er færdig.
+### User Story 1 - Create a booking through the browser frontend (Priority: Must)
 
-**Prioritet (MoSCoW)** er et forslag (A1): Must = kræves af opgaven og kan leveres med det
-foreliggende data; Should = kræves eller ønskes, men afhænger af data eller afklaringer, der ikke
-findes endnu; Could = nice to have; Won't = ikke i denne version.
+**Card**: As a receptionist, I want to create a booking using valid selections in the browser, so that the booking page reflects new reservations.
 
-**INVEST**: Hver story leverer én selvstændig værdi og kan testes alene mod et kendt datasæt.
-Nøgletalsstories er uafhængige af hinanden og af bookingstories, fordi de kan testes mod de
-udleverede data. Referenceværdier i acceptkriterierne er hentet fra arbejdsbogen (K3) og gælder
-**kun, når systemet udelukkende indeholder seed-data fra Excel-filen** (de 1.000 bookinger og de 30
-drinks, uden oprettede, rettede eller slettede bookinger), under antagelserne A2–A4. Så snart data
-ændres, gælder tallene ikke længere; så er facit en uafhængig beregning på de aktuelle data.
+**Why this priority**: Supports the assignment’s requested capability and the team’s confirmed clarifications. Priority remains proposed under A1.
 
----
-
-### User Story 1 - Opret booking via browserfrontend (Prioritet: Must)
-
-**Card**: Som receptionist ønsker jeg at kunne oprette en booking i browseren, så systemet altid
-viser den aktuelle belægning.
-
-**Hvorfor denne prioritet**: Opgaven kræver eksplicit, at bookinger kan oprettes via en
-browserfrontend (K1). Uden oprettelse kan data ikke opdateres løbende.
-
-**Uafhængig test**: Opret en booking i frontend og hent den igen, uden at dashboardet er nødvendigt.
+**Independent Test**: Create a booking with an agreed selection fixture and tariff, then retrieve it without using the dashboard.
 
 **Conversation**:
 
-- Materialets bookingfelter er: Booking ID, fornavn, efternavn, land, værelsestype, nætter, sæson
-  og pris i alt. Pris pr. nat er afledt (pris i alt / nætter).
-- Det er ikke afgjort, hvilke felter der er påkrævede, om prisen indtastes eller beregnes, og om
-  nye bookinger skal have datoer (Q1, Q2).
-- Det er ikke afgjort, om sæson indtastes manuelt som i data eller afledes af en dato (Q3).
-- Validering og fejlhåndtering er åben (Q5).
+- Q1/Q5: select first name, last name, country, room type, and nights; the system supplies the identifier, dates, season, and price. No manual price entry is available.
+- Q9: support multiple guests and rooms and identify one guest as the booking holder. Available guest/name choices and room selection rules remain R3/R5.
+- R1/R2: the tariff and date-generation basis must be agreed before a definitive creation calculation can be tested.
 
-**Confirmation (acceptkriterier)**:
+**Confirmation (acceptance criteria)**:
 
-1. **Givet** gyldige bookingoplysninger, **når** receptionisten opretter bookingen i
-   browserfrontenden, **så** gemmes bookingen og kan hentes igen med de samme oplysninger.
-2. **Givet** at en booking netop er oprettet, **når** listen over bookinger vises, **så** indgår
-   den nye booking.
-3. **Givet** ugyldige eller manglende oplysninger, **når** receptionisten forsøger at oprette
-   bookingen, **så** gemmes den ikke, og receptionisten får besked om hvorfor (regler: Q5).
+1. Given valid selections and an agreed date-generation basis and tariff, when a booking is created, then it is retrievable with a generated unique BookingID, arrival, departure, derived season, and calculated total price.
+2. Given a newly saved booking, when the save succeeds, then the booking page refreshes and includes that booking without a separate manual refresh (Q7).
+3. Given the booking form, when the user enters booking details, then only valid selectable values are offered and no control permits manual entry or override of the price (Q5).
 
 ---
 
-### User Story 2 - Ret booking via browserfrontend (Prioritet: Must)
+### User Story 2 - Edit a booking through the browser frontend (Priority: Must)
 
-**Card**: Som receptionist ønsker jeg at kunne rette en eksisterende booking i browseren, så
-bookingoplysningerne altid er korrekte.
+**Card**: As a receptionist, I want to update an existing booking in the browser, so that reservation details remain correct.
 
-**Hvorfor denne prioritet**: Kræves eksplicit af opgaven (K1).
+**Why this priority**: Supports the assignment’s requested capability and the team’s confirmed clarifications. Priority remains proposed under A1.
 
-**Uafhængig test**: Ret en kendt booking i frontend og hent den igen.
+**Independent Test**: Edit a known booking using valid selections and retrieve the result.
 
 **Conversation**:
 
-- Hvilke felter må rettes, og må Booking ID ændres (Q1)?
-- Hvad sker der, hvis to rettelser af samme booking sker samtidigt (Q5)?
+- The same selection and automatic-price requirements apply to editing. BookingID is the generated identity, not a user-entered replacement.
+- Exactly which fields are editable and how concurrent changes are resolved remain R7; no rule is invented.
 
-**Confirmation (acceptkriterier)**:
+**Confirmation (acceptance criteria)**:
 
-1. **Givet** en eksisterende booking, **når** receptionisten retter et tilladt felt og gemmer,
-   **så** kan samme booking hentes med den rettede værdi.
-2. **Givet** en rettelse med ugyldige værdier, **når** receptionisten gemmer, **så** forbliver
-   bookingen uændret, og receptionisten får besked om hvorfor (Q5).
+1. Given an existing booking and an agreed editable field, when a valid selected change is saved, then the same BookingID retrieves the changed value.
+2. Given a change to a price-driving field under the agreed tariff, when it is saved, then price and dependent values are recalculated and cannot be manually overridden.
+3. Given an invalid requested value, when an update is submitted, then it is rejected without changing the booking, with an explanation.
 
 ---
 
-### User Story 3 - Slet booking via browserfrontend (Prioritet: Must)
+### User Story 3 - Delete or cancel a booking through the browser frontend (Priority: Must)
 
-**Card**: Som receptionist ønsker jeg at kunne slette en booking i browseren, så bookinger, der
-ikke længere gælder, ikke tæller med i belægning og nøgletal.
+**Card**: As a receptionist, I want to delete or cancel a booking in the browser, so that inactive reservations no longer contribute to operational indicators.
 
-**Hvorfor denne prioritet**: Kræves eksplicit af opgaven (K1).
+**Why this priority**: Supports the assignment’s requested capability and the team’s confirmed clarifications. Priority remains proposed under A1.
 
-**Uafhængig test**: Slet en kendt booking i frontend og kontrollér, at den ikke længere vises som aktiv.
+**Independent Test**: Delete/cancel a known booking, check active bookings, and recalculate affected indicators.
 
 **Conversation**:
 
-- Betyder "slet" fysisk sletning eller annullering, og skal historiske nøgletal ændres (Q4)?
-- Skal sletning bekræftes af brugeren først? Ikke nævnt i materialet (Q5).
+- Q4: deleted/cancelled bookings are excluded from indicators. Physical deletion versus retained cancellation is not a business requirement here.
+- Repeated deletion, missing bookings, and confirmation behavior remain R7.
 
-**Confirmation (acceptkriterier)**:
+**Confirmation (acceptance criteria)**:
 
-1. **Givet** en eksisterende booking, **når** receptionisten sletter den, **så** vises den ikke
-   længere blandt aktive bookinger.
-2. **Givet** en booking, der allerede er slettet, **når** sletning forsøges igen, **så** får
-   brugeren besked om, at bookingen ikke findes (Q5).
+1. Given an active booking, when it is deleted/cancelled, then it no longer appears among active bookings.
+2. Given a deleted/cancelled booking, when indicators are recalculated, then its booking, guest, room-night, and booking-revenue contributions are excluded.
 
 ---
 
-### User Story 4 - Bookingsystemet opretter, retter og sletter bookinger via API'et (Prioritet: Must)
+### User Story 4 - Maintain bookings through the API (Priority: Must)
 
-**Card**: Som hotellets eksisterende bookingsystem ønsker jeg at kunne oprette, rette og slette
-bookinger via API'et, så bookinger fra hotellets drift kommer ind i systemet uden manuel indtastning.
+**Card**: As the hotel's existing booking system, I want to create, update, and delete bookings through the API, so that operational bookings can enter the system without retyping them.
 
-**Hvorfor denne prioritet**: Opgaven siger, at hotellets nuværende bookingsystem skal kunne skrive
-til API'et (K1). Det er også den primære kilde til løbende data.
+**Why this priority**: Supports the assignment’s requested capability and the team’s confirmed clarifications. Priority remains proposed under A1.
 
-**Uafhængig test**: Send en oprettelse, en rettelse og en sletning gennem API'et og kontrollér
-resultatet ved at hente bookingen igen, uden brug af browserfrontenden.
+**Independent Test**: Submit each booking operation through the API and retrieve its resulting state without using the browser.
 
 **Conversation**:
 
-- De samme bookingregler bør gælde som i frontend (Story 1–3), så resultatet ikke afhænger af
-  kanalen. Antagelse A5.
-- Storyen kan deles op i tre (opret, ret, slet), hvis gruppen finder den for stor til ét estimat.
-- Skal bookingsystemet identificere sig, og har det andre rettigheder end receptionisten (Q6)?
-- Hvad sker der ved dubletter eller gentagne kald (Q5)?
+- This combined story exists in the current source specification and is retained; the three previously deleted standalone API stories are not recreated.
+- Q6: no different permissions apply. A5 proposes the same booking rules across channels; user-supplied prices cannot override generated prices.
+- A combined story may need task-level splitting for estimation; requests repeated with different identifiers remain R7.
 
-**Confirmation (acceptkriterier)**:
+**Confirmation (acceptance criteria)**:
 
-1. **Givet** gyldige bookingoplysninger, **når** bookingsystemet opretter en booking via API'et,
-   **så** gemmes den og kan hentes igen med de samme oplysninger.
-2. **Givet** en eksisterende booking, **når** bookingsystemet retter den via API'et, **så** kan
-   samme booking hentes med de rettede værdier.
-3. **Givet** en eksisterende booking, **når** bookingsystemet sletter den via API'et, **så** vises
-   den ikke længere blandt aktive bookinger.
-4. **Givet** ugyldige oplysninger, **når** bookingsystemet sender dem, **så** afvises kaldet med
-   en forklarende fejl, og ingen data ændres.
-5. **Givet** en booking oprettet via API'et, **når** receptionisten åbner frontenden, **så** vises
-   bookingen der også.
+1. Given valid booking data under the agreed rules, when the booking system creates a booking, then it is retrievable with a system-generated unique identifier, dates, and price.
+2. Given an existing booking, when an allowed update succeeds, then the same BookingID retrieves the updated details and calculated price.
+3. Given an active booking, when it is deleted/cancelled, then it is no longer active and is excluded from indicators.
+4. Given an invalid value, when the booking system submits it, then the operation is rejected with an explanation and without changing stored booking data.
+5. Given a booking created through the API, when the browser booking page next loads, then the same booking is visible.
 
 ---
 
-### User Story 5 - Nøgletal viser aktuelle data (Prioritet: Must)
+### User Story 5 - Show current operational indicators (Priority: Must)
 
-**Card**: Som hoteladministrator ønsker jeg, at nøgletallene opdateres løbende, når bookinger
-ændres, så jeg træffer beslutninger på aktuelle tal og ikke kun historiske.
+**Card**: As a hotel administrator/decision-maker, I want to see indicators that reflect changing operational data, so that I can make decisions using current information.
 
-**Hvorfor denne prioritet**: Opgaven kræver et system, der "løbende kan opdatere data, og som kan
-vise data live, og altså ikke kun historisk" (K1, K2 spm. 9).
+**Why this priority**: Supports the assignment’s requested capability and the team’s confirmed clarifications. Priority remains proposed under A1.
 
-**Uafhængig test**: Notér et nøgletal, opret eller slet en booking, der påvirker det, og
-kontrollér, at nøgletallet ændrer sig tilsvarende.
+**Independent Test**: Start from a dated fixture, create, edit, or cancel a booking, and compare recalculated indicators against an independent calculation.
 
 **Conversation**:
 
-- Hvad "live" betyder, er ikke defineret: øjeblikkeligt, inden for et fast interval eller ved
-  genindlæsning (Q7). Opgaven nævner selv dette som et Clarify-spørgsmål.
-- Skal bardata også kunne opdateres løbende, og i så fald af hvem (Q8)?
-- De 1.000 historiske bookinger indlæses som udgangspunkt (A6).
+- Q7 confirms automatic booking-page refresh after creation; it does not specify a maximum dashboard/indicator update delay (R9).
+- Q8 adds daily dated bar updates. The original undated totals remain source evidence until R2 is settled.
 
-**Confirmation (acceptkriterier)**:
+**Confirmation (acceptance criteria)**:
 
-1. **Givet** at systemet kun indeholder seed-data fra Excel-filen, hvor årets indtjening er 11.234.034 DKK, **når** der
-   oprettes en booking med pris i alt X DKK, **så** viser årets indtjening 11.234.034 + X DKK,
-   efter at den aftalte opdateringstid er gået (Q7).
-2. **Givet** en booking, der slettes, **når** nøgletallene opdateres, **så** indgår bookingen ikke
-   længere i dem (afhængigt af Q4).
-3. **Givet** en rettelse af land eller værelsestype på en booking, **når** nøgletallene opdateres,
-   **så** flyttes bookingens bidrag til den nye gruppe.
+1. Given booking revenue R for an agreed period and a new booking contributing X in that period, when current indicators are recalculated, then booking revenue is R + X.
+2. Given a cancelled/deleted booking, when current indicators are recalculated, then the booking is excluded.
+3. Given an agreed grouping change to a booking, when current indicators are recalculated, then its contribution moves to the correct group without being counted twice.
 
 ---
 
-### User Story 6 - Gæster pr. land (Prioritet: Must)
+### User Story 6 - Guests and bookings by country (Priority: Must)
 
-**Card**: Som hoteladministrator ønsker jeg at se, hvor gæsterne kommer fra, så jeg kan målrette
-markedsføring mod de vigtigste lande.
+**Card**: As a hotel administrator/decision-maker, I want to see guest and booking counts by country, so that I can understand our guest markets.
 
-**Hvorfor denne prioritet**: Krav i opgaven: "Hvor kommer gæsterne fra (lande)" (K1).
+**Why this priority**: Supports the assignment’s requested capability and the team’s confirmed clarifications. Priority remains proposed under A1.
 
-**Uafhængig test**: Indlæs det udleverede datasæt og sammenlign antal pr. land med arbejdsbogens
-ark "Indtjening pr. land".
+**Independent Test**: Use a fixture with known guest counts, named booking holders, and country assignments; check person counts separately from booking counts.
 
 **Conversation**:
 
-- Data har ikke antal personer pr. booking. Arbejdsbogen tæller én booking som én gæst. Skal vi
-  tælle bookinger eller personer, og skal personantal i så fald registreres fremover (Q9)?
-- Datasættet indeholder 20 lande.
+- Q9 confirms both booking and guest counts and multiple guests/rooms per booking. One guest is the named booking holder.
+- K3 can verify booking counts only: 1,000 across 20 countries, South Korea 63. These are not verified person counts. Country attribution for group bookings remains R4.
 
-**Confirmation (acceptkriterier)**:
+**Confirmation (acceptance criteria)**:
 
-1. **Givet** at systemet kun indeholder seed-data fra Excel-filen, **når** gæster pr. land vises, **så** vises alle 20 lande,
-   og summen er 1.000 (under A3).
-2. **Givet** at systemet kun indeholder seed-data fra Excel-filen, **når** gæster pr. land vises, **så** har South Korea flest
-   (63), og tallene for hvert land matcher arbejdsbogen.
+1. Given the unchanged source dataset, when booking counts by country are shown, then all 20 countries sum to 1,000 bookings and South Korea has 63 bookings.
+2. Given a fixture with known guests and the agreed country-attribution rule, when counts are shown, then both guest and booking counts match independent counts and are labelled distinctly.
+3. Given no person-count data for a reporting scope, when its guest count is requested, then the result is null rather than a booking count relabelled as guests.
 
 ---
 
-### User Story 7 - Indtjening pr. værelsestype pr. sæson (Prioritet: Must)
+### User Story 7 - Revenue by room type and season (Priority: Must)
 
-**Card**: Som hoteladministrator ønsker jeg at se indtjening pr. værelsestype fordelt på sæson,
-så jeg kan vurdere prissætningen i lav-, mellem- og højsæson.
+**Card**: As a hotel administrator/decision-maker, I want to see revenue by room type and season, so that I can compare seasonal room performance.
 
-**Hvorfor denne prioritet**: Krav i opgaven: indtjening "pr værelsestype (pr sæson)" (K1).
+**Why this priority**: Supports the assignment’s requested capability and the team’s confirmed clarifications. Priority remains proposed under A1.
 
-**Uafhængig test**: Sammenlign med arbejdsbogens ark "Indtjening pr. værelse".
+**Independent Test**: Check the unchanged source aggregations and a separately dated fixture using the confirmed month-to-season map.
 
 **Conversation**:
 
-- Sæson findes som kode i data (`low`/`mid`/`high`). Opgaven beskriver sæsonerne løst
-  (vinter / forår og efterår / sommer og juletid), men ikke præcise måneder (Q3).
-- Indtjening er antaget at være summen af "Pris i alt" (A2).
+- Q3: high is June–August; mid is April–May and September–December; low is January–March. December is mid season despite the earlier general assignment description.
+- Exact rates and the date used for season derivation, including cross-season stays, remain R1/R2. Historical season codes can be reconciled without inventing historical dates.
 
-**Confirmation (acceptkriterier)**:
+**Confirmation (acceptance criteria)**:
 
-1. **Givet** at systemet kun indeholder seed-data fra Excel-filen, **når** indtjening pr. værelsestype pr. sæson vises, **så**
-   vises alle 8 værelsestyper × 3 sæsoner, og hver værdi matcher arbejdsbogen.
-2. **Givet** at systemet kun indeholder seed-data fra Excel-filen, **så** er sæsontotalerne lavsæson 3.354.077 DKK,
-   mellemsæson 3.809.387 DKK og højsæson 4.070.570 DKK.
+1. Given the unchanged source records grouped by their recorded season codes, when room revenue is aggregated, then all 8 room types and 3 seasons match K3, with totals low DKK 3,354,077.0, mid DKK 3,809,387.0, and high DKK 4,070,570.0.
+2. Given an agreed relevant date in each month, when the season is derived, then it matches the Q3 month map and is not manually selected.
+3. Given a multi-room booking with agreed room-level revenue allocation, when revenue is grouped, then each room contribution is counted once under its correct type and season.
 
 ---
 
-### User Story 8 - Indtjening pr. land (Prioritet: Must)
+### User Story 8 - Revenue by country (Priority: Must)
 
-**Card**: Som hoteladministrator ønsker jeg at se indtjening pr. land, så jeg kan se, hvilke
-markeder der bidrager mest økonomisk.
+**Card**: As a hotel administrator/decision-maker, I want to see revenue by country, so that I can compare the financial contribution of guest markets.
 
-**Hvorfor denne prioritet**: Krav i opgaven: indtjening "pr land" (K1).
+**Why this priority**: Supports the assignment’s requested capability and the team’s confirmed clarifications. Priority remains proposed under A1.
 
-**Uafhængig test**: Sammenlign med arbejdsbogens ark "Indtjening pr. land".
+**Independent Test**: Compare country totals against K3 for unchanged source records and against a group-booking fixture once allocation is agreed.
 
 **Conversation**:
 
-- En booking har ét land i data. Hvis en booking fremover kan have gæster fra flere lande, skal
-  det afklares (Q9).
+- Q10 confirms all-inclusive booking totals. Attribution of a multi-country booking and of walk-in bar sales to countries is unresolved (R4).
 
-**Confirmation (acceptkriterier)**:
+**Confirmation (acceptance criteria)**:
 
-1. **Givet** at systemet kun indeholder seed-data fra Excel-filen, **når** indtjening pr. land vises, **så** matcher hvert lands
-   indtjening arbejdsbogen, og summen er 11.234.034 DKK.
+1. Given unchanged source booking data, when booking revenue is grouped by its recorded country, then all country totals match K3 and sum to DKK 11,234,034.0 across the complete source dataset.
+2. Given a booking with multiple guests and the agreed country-allocation rule, when revenue is grouped, then total allocated booking revenue equals the booking total without duplication.
 
 ---
 
-### User Story 9 - Hvilke værelser tjener mest (Prioritet: Must)
+### User Story 9 - Identify the highest-earning rooms (Priority: Must)
 
-**Card**: Som hoteladministrator ønsker jeg at se, hvilke værelser der tjener flest penge, så jeg
-ved, hvilke værelser der er vigtigst for forretningen.
+**Card**: As a hotel administrator/decision-maker, I want to identify which rooms earn the most, so that I can compare the contribution of individual rooms.
 
-**Hvorfor denne prioritet**: Krav i opgaven: "Hvilke værelser tjener Kong Arthur flest penge på?" (K1).
+**Why this priority**: Supports the assignment’s requested capability and the team’s confirmed clarifications. Priority remains proposed under A1.
 
-**Uafhængig test**: Sammenlign rangordningen med arbejdsbogens ark "Indtjening pr. værelse".
+**Independent Test**: Use a fixture of numbered rooms with known types and allocated booking revenue, and compare the resulting ranking.
 
 **Conversation**:
 
-- Data har ingen værelsesnumre, kun værelsestyper. Det antages derfor, at "værelser" betyder
-  værelsestyper (A7). Hvis det skal være enkelte værelser, kræver det nye data (Q11).
-- Hvordan vises lige store værdier? Ingen regel er givet i materialet (Q5).
+- Q11 requires a room-number-to-room-type inventory. The example “small = 1, 2, 3” does not establish actual room assignments.
+- K3 supports a room-type ranking only. Actual numbered-room ranking requires R5; multi-room price allocation requires R1.
 
-**Confirmation (acceptkriterier)**:
+**Confirmation (acceptance criteria)**:
 
-1. **Givet** at systemet kun indeholder seed-data fra Excel-filen, **når** værelsestyperne rangordnes efter indtjening, **så** er
-   rækkefølgen øverst Suite (2.119.671 DKK), Spa Executive (1.722.396 DKK) og LOFT Suite
-   (1.695.405 DKK), og hele rangordningen matcher arbejdsbogen.
+1. Given numbered rooms with known types and agreed revenue allocation, when rooms are ranked, then the highest revenue appears first and each room number retains its correct type.
+2. Given unchanged source data, when the separate room-type ranking is requested, then the leading types are Suite (DKK 2,119,671.0), Spa Executive (DKK 1,722,396.0), and LOFT Suite (DKK 1,695,405.0).
+3. Given no historical room-number assignment, when numbered-room results are requested, then missing values are null and no assignments are invented.
 
 ---
 
-### User Story 10 - Hvilke lande tjener mest (Prioritet: Must)
+### User Story 10 - Identify the highest-earning countries (Priority: Must)
 
-**Card**: Som hoteladministrator ønsker jeg at se, hvilke lande hotellet tjener flest penge på, så
-jeg kan prioritere de mest værdifulde markeder.
+**Card**: As a hotel administrator/decision-maker, I want to identify countries generating the most revenue, so that I can compare our most valuable markets.
 
-**Hvorfor denne prioritet**: Krav i opgaven: "Hvilke lande tjener Kong Arthur flest penge på?" (K1).
+**Why this priority**: Supports the assignment’s requested capability and the team’s confirmed clarifications. Priority remains proposed under A1.
 
-**Uafhængig test**: Sammenlign rangordningen med arbejdsbogens ark "Indtjening pr. land".
+**Independent Test**: Compare booking revenue ranking against the unchanged source data.
 
 **Conversation**:
 
-- Bemærk, at flest gæster og flest penge ikke nødvendigvis er samme land (fx har Sweden og India
-  flere bookinger end United Kingdom, men lavere indtjening).
+- Country allocation for multi-country bookings remains R4; most guests and highest revenue are distinct measures.
 
-**Confirmation (acceptkriterier)**:
+**Confirmation (acceptance criteria)**:
 
-1. **Givet** at systemet kun indeholder seed-data fra Excel-filen, **når** landene rangordnes efter indtjening, **så** er
-   rækkefølgen øverst South Korea (767.699 DKK), China (722.928 DKK) og United Kingdom
-   (698.290 DKK), og hele rangordningen matcher arbejdsbogen.
+1. Given unchanged source booking data, when countries are ranked by booking revenue, then the leaders are South Korea (DKK 767,699.0), China (DKK 722,928.0), and United Kingdom (DKK 698,290.0), and the full ranking matches K3.
 
 ---
 
-### User Story 11 - Årets indtjening (Prioritet: Must)
+### User Story 11 - Annual hotel revenue (Priority: Must)
 
-**Card**: Som hoteladministrator ønsker jeg at se årets samlede indtjening for hotellet, så jeg kan
-vurdere hotellets økonomiske resultat.
+**Card**: As a hotel administrator/decision-maker, I want to see annual hotel revenue including rooms and bar, so that I can assess the hotel’s annual financial performance.
 
-**Hvorfor denne prioritet**: Krav i opgaven: "Beregn årets indtjening for hotellet" (K1).
+**Why this priority**: Supports the assignment’s requested capability and the team’s confirmed clarifications. Priority remains proposed under A1.
 
-**Uafhængig test**: Sammenlign med arbejdsbogens ark "Oversigt".
+**Independent Test**: Use dated booking and bar fixtures for a known year and reconcile components and their sum.
 
 **Conversation**:
 
-- Data har ingen datoer. Arbejdsbogen antager, at hele datasættet er ét år (A3). Hvilket år, og
-  hvordan nye bookinger henføres til et år, er åbent (Q2, Q12).
-- Skal barens omsætning tælle med i "hotellets" indtjening? Arbejdsbogen viser begge dele
-  separat og samlet (Q10).
-- Barens omsætning (ca. 13,4 mio. DKK) er større end værelsesindtjeningen (ca. 11,2 mio. DKK).
-  Før de lægges sammen, skal det afklares, om de dækker samme periode (Q20).
+- Q10: booking total prices are all-inclusive and bar revenue is included in combined hotel revenue for the same reporting period.
+- Q12: the source covers three years; undated whole-source totals cannot be called one year. Exact annual attribution remains R2.
+- Q20: bar guests may be walk-ins; high bar revenue is accepted and is not filtered by booking existence.
 
-**Confirmation (acceptkriterier)**:
+**Confirmation (acceptance criteria)**:
 
-1. **Givet** at systemet kun indeholder seed-data fra Excel-filen, **når** årets indtjening vises, **så** er indtjeningen fra
-   værelser 11.234.034 DKK.
-2. **Givet** at Q10 og Q20 afgøres til at inkludere baren, **så** vises også samlet indtjening
-   24.682.674,34 DKK (værelser + bar).
+1. Given dated room and bar revenue for one year under the agreed date-allocation rule, when annual revenue is shown, then room revenue and bar revenue are shown distinctly and combined revenue equals their sum.
+2. Given the unchanged complete source dataset, when whole-source totals are reconciled, then room revenue is DKK 11,234,034.0, bar revenue is DKK 13,448,640.3, and combined revenue is DKK 24,682,674.3; these are not labelled as verified annual totals.
+3. Given bar sales without any booking link, when revenue is calculated for their reporting period, then those sales contribute to bar and combined revenue.
 
 ---
 
-### User Story 12 - Belægningsgrad (Prioritet: Must)
+### User Story 12 - Annual occupancy (Priority: Must)
 
-**Card**: Som hoteladministrator ønsker jeg at se hotellets belægningsgrad, så jeg kan planlægge
-kampagner i perioder med lav belægning.
+**Card**: As a hotel administrator/decision-maker, I want to see annual room occupancy, so that I can assess use of available room capacity.
 
-**Hvorfor denne prioritet**: Opgaven siger, at systemet skal kunne beregne belægningsgrader (K1), og
-nævner "Hvordan beregnes belægningsgraden?" som Clarify-spørgsmål.
+**Why this priority**: Supports the assignment’s requested capability and the team’s confirmed clarifications. Priority remains proposed under A1.
 
-**Uafhængig test**: Beregn belægningsgraden for det udleverede datasæt og sammenlign med den
-aftalte formel og referenceberegning.
+**Independent Test**: Use an agreed annual fixture with known sold room-nights and independently calculate sold room-nights / (214 × 365) × 100.
 
 **Conversation**:
 
-- Uden datoer kan belægning pr. dag eller måned ikke beregnes ud fra de udleverede data. Det
-  er nævnt i arbejdsbogens noter.
-- Arbejdsbogen viser et teoretisk årsestimat: solgte værelsesnætter / (214 × 365) = 5.379 / 78.110
-  ≈ 6,9 %. Det er et estimat og ikke en aftalt definition (Q13).
-- Opgavens eksempel med månedlige belægningsgrader forudsætter datoer (Q2). Se Won't-listen.
-- Kapacitet pr. værelsestype (antal værelser af hver type) er ikke oplyst (Q13).
+- Q13 confirms a one-year formula with denominator 214 × 365 = 78,110 room-nights. A multi-room booking contributes the room-nights for its rooms, not guest-nights.
+- K3 contains 5,379 recorded nights over an undated three-year source. Its former 6.9% one-year estimate is not a verified annual occupancy result.
+- Annual allocation and historical multi-room evidence remain R2/R5. No per-type occupancy formula or leap-year variation is added.
 
-**Confirmation (acceptkriterier)**:
+**Confirmation (acceptance criteria)**:
 
-1. **Givet** at systemet kun indeholder seed-data fra Excel-filen, og at formlen er aftalt i Q13, **når** belægningsgraden
-   vises, **så** matcher den en uafhængig beregning med samme formel.
-2. **Givet** at en booking oprettes eller slettes, **når** nøgletallene opdateres, **så** ændres
-   belægningsgraden tilsvarende.
+1. Given an approved annual fixture with 5,379 sold room-nights, when annual occupancy is displayed, then it is 6.9% using the agreed formula; this fixture does not assert the source nights all belong to one year.
+2. Given two rooms each booked for three nights in the same reporting year, when sold room-nights are calculated, then the booking contributes six room-nights regardless of guest count.
+3. Given a cancelled/deleted booking, when annual occupancy is recalculated, then its room-nights are excluded.
 
 ---
 
-### User Story 13 - Kundetilfredshed (Prioritet: Should)
+### User Story 13 - Room-level guest satisfaction (Priority: Should)
 
-**Card**: Som hoteladministrator ønsker jeg at se et mål for kundetilfredshed, så jeg kan følge
-med i, om gæsterne er tilfredse med deres ophold.
+**Card**: As a hotel administrator/decision-maker, I want to see questionnaire-based guest satisfaction for each room, so that I can identify differences in guest experience between rooms.
 
-**Hvorfor denne prioritet**: Opgaven nævner kundetilfredshed som eksempel på et nøgletal (K1), men
-der findes **ingen data om kundetilfredshed** i materialet. Storyen kan derfor ikke leveres uden en
-beslutning om datakilde. Foreslået som Should; gruppen kan også vælge Won't for denne version.
+**Why this priority**: Existing Should priority is retained; the questionnaire source is confirmed but scoring still requires agreement. Priority remains proposed under A1.
 
-**Uafhængig test**: Kan først beskrives, når datakilden er afklaret (Q14).
+**Independent Test**: Use questionnaire responses linked to known room numbers and an agreed scale and aggregate.
 
 **Conversation**:
 
-- Hvor skal tilfredsheden komme fra: registreres pr. booking, indsamles fra gæster eller hentes
-  fra en ekstern kilde (Q14)?
-- Hvilken skala og hvilket mål (gennemsnit, andel tilfredse e.l.) skal bruges (Q14)?
-- Specen opfinder ikke tilfredshedsdata.
+- Q14 confirms questionnaires linked to rooms as the source. Collection workflow, response scale, and aggregation remain R6.
+- K3 has no satisfaction records. This clarification settles the source, not the missing historical scores.
 
-**Confirmation (acceptkriterier)**:
+**Confirmation (acceptance criteria)**:
 
-1. **Givet** at datakilde og mål er aftalt i Q14, og at der findes tilfredshedsdata, **når**
-   kundetilfredsheden vises, **så** matcher den en uafhængig beregning med det aftalte mål.
-2. **Givet** at der ikke findes tilfredshedsdata, **når** nøgletallet vises, **så** fremgår det
-   tydeligt, at der ikke er data, frem for at der vises et opfundet tal.
+1. Given questionnaire responses linked to rooms and an approved scoring rule, when satisfaction is shown, then each room’s result matches an independent calculation using only responses linked to that room.
+2. Given a room with no questionnaire responses, when its satisfaction is requested, then the result is null.
+3. Given a numeric satisfaction result, when it is displayed, then it uses one decimal place (Q19).
 
 ---
 
-### User Story 14 - Ekstra nøgletal efter gruppens valg (Prioritet: Must)
+### User Story 14 - Room inventory by type — selected extra indicator (Priority: Must)
 
-**Card**: Som hoteladministrator ønsker jeg at se et ekstra nøgletal, som gruppen har valgt, så jeg
-får ny indsigt i hotellets drift.
+**Card**: As a hotel administrator/decision-maker, I want to see room types and the number of rooms in each type, so that I can understand the hotel’s room inventory.
 
-**Hvorfor denne prioritet**: Krav i opgaven: "Find også selv et interessant nøgletal at vise" (K1).
+**Why this priority**: Supports the assignment’s requested capability and the team’s confirmed clarifications. Priority remains proposed under A1.
 
-**Uafhængig test**: Sammenlign det valgte nøgletal med en uafhængig beregning på det udleverede datasæt.
-
-**Conversation**: Gruppen vælger i Clarify (Q15). Forslag, der kan beregnes ud fra data:
-
-| Forslag | Definition (fra arbejdsbogen) | Værdi i datasættet | Bemærkning |
-| --- | --- | --- | --- |
-| Gennemsnitlig pris pr. nat (ADR) | Indtjening / solgte værelsesnætter | ≈ 2.088,50 DKK | Kendt hotelnøgletal; kræver ingen datoer |
-| Gennemsnitlig opholdslængde | Gennemsnit af nætter pr. booking | ≈ 5,38 nætter | Kan sammenlignes pr. land eller værelsestype |
-| Gennemsnitlig indtjening pr. booking | Indtjening / antal bookinger | ≈ 11.234,03 DKK | Var forslaget i den tidligere version af specen |
-
-**Confirmation (acceptkriterier)**:
-
-1. **Givet** at systemet kun indeholder seed-data fra Excel-filen, og at nøgletallet er valgt i Q15, **når** nøgletallet vises,
-   **så** matcher værdien arbejdsbogens/den uafhængige beregning.
-2. **Givet** at en booking oprettes eller slettes, **når** nøgletallene opdateres, **så** ændres
-   det ekstra nøgletal tilsvarende.
-
----
-
-### User Story 15 - Barens samlede salg for året (Prioritet: Must)
-
-**Card**: Som Helene Christine ønsker jeg at se, hvor meget jeg har solgt i alt i baren for året,
-så jeg kan følge barens resultat.
-
-**Hvorfor denne prioritet**: Krav i opgaven: "Hvor meget har Helene Christine solgt totalt for året" (K1).
-
-**Uafhængig test**: Sammenlign med arbejdsbogens ark "Bar - Drinks".
+**Independent Test**: Use a known room-number/type inventory and count unique rooms by type independently.
 
 **Conversation**:
 
-- Bardata har ingen datoer. Hele opgørelsen antages at være ét år (A3, Q12).
-- Barens omsætning er større end værelsesindtjeningen, hvilket er usædvanligt for et hotel. Det
-  er uafklaret, om bardata dækker samme periode som bookingdata (Q20).
-- "Solgt" kan betyde beløb eller antal. Arbejdsbogen viser begge (Q16).
-- Er det Helene selv eller administratoren, der ser bartallene (Q17)?
+- Q15 selects this inventory overview instead of earlier proposed ADR, average stay, or revenue-per-booking indicators.
+- Q11 provides the categorization requirement, but not the actual mapping. Source booking counts must not be used as inventory counts (R5).
+- This describes room stock, so creating or cancelling a booking must not change the inventory counts.
 
-**Confirmation (acceptkriterier)**:
+**Confirmation (acceptance criteria)**:
 
-1. **Givet** at systemet kun indeholder seed-data fra Excel-filen, **når** årets barsalg vises, **så** er omsætningen
-   13.448.640,34 DKK, og antal solgte enheder er 179.958.
+1. Given an approved inventory of numbered rooms and their types, when the overview is shown, then each type’s count equals the number of rooms assigned to that type.
+2. Given an approved complete inventory for the 214-room hotel, when type counts are summed, then they total 214.
+3. Given an unchanged room inventory, when a booking is created or cancelled, then the inventory counts remain unchanged.
 
 ---
 
-### User Story 16 - Omsætning pr. drink (Prioritet: Must)
+### User Story 15 - Annual bar sales: revenue and units (Priority: Must)
 
-**Card**: Som Helene Christine ønsker jeg at se omsætningen for hver drink, så jeg kan se, hvilke
-drinks der sælger bedst.
+**Card**: As Helene Christine, I want to see annual bar revenue and units sold, so that I can assess bar sales performance.
 
-**Hvorfor denne prioritet**: Krav i opgaven: "Vis omsætning pr drink" (K1).
+**Why this priority**: Supports the assignment’s requested capability and the team’s confirmed clarifications. Priority remains proposed under A1.
 
-**Uafhængig test**: Sammenlign med arbejdsbogens ark "Bar - Drinks".
+**Independent Test**: Reconcile unchanged source totals, then verify a dated fixture independently for a selected year.
 
 **Conversation**:
 
-- Omsætning pr. drink = pris × solgte enheder (arbejdsbogens formel).
-- Opgaven nævner vin og øl, men de findes ikke i data (Q16).
+- Q16 requires both revenue and units. Q17 makes these results visible to both Helene Christine and the administrator.
+- Q20 permits non-resident customers. Q12 replaces the one-year source assumption; daily/annual historical attribution remains R2.
 
-**Confirmation (acceptkriterier)**:
+**Confirmation (acceptance criteria)**:
 
-1. **Givet** at systemet kun indeholder seed-data fra Excel-filen, **når** omsætning pr. drink vises, **så** vises alle 30
-   drinks (20 cocktails og 10 kaffetyper) med omsætning, der matcher arbejdsbogen.
-2. **Givet** at systemet kun indeholder seed-data fra Excel-filen, **så** er Espresso den drink med højest omsætning.
+1. Given unchanged complete source bar data, when source totals are shown, then revenue is DKK 13,448,640.3 and units sold are 179,958 without claiming those undated totals are for one known year.
+2. Given dated daily sales for a year, when annual totals are shown, then revenue and units each equal the sum of that year’s eligible sales.
+3. Given a sale without a booking, when totals are calculated, then the sale is included and can be viewed by both Helene Christine and the administrator.
 
 ---
 
-### User Story 17 - Procentfordeling mellem cocktails og kaffe (Prioritet: Must)
+### User Story 16 - Revenue per drink (Priority: Must)
 
-**Card**: Som Helene Christine ønsker jeg at se procentfordelingen mellem cocktails og kaffe, så jeg
-kan se, hvad baren lever af.
+**Card**: As Helene Christine, I want to see revenue for each drink, so that I can compare which drinks generate revenue.
 
-**Hvorfor denne prioritet**: Krav i opgaven: "Vis procentfordeling af cocktails og kaffe for
-Helene Christine" (K1).
+**Why this priority**: Supports the assignment’s requested capability and the team’s confirmed clarifications. Priority remains proposed under A1.
 
-**Uafhængig test**: Sammenlign med arbejdsbogens fordelingstabel i "Bar - Drinks".
+**Independent Test**: Compare drink price × units against unchanged source data and an independently calculated dated fixture.
 
 **Conversation**:
 
-- Fordelingen er meget forskellig afhængigt af grundlaget: efter omsætning er den ca. 52,8 %
-  cocktails / 47,2 % kaffe, efter solgte enheder ca. 34,5 % / 65,5 %. Hvilket grundlag skal
-  bruges, eller skal begge vises (Q16)?
+- Revenue per source drink follows the workbook formula price × sold units. Q8 adds dated daily sales going forward.
+- Wine/beer require categorization beyond cocktail/coffee (Q16); actual catalog, prices, and grouping remain R8.
 
-**Confirmation (acceptkriterier)**:
+**Confirmation (acceptance criteria)**:
 
-1. **Givet** at systemet kun indeholder seed-data fra Excel-filen, og at grundlaget er aftalt i Q16, **når** fordelingen
-   vises, **så** matcher procenterne arbejdsbogen (omsætning: 52,8 % / 47,2 %; enheder:
-   34,5 % / 65,5 %), og de to andele summerer til 100 %.
+1. Given unchanged source data, when revenue per drink is shown, then all 30 drinks match K3 and Espresso has the highest revenue.
+2. Given a dated daily fixture with known drink prices and quantities, when revenue per drink is requested, then the drink totals match the independently calculated results with one decimal place.
+3. Given Helene Christine or the administrator, when drink revenue is requested, then both can see the results.
 
 ---
 
-### User Story 18 - Interaktivt Tableau-dashboard med data fra API'et (Prioritet: Must)
+### User Story 17 - Cocktail and coffee revenue percentages (Priority: Must)
 
-**Card**: Som hoteladministrator ønsker jeg et interaktivt Tableau-dashboard, der henter
-nøgletallene fra API'et, så jeg kan undersøge hotellets og barens tal ét sted.
+**Card**: As Helene Christine, I want to see the revenue percentage split between cocktails and coffee, so that I can understand the bar’s revenue mix.
 
-**Hvorfor denne prioritet**: Krav i opgaven: interaktivt Tableau-dashboard "med udgangspunkt i
-backendens REST API" (K1).
+**Why this priority**: Supports the assignment’s requested capability and the team’s confirmed clarifications. Priority remains proposed under A1.
 
-**Uafhængig test**: Lever et kendt sæt nøgletal gennem API'et og kontrollér, at dashboardet viser
-de samme værdier, og at mindst én interaktion virker.
+**Independent Test**: Compare against K3 for the original two-category dataset and use a separate fixture containing additional drink categories after R8 is resolved.
 
 **Conversation**:
 
-- Hvilke interaktioner kræves (fx filtrering på sæson, land eller værelsestype) (Q18)?
-- Hvordan og hvor ofte dashboardet henter nye data hænger sammen med Q7.
-- Hvor beregnes nøgletallene (i backend eller i Tableau)? Det hører til Plan, men K2 spm. 4
-  forventer en begrundelse.
+- Q16 explicitly selects revenue, not units, as the percentage basis. Additional category treatment must not silently put wine/beer into cocktail or coffee.
+- With additional categories, the percentage denominator and whether the view is a cocktail/coffee subset or whole-bar mix remain R8.
 
-**Confirmation (acceptkriterier)**:
+**Confirmation (acceptance criteria)**:
 
-1. **Givet** at systemet kun indeholder seed-data fra Excel-filen, **når** dashboardet indlæses, **så** viser det alle
-   nøgletal fra Story 6–12, 14 og 15–17 med værdier, der matcher API'ets data.
-2. **Givet** et dashboard med data, **når** brugeren anvender en aftalt interaktion (Q18), **så**
-   ændres de viste tal, så de svarer til valget.
-3. **Givet** en bookingændring, der påvirker et nøgletal, **når** dashboardet opdateres efter
-   den aftalte tid (Q7), **så** viser det den nye værdi.
+1. Given the unchanged two-category source data, when revenue percentages are shown, then cocktails are 52.8% and coffee is 47.2%, calculated from revenue rather than sold units.
+2. Given no data in the reporting scope, when percentages are requested, then they are null.
+3. Given data with wine/beer, when categories are reported, then those sales are not misclassified as cocktail or coffee; percentage calculations follow the agreed R8 denominator.
 
 ---
 
-### Won't (ikke i denne version — forslag)
+### User Story 18 - Interactive Tableau dashboard supplied through the API (Priority: Must)
 
-Disse er bevidst taget ud, så afgrænsningen er tydelig. Gruppen kan flytte dem i Clarify.
+**Card**: As a hotel administrator/decision-maker, I want to explore hotel and bar results in an interactive Tableau dashboard supplied through the API, so that I can investigate operational performance in one place.
 
-- **Månedlig belægningsrapport** (opgavens eksempel): "Som hoteladministrator ønsker jeg at se
-  en rapport over månedlige belægningsgrader, så jeg kan planlægge kampagner." Kan ikke beregnes,
-  så længe bookinger ikke har datoer (Q2). Flyttes til Should, hvis datoer indføres.
-- **Rangordning af enkelte værelser** (værelsesnumre): kræver data, der ikke findes (Q11).
-- **Registrering af barsalg i systemet**: ikke beskrevet i materialet (Q8).
+**Why this priority**: Supports the assignment’s requested capability and the team’s confirmed clarifications. Priority remains proposed under A1.
+
+**Independent Test**: Supply known indicator values and verify visible values, shared access, and a selected exploratory interaction.
+
+**Conversation**:
+
+- Q17: Helene Christine also sees bar results alongside the administrator, with no role-specific rights (Q6).
+- Q18 deliberately defers final interactions: try alternatives and decide later. No specific filter or layout is approved.
+- Q7 confirms booking-page refresh only. Indicator/dashboard refresh timing remains R9; technical calculation placement belongs in Plan.
+
+**Confirmation (acceptance criteria)**:
+
+1. Given known indicator results through the API, when the dashboard loads, then it displays the applicable hotel, occupancy, inventory, satisfaction, and bar results from Stories 6–17 consistently with those results.
+2. Given Helene Christine and the administrator, when they view bar reporting, then both can see the bar results.
+3. Given a selected exploratory interaction with known expected results, when it is used, then the displayed scope and values match that selection; final interaction selection remains deferred.
+4. Given missing results or numeric amounts/percentages, when they are shown, then missing results are null and amounts/percentages use one decimal place.
+
+---
+
+### User Story 19 - Register daily bar sales (Priority: Must)
+
+**Card**: As a closing-shift staff member, I want to record bar sales once each day against that sales date, so that the hotel can later compare bar performance across days.
+
+**Why this priority**: Supports the assignment’s requested capability and the team’s confirmed clarifications. Priority remains proposed under A1.
+
+**Independent Test**: Record an agreed daily fixture with known drink quantities and sales date, then retrieve daily and annual reporting contributions.
+
+**Conversation**:
+
+- Q8 introduces this function explicitly; it is no longer excluded from scope. Q20 means no hotel booking is required for a bar customer.
+- Q5’s valid-option interaction rule is retained; no manual price override is added. The daily entry granularity, catalog, correction workflow, and duplicates remain R8.
+
+**Confirmation (acceptance criteria)**:
+
+1. Given an agreed daily sales fixture and valid selectable options, when the closing shift records that day’s sales, then the saved records retain the sales date and the fixture’s drink quantities and revenue.
+2. Given two dated daily sales records, when daily reporting is requested, then each day can be distinguished and reports the corresponding sales rather than an undated cumulative total.
+3. Given dated sales for non-resident bar customers, when registration completes, then no hotel booking link is required and the sales contribute to drink, daily, and applicable annual totals.
+
+---
+
+### Deferred Scope
+
+- Final dashboard interactions are deliberately deferred for exploration (Q18).
+- A separate monthly occupancy report is not selected by Q13, which accepts an annual measure.
+- Numbered-room reporting and daily bar registration are now in scope (Q11, Q8);
+  their former Won't entries are removed.
 
 ### Edge Cases
 
-Materialet fastlægger ikke, hvad der skal ske i disse tilfælde. De er åbne spørgsmål, ikke
-forretningsregler:
-
-- Manglende eller ugyldige felter, ukendt land eller værelsestype, nætter ≤ 0 (Q5).
-- Pris uden for opgavens prisinterval for værelsestypen. Data indeholder allerede sådanne
-  bookinger, så en afvisning ville ramme de historiske data (Q5).
-- Rettelse eller sletning af en booking, der ikke findes; dubletter; samtidige ændringer (Q5).
-- Sletning versus annullering og påvirkning af historiske nøgletal (Q4).
-- Tomt datasæt: nøgletal med division (fx procentfordeling, ADR) må ikke vise et opfundet tal (Q19).
-- Lige store værdier i rangordninger (Q5).
-- Ingen tilfredshedsdata (Story 13).
+- No data produces `null`, not an invented score, zero, or person count (Q19).
+  Zero denominators with records present still require R10.
+- Generated BookingIDs are unique; two attempts to store the same ID cannot create
+  two bookings. This does not define repeated-request handling or detect equivalent
+  real-world reservations with different IDs (R7).
+- Booking selections expose only valid values and never permit manual prices (Q5).
+  Catalog population, name selection, and historic out-of-range prices still need R1/R3.
+- Deleted/cancelled bookings are excluded from indicators (Q4), while independent bar
+  sales remain valid without a booking (Q20).
+- Cross-season/year stays, group-country attribution, and multi-room price allocation
+  remain unresolved; no arbitrary split or arrival-year rule is introduced (R1/R2/R4).
+- Concurrent changes, missing bookings, repeated daily entry, correction, and tied
+  ranking presentation remain R7/R8. No new conflict or tie-break policy is invented.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-| ID | Krav | Story |
+| ID | Requirement | Acceptance coverage |
 | --- | --- | --- |
-| FR-001 | Receptionisten MUST kunne oprette bookinger via en browserfrontend. | 1 |
-| FR-002 | Receptionisten MUST kunne rette bookinger via en browserfrontend. | 2 |
-| FR-003 | Receptionisten MUST kunne slette bookinger via en browserfrontend. | 3 |
-| FR-004 | Hotellets bookingsystem MUST kunne oprette, rette og slette bookinger via API'et. | 4 |
-| FR-005 | Samme bookingregler MUST gælde, uanset om ændringen kommer fra frontend eller API. | 1–4; A5 |
-| FR-006 | Ugyldige bookingændringer MUST afvises med en forklarende besked uden at ændre data. | 1–4; Q5 |
-| FR-007 | Nøgletal MUST afspejle oprettede, rettede og slettede bookinger inden for den aftalte opdateringstid. | 5; Q4, Q7 |
-| FR-008 | Systemet MUST vise antal gæster pr. land. | 6; Q9 |
-| FR-009 | Systemet MUST vise indtjening pr. værelsestype pr. sæson. | 7; Q3 |
-| FR-010 | Systemet MUST vise indtjening pr. land. | 8 |
-| FR-011 | Systemet MUST rangordne værelser(typer) efter indtjening. | 9; Q11 |
-| FR-012 | Systemet MUST rangordne lande efter indtjening. | 10 |
-| FR-013 | Systemet MUST vise årets indtjening for hotellet. | 11; Q10, Q12 |
-| FR-014 | Systemet MUST vise belægningsgrad efter den formel, der aftales. | 12; Q13 |
-| FR-015 | Systemet SHOULD vise kundetilfredshed, når datakilde og mål er aftalt. | 13; Q14 |
-| FR-016 | Systemet MUST vise ét ekstra nøgletal valgt af gruppen. | 14; Q15 |
-| FR-017 | Systemet MUST vise barens samlede salg for året. | 15; Q16 |
-| FR-018 | Systemet MUST vise omsætning pr. drink. | 16 |
-| FR-019 | Systemet MUST vise procentfordelingen mellem cocktails og kaffe. | 17; Q16 |
-| FR-020 | Systemet MUST stille nøgletallene til rådighed via API'et til et interaktivt Tableau-dashboard. | 18; Q18 |
-| FR-021 | De 1.000 historiske bookinger og bardata fra K3 MUST kunne indlæses som startdata. | 5–17; A6 |
-| FR-022 | Systemet MUST NOT vise opfundne værdier, hvor data mangler (fx kundetilfredshed). | 13; Q19 |
+| FR-001 | Receptionists MUST be able to create bookings through a browser frontend using valid selections. | Story 1 |
+| FR-002 | Receptionists MUST be able to edit allowed booking details through the browser; generated identity and prices are not manually editable. | Story 2; R7 |
+| FR-003 | Receptionists MUST be able to delete/cancel bookings; those bookings MUST be excluded from active bookings and indicators. | Story 3 |
+| FR-004 | The existing booking system MUST be able to create, edit, and delete/cancel bookings through the API. | Story 4 |
+| FR-005 | Booking behavior across the browser and API follows the same rules (proposed A5); no actor-specific access rights are required (Q6). | Stories 1–4 |
+| FR-006 | The browser MUST offer valid selection controls, not manual typing or price entry; invalid submitted booking values MUST be rejected without changing booking data. | Stories 1–4; R3/R7 |
+| FR-007 | Operational indicators MUST reflect accepted booking changes; the booking page MUST refresh after every new booking. Indicator/dashboard maximum delay remains R9. | Stories 1, 5, 18 |
+| FR-008 | The system MUST distinguish booking counts from person counts and support guest and booking reporting by country without inventing missing people. | Story 6; R4 |
+| FR-009 | The system MUST show revenue by room type and season; derive season from dates using the confirmed month map. | Story 7; R1/R2 |
+| FR-010 | The system MUST show revenue by country under an agreed attribution rule. | Story 8; R4 |
+| FR-011 | The system MUST categorize numbered rooms by type and rank individual rooms by revenue when room assignments and allocation are available. | Story 9; R1/R5 |
+| FR-012 | The system MUST rank countries by revenue. | Story 10; R4 |
+| FR-013 | Annual hotel revenue MUST include all-inclusive booking totals and bar revenue for the same year, with distinct component totals. | Story 11; R2 |
+| FR-014 | Annual occupancy MUST use sold room-nights / (214 × 365), expressed as a percentage. Cancelled/deleted bookings do not contribute. | Story 12; R2 |
+| FR-015 | The system SHOULD show questionnaire-based satisfaction linked to individual rooms; scale and aggregation require agreement. | Story 13; R6 |
+| FR-016 | The selected additional indicator MUST show room types and the number of rooms of each type. | Story 14; R5 |
+| FR-017 | Annual bar sales MUST show both revenue and units sold and be visible to Helene Christine and the administrator. | Story 15; R2 |
+| FR-018 | The system MUST show revenue per drink and retain appropriate categories for drinks beyond cocktail and coffee. | Story 16; R8 |
+| FR-019 | Cocktail/coffee percentages MUST use revenue; additional-category denominator behavior remains R8. | Story 17 |
+| FR-020 | The system MUST provide indicators through the API to an interactive Tableau dashboard. Final interactions are deferred for exploration. | Story 18 |
+| FR-021 | The source bookings and bar data MUST be usable as starting data without fabricated dates or room assignments. All operational bookings require arrival/departure; historical enrichment is unresolved. | Stories 1, 5–17; A6/R2 |
+| FR-022 | No-data results MUST be null. Displayed numeric amounts and percentages MUST use one decimal place; counts remain counts. | Stories 6, 9, 13, 15–18; R10 |
+| FR-023 | The system MUST generate a unique BookingID, price, arrival, and departure for each booking; no manual price override is permitted. | Stories 1, 2, 4; R1/R2 |
+| FR-024 | A booking MUST support multiple guests and multiple rooms and be held in one guest's name. | Stories 1, 6–9, 12; R4/R5 |
+| FR-025 | The closing shift MUST be able to register dated bar sales once daily, enabling comparisons across sales days. | Story 19; R8 |
+| FR-026 | Bar sales MUST NOT require a booking and MUST include sales to non-resident customers in applicable bar and combined totals. | Stories 11, 15, 19 |
 
 ### Key Entities *(include if feature involves data)*
 
-Konceptuelle begreber fra K1 og K3, ikke en datamodel (den hører til Plan):
+These are conceptual requirements, not a technical data model.
 
-- **Booking**: Booking ID, fornavn, efternavn, land, værelsestype, nætter, sæson, pris i alt.
-  Pris pr. nat er afledt. Ingen datoer, ingen værelsesnummer, intet personantal i nuværende data.
-- **Værelsestype**: 8 typer (Standard Single, Grand Lit, Standard Double, Superior Double,
-  Junior Suite, Spa Executive, Suite, LOFT Suite) med vejledende prisinterval pr. nat fra K1.
-- **Sæson**: Lav (`low`), mellem (`mid`), høj (`high`). Kun løst beskrevet med årstider i K1.
-- **Land**: Gæstens land. 20 lande i datasættet.
-- **Hotel**: 214 værelser, 1–4 personer pr. værelse, maks. ca. 428 gæster (K1).
-- **Drink**: Navn, kategori (cocktail/kaffe), pris, solgte enheder. 20 cocktails og 10 kaffetyper.
-- **Kundetilfredshed**: Nævnt i K1, men ingen data findes (Q14).
+- **Booking**: Unique system-generated BookingID (primary identifier), named booking
+  holder, selected first/last name and country, multiple guests and rooms, room type,
+  nights, generated arrival/departure, date-derived season, and all-inclusive generated
+  price. Operational fields and source fields are distinguished; missing historical
+  dates/guests/rooms are not assumed present.
+- **Guest / Booking Holder**: People associated with a booking; one holds the booking.
+  Counting and country attribution for groups require R4.
+- **Room / Room Type**: Individual room number mapped to one of the eight source types:
+  Standard Single, Grand Lit, Standard Double, Superior Double, Junior Suite,
+  Spa Executive, Suite, LOFT Suite. Actual inventory and assignments require R5.
+- **Season**: Low = January–March; mid = April, May, September–December;
+  high = June–August. Which stay date controls season is not yet agreed.
+- **Reporting Period**: Source horizon of three years; annual reporting for dated records.
+  Exact years and historical period allocation remain R2.
+- **Hotel Capacity**: 214 rooms from K1, with the confirmed annual occupancy denominator
+  214 × 365. K1 describes 1–4 people per room and approximate maximum guest capacity 428;
+  those facts do not provide a complete type-by-type capacity mapping.
+- **Drink / Daily Bar Sale**: Drink, category, price, quantity, calculated revenue, and
+  sales day for new daily entries. Source rows are undated aggregates, not daily sales.
+  A hotel booking is optional for bar customers.
+- **Questionnaire Response**: Satisfaction information linked to room number; scale,
+  aggregate, collection method, and treatment of multi-room stays require R6.
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-Foreslåede kriterier (A8). Der er ikke opfundet svartider, brugerantal eller lignende mål, da
-materialet ikke nævner sådanne.
+Proposed acceptance measures (A8), not invented service-level targets.
 
-- **SC-001**: Alle Must-stories består deres acceptkriterier i Converge.
-- **SC-002**: Når systemet kun indeholder seed-data fra Excel-filen, matcher alle nøgletal fra Story 6–11 og 15–17 arbejdsbogens
-  værdier (K3), afrundet som aftalt i Q19.
-- **SC-003**: En booking oprettet, rettet eller slettet via frontend eller API indgår i nøgletal og
-  dashboard inden for den opdateringstid, der aftales i Q7.
-- **SC-004**: Receptionisten kan oprette, rette og slette en booking i frontenden uden hjælp
-  udefra på første forsøg ved fremlæggelsen.
-- **SC-005**: Dashboardet viser samme værdier som API'et for alle viste nøgletal, og mindst én
-  interaktion ændrer visningen korrekt.
+- **SC-001**: Every Must story passes its acceptance criteria with an approved fixture;
+  unresolved rules must be settled before that story is declared complete.
+- **SC-002**: Unchanged source booking and bar totals match K3, displayed to one decimal
+  where appropriate, without relabelling three-year undated totals as annual figures.
+- **SC-003**: Every successful new booking appears on the automatically refreshed
+  booking page. Recalculated indicators reflect accepted creation, edits, and cancellation;
+  a maximum dashboard refresh delay still requires R9.
+- **SC-004**: A receptionist completes browser booking maintenance using only valid
+  selections and without entering prices. First-attempt unaided demonstration remains
+  a proposed acceptance measure, not an assignment-provided performance target.
+- **SC-005**: Dashboard values match supplied indicator values for the same scope;
+  at least one agreed exploratory interaction changes that scope correctly.
+- **SC-006**: A two-day bar fixture preserves both sales dates and produces correct
+  daily, drink, unit, and revenue totals, including sales without booking links.
+- **SC-007**: Approved inventory counts total 214 rooms; a booking does not change stock.
+  A room with no satisfaction responses reports null rather than an invented score.
 
 ## Assumptions
 
-Alt her står ikke direkte i materialet og skal bekræftes eller afvises i Clarify.
+Confirmed decisions now appear in Clarifications and requirements rather than remaining
+as assumptions. A2 (booking revenue), A4 (season), and A7 (rooms mean room types) are
+retired: Q10 confirms the first, Q3 replaces the second with date derivation, and Q11
+requires numbered rooms. A3 (one-year source) is explicitly rejected by Q12.
 
-- **A1 — MoSCoW-prioriteter**: Prioriteterne er specens forslag, ikke opgavens.
-- **A2 — Indtjening**: Indtjening = summen af "Pris i alt" for bookinger, som i arbejdsbogen (Q10).
-- **A3 — Ét år**: Hele datasættet behandles som ét år, som i arbejdsbogen, fordi der ikke er
-  datoer (Q12).
-- **A4 — Sæson**: Sæson bruges som angivet i data (`low`/`mid`/`high`) (Q3).
-- **A5 — Samme regler i begge kanaler**: Frontend og API følger samme bookingregler.
-- **A6 — Startdata**: De udleverede data indlæses som udgangspunkt, og nye ændringer lægges oveni.
-- **A7 — "Værelser" = værelsestyper**: Fordi data ikke har værelsesnumre (Q11).
-- **A8 — Succeskriterier**: SC-001–SC-005 er forslag til, hvordan specen kan vurderes.
-- **A9 — Referenceværdier**: Arbejdsbogens beregnede værdier bruges som facit i acceptkriterierne,
-  og kun i tilstanden, hvor systemet udelukkende indeholder seed-data fra Excel-filen.
+- **A1 — MoSCoW priorities**: Existing priorities remain proposed delivery priorities.
+- **A5 — Consistent channel rules**: Browser and API use the same business rules;
+  equal rights are confirmed by Q6, while shared channel validation remains this proposal.
+- **A6 — Starting data**: K3 provides starting data and new operations build on it;
+  the import/enrichment of missing fields must be agreed before implementation.
+- **A8 — Success measures**: The measures above are proposed ways to evaluate the feature.
+- **A9 — Source references**: Workbook values are source-reconciliation checks only for
+  unchanged raw inputs. They do not override Q12 or supply missing historical attributes.
 
-## Åbne spørgsmål til Clarify
+## Remaining Open Questions
 
-Samlet liste. Hver Q er refereret fra de stories, den påvirker.
+Each item records the part still unanswered; it does not reopen the confirmed part of Q1–Q20.
 
-**Bookinger**
-
-- **Q1 — Bookingfelter**: Hvilke felter er påkrævede ved oprettelse, og hvilke må rettes? Indtastes
-  "Pris i alt", eller beregnes den ud fra værelsestype, sæson og nætter? Tildeles Booking ID af
-  systemet?
-- **Q2 — Datoer**: Skal nye bookinger have ankomst- og afrejsedato? Hvordan håndteres de 1.000
-  historiske bookinger uden datoer? (Afgør belægningsgrad, "årets" tal og månedsrapport.)
-- **Q3 — Sæson**: Indtastes sæson manuelt som i data, eller afledes den af en dato? Hvilke måneder
-  hører til hvilken sæson, og hvor ligger "juletid"?
-- **Q4 — Sletning**: Er sletning fysisk sletning eller annullering? Skal en slettet booking fjernes
-  fra historiske nøgletal?
-- **Q5 — Validering og fejl**: Hvad er ugyldige værdier (nætter, land, værelsestype)? Skal priser uden
-  for opgavens prisintervaller afvises, når data allerede indeholder sådanne? Hvordan håndteres
-  dubletter, samtidige ændringer, bookinger der ikke findes, og lige store værdier i rangordninger?
-- **Q6 — Adgang**: Skal receptionist, bookingsystem og administrator have forskellige rettigheder,
-  og kræves login? Materialet nævner det ikke.
-
-**Løbende data**
-
-- **Q7 — "Live"**: Hvad betyder live: øjeblikkeligt, inden for et fast interval eller ved
-  genindlæsning? Hvad er den maksimale acceptable forsinkelse til nøgletal og dashboard?
-- **Q8 — Bardata**: Skal barsalg også kunne opdateres løbende, og i så fald af hvem og hvordan?
-  Materialet beskriver kun ændringer af bookinger.
-
-**Nøgletal**
-
-- **Q9 — Gæster**: Tæller vi bookinger eller personer? Skal personantal registreres pr. booking
-  fremover? Kan én booking have gæster fra flere lande?
-- **Q10 — Indtjening**: Er indtjening = "Pris i alt"? Inkl. eller ekskl. moms og rabatter? Skal
-  barens omsætning med i "årets indtjening for hotellet"?
-- **Q11 — Værelser**: Betyder "hvilke værelser" værelsestyper eller enkelte værelser? Det sidste
-  kræver værelsesnumre, som ikke findes i data.
-- **Q12 — År**: Hvilket år dækker data? Hvordan henføres nye bookinger og bardata til et år?
-- **Q13 — Belægningsgrad**: Hvilken formel (fx solgte værelsesnætter / (214 × 365))? For hvilken
-  periode? Skal den opgøres pr. værelsestype, og hvor mange værelser findes der af hver type?
-- **Q14 — Kundetilfredshed**: Hvor skal data komme fra, og med hvilken skala og hvilket mål? Eller
-  skal nøgletallet udskydes (Won't) i denne version?
-- **Q15 — Ekstra nøgletal**: Hvilket af forslagene i Story 14 (eller et andet) vælger gruppen?
-- **Q16 — Bar**: Betyder "solgt totalt" beløb, antal eller begge? Skal procentfordelingen være efter
-  omsætning eller solgte enheder? Hvad med vin og øl, som opgaven nævner, men data ikke indeholder?
-- **Q17 — Helene Christine**: Ser Helene selv bartallene, eller er det administratoren? Bruger hun
-  samme dashboard?
-- **Q20 — Barens omsætning versus værelsesindtjening**: I seed-data er barens omsætning
-  (13.448.640,34 DKK) større end værelsesindtjeningen (11.234.034 DKK), så baren ville udgøre ca.
-  54 % af den samlede omsætning. Dækker bardata samme periode som bookingdata (fx ét år), eller en
-  længere eller ukendt periode? Er tallene realistiske, eller er der tale om testdata, der ikke skal
-  sammenlignes direkte? Svaret afgør, om bar og værelser må lægges sammen i "årets indtjening" (Q10)
-  og vises side om side i dashboardet.
-
-**Dashboard og visning**
-
-- **Q18 — Interaktion**: Hvilke interaktioner skal dashboardet have (fx filtrering på sæson, land,
-  værelsestype)?
-- **Q19 — Afrunding og tomme resultater**: Hvor mange decimaler for beløb og procenter? Hvad vises,
-  når der ikke er data, eller når der divideres med nul?
+- **R1 — Exact automatic prices (Q1/Q5/Q9)**: What rate applies to each room type and
+  season? How are multi-room totals and revenue per room calculated? Are cross-season
+  stays priced per night or by a single season? K1 gives approximate ranges, not tariffs.
+- **R2 — Dates, seasons, and three-year allocation (Q1/Q2/Q3/Q12)**: What are the three
+  years? How can arrival be generated from the stated selections, and how are arrival,
+  departure, and nights related? Which date determines season? How are cross-year stays
+  allocated? How are dates assigned to historical bookings and years to aggregate bar
+  sales without inventing evidence? Do not silently use the current date or split totals equally.
+- **R3 — Selection-only entry (Q5)**: Where do selectable names, guests, dates, countries,
+  and valid night counts come from? How are new guests added when manual typing is prohibited?
+  No guest catalog or name-generation rule is supplied.
+- **R4 — Guest counts and country allocation (Q9/Q10)**: How are multiple guests and
+  their countries recorded, how are mixed-country booking counts/revenue allocated,
+  and what should country reporting include for walk-in bar revenue? Historical person
+  counts are absent. Do not multiply the booking total by the number of guests.
+- **R5 — Room inventory and assignment (Q9/Q11/Q15)**: What is the actual room-number/type
+  mapping, how are rooms assigned to group bookings, and how are historical rooms identified?
+  The team's “small” example is illustrative, not actual inventory. Availability/overlap
+  and capacity rules are not specified.
+- **R6 — Satisfaction scoring (Q14)**: Which questionnaire, response scale, aggregation,
+  collection flow, and multi-room response attribution are intended? The source and
+  per-room linkage are confirmed; the score itself is not yet defined.
+- **R7 — Remaining booking behavior (Q1/Q5/Q6)**: Which fields may be edited? How are
+  simultaneous changes, unknown IDs, repeat submissions, and ties presented? Unique
+  BookingID prevents duplicate identifiers, not equivalent bookings with different IDs.
+  Equal rights do not specify whether login is required.
+- **R8 — Daily bar capture and category definitions (Q8/Q16)**: Is a daily entry per drink,
+  or individual sale? How are quantities selected, corrections and repeat daily entries
+  handled, and prices/catalog populated? Should wine and beer have separate categories
+  or one shared additional category? Does the cocktail/coffee split exclude those
+  categories from its denominator or show a whole-bar mix? No extra menu values are invented.
+- **R9 — Reporting refresh and exploration (Q7/Q18)**: Automatic booking-page refresh
+  after creation is confirmed. Indicator/dashboard delay, refresh after edits/deletion,
+  source failure behavior, and the final exploratory interaction choice are not specified.
+  Interaction design is deliberately deferred; no arbitrary latency threshold is introduced.
+- **R10 — Display boundary cases (Q19)**: Null for no data and one decimal for amounts/
+  percentages are confirmed. Does a zero denominator with records also return null,
+  and which tie-rounding rule applies? No-data null must not erase a genuine numeric zero.

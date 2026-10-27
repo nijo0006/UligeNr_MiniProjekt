@@ -30,7 +30,7 @@
 
 ## Feature Readiness
 
-- [x] All functional requirements have clear acceptance criteria — FR-001–FR-022 peger på stories.
+- [ ] All functional requirements have clear acceptance criteria — FR-001–FR-022 peger på stories.
 - [x] User scenarios cover primary flows — booking (frontend og API), løbende data, nøgletal, bar,
   dashboard.
 - [ ] Feature meets measurable outcomes defined in Success Criteria
