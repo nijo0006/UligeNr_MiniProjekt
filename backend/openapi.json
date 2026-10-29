@@ -1,0 +1,735 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Hotel Kong Arthur Booking API",
+    "version": "0.1.0",
+    "description": "Implemented booking MVP: catalog, availability, booking creation/read/edit/cancellation. Reporting, historical import, bar, satisfaction and Tableau are not implemented in this version. No login or request-deduplication feature."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000"
+    }
+  ],
+  "security": [],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "operationId": "health",
+        "summary": "Read application readiness",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ready"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database/initialization unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/catalog": {
+      "get": {
+        "operationId": "catalog",
+        "summary": "Read approved types, countries, seasonal tariffs, and category names",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Catalog"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/rooms": {
+      "get": {
+        "operationId": "rooms",
+        "summary": "List inventory or rooms available for an interval",
+        "parameters": [
+          {
+            "name": "arrival",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "departure",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "roomType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "excludeBookingId",
+            "in": "query",
+            "required": false,
+            "description": "Exclude this booking itself when showing availability for an edit.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Room"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or attempted override of read-only calculations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "Supply arrival and departure together for availability filtering. Arrival inclusive, departure exclusive. Inventory is labelled synthetic. Do not enforce guest capacity."
+      }
+    },
+    "/api/bookings": {
+      "get": {
+        "operationId": "bookings",
+        "summary": "List active bookings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Booking"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Cancelled bookings do not appear in the active list. No login required."
+      },
+      "post": {
+        "operationId": "createBooking",
+        "summary": "Create a booking with generated ID and price",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Booking"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or attempted override of read-only calculations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale edit: reload; or room unavailable; no partial mutation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookingCreate"
+              }
+            }
+          }
+        },
+        "description": "Create one booking with selected rooms; derive departure and nightly prices; atomically check availability. No request-idempotency-key or duplicate-specific save rule. Clients cannot supply ID, total price, departure, or nightly charges."
+      }
+    },
+    "/api/bookings/{bookingId}": {
+      "get": {
+        "operationId": "booking",
+        "summary": "Read a known active or cancelled booking",
+        "parameters": [
+          {
+            "name": "bookingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Booking"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Booking not found; no mutation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "editBooking",
+        "summary": "Edit permitted fields using the saved version",
+        "parameters": [
+          {
+            "name": "bookingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Booking"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or attempted override of read-only calculations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Booking not found; no mutation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale edit: reload; or room unavailable; no partial mutation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookingEdit"
+              }
+            }
+          }
+        },
+        "description": "Preserve immutable ID. Compare version atomically; stale state returns conflict and a reload message. Recalculate prices and departure; check availability again. Cancelled-booking editing/reactivation is not established by this draft."
+      },
+      "delete": {
+        "operationId": "cancelBooking",
+        "summary": "Cancel a known booking",
+        "parameters": [
+          {
+            "name": "bookingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Booking"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Booking not found; no mutation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "Known cancelled ID remains cancelled without changing reports again. Browser asks for confirmation before sending. Unknown ID reports Booking not found. Storage retains enough lifecycle information to distinguish the two."
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "GuestName": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "firstName",
+          "lastName"
+        ],
+        "additionalProperties": false
+      },
+      "BookingCreate": {
+        "type": "object",
+        "properties": {
+          "holderFirstName": {
+            "type": "string"
+          },
+          "holderLastName": {
+            "type": "string"
+          },
+          "holderCountry": {
+            "type": "string"
+          },
+          "guestCount": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Recorded person count including holder; no per-room capacity policy."
+          },
+          "guests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GuestName"
+            }
+          },
+          "roomNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "arrival": {
+            "type": "string",
+            "format": "date"
+          },
+          "nights": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Positive whole nights; no arbitrary maximum is selected. Final frontend choices remain spec R3."
+          }
+        },
+        "required": [
+          "holderFirstName",
+          "holderLastName",
+          "holderCountry",
+          "guestCount",
+          "roomNumbers",
+          "arrival",
+          "nights"
+        ],
+        "additionalProperties": false
+      },
+      "BookingEdit": {
+        "type": "object",
+        "properties": {
+          "holderFirstName": {
+            "type": "string"
+          },
+          "holderLastName": {
+            "type": "string"
+          },
+          "holderCountry": {
+            "type": "string"
+          },
+          "guestCount": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Recorded person count including holder; no per-room capacity policy."
+          },
+          "guests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GuestName"
+            }
+          },
+          "roomNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "arrival": {
+            "type": "string",
+            "format": "date"
+          },
+          "nights": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Positive whole nights; no arbitrary maximum is selected. Final frontend choices remain spec R3."
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "holderFirstName",
+          "holderLastName",
+          "holderCountry",
+          "guestCount",
+          "roomNumbers",
+          "arrival",
+          "nights",
+          "version"
+        ],
+        "additionalProperties": false
+      },
+      "Room": {
+        "type": "object",
+        "properties": {
+          "roomNumber": {
+            "type": "string"
+          },
+          "roomType": {
+            "type": "string"
+          },
+          "synthetic": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "roomNumber",
+          "roomType",
+          "synthetic"
+        ],
+        "additionalProperties": false
+      },
+      "NightCharge": {
+        "type": "object",
+        "properties": {
+          "roomNumber": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "season": {
+            "type": "string",
+            "enum": [
+              "low",
+              "mid",
+              "high"
+            ]
+          },
+          "charge": {
+            "type": "string",
+            "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+            "description": "Exact DKK amount encoded as a decimal string. Format one decimal in the user-facing view; source reconciliation retains full precision.",
+            "example": "2491.00"
+          }
+        },
+        "required": [
+          "roomNumber",
+          "date",
+          "season",
+          "charge"
+        ],
+        "additionalProperties": false
+      },
+      "Booking": {
+        "type": "object",
+        "properties": {
+          "holderFirstName": {
+            "type": "string"
+          },
+          "holderLastName": {
+            "type": "string"
+          },
+          "holderCountry": {
+            "type": "string"
+          },
+          "guestCount": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Null when source records do not establish person count."
+          },
+          "guests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GuestName"
+            }
+          },
+          "roomNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "arrival": {
+            "type": "string",
+            "format": "date"
+          },
+          "nights": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Positive whole nights; no arbitrary maximum is selected. Final frontend choices remain spec R3."
+          },
+          "bookingId": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "departure": {
+            "type": "string",
+            "format": "date"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "cancelled"
+            ]
+          },
+          "totalPrice": {
+            "type": "string",
+            "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+            "description": "Exact DKK amount encoded as a decimal string. Format one decimal in the user-facing view; source reconciliation retains full precision.",
+            "example": "2491.00"
+          },
+          "nightCharges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NightCharge"
+            }
+          },
+          "syntheticDates": {
+            "type": "boolean"
+          },
+          "syntheticRoomAssignment": {
+            "type": "boolean"
+          },
+          "sourceId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "bookingId",
+          "holderFirstName",
+          "holderLastName",
+          "holderCountry",
+          "guestCount",
+          "roomNumbers",
+          "arrival",
+          "departure",
+          "nights",
+          "version",
+          "status",
+          "totalPrice",
+          "syntheticDates",
+          "syntheticRoomAssignment"
+        ],
+        "additionalProperties": false
+      },
+      "Rate": {
+        "type": "object",
+        "properties": {
+          "roomType": {
+            "type": "string"
+          },
+          "season": {
+            "type": "string",
+            "enum": [
+              "low",
+              "mid",
+              "high"
+            ]
+          },
+          "nightlyPrice": {
+            "type": "string",
+            "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+            "description": "Exact DKK amount encoded as a decimal string. Format one decimal in the user-facing view; source reconciliation retains full precision.",
+            "example": "2491.00"
+          }
+        },
+        "required": [
+          "roomType",
+          "season",
+          "nightlyPrice"
+        ],
+        "additionalProperties": false
+      },
+      "Catalog": {
+        "type": "object",
+        "properties": {
+          "roomTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "countries": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Rate"
+            }
+          },
+          "drinkCategories": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "Cocktails",
+                "Coffee",
+                "Wine",
+                "Beer"
+              ]
+            }
+          }
+        },
+        "required": [
+          "roomTypes",
+          "countries",
+          "rates",
+          "drinkCategories"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "x-design-status": "implemented booking slice"
+}

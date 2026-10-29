@@ -7,7 +7,8 @@
 **Status**: Draft — confirmed technical direction recorded; Tableau integration and
 refresh are deferred to the user as of 2026-10-29. Continue other planning; independent technical research and draft design are recorded in research.md,
 data-model.md, contracts/openapi.json, and quickstart.md. The full plan remains
-incomplete at the explicitly unresolved business and Tableau gates. This document does not authorize implementation or resolve open business rules.
+incomplete at the explicitly unresolved business and Tableau gates. The user authorized implementation of the confirmed booking slice on 2026-10-29;
+this does not resolve other open business rules or the user-deferred Tableau work.
 
 ## Summary
 
@@ -303,3 +304,25 @@ Normal uniqueness, room-overlap checks, stale-edit checks, and repeated cancella
 semantics still apply. No Tableau connector/exporter is selected. Do not enter unrestricted
 implementation merely because these independent draft artifacts exist: unresolved
 business items and deferred integration remain visible in research.md.
+
+## Implementation slice — 2026-10-29
+
+US1–US4 are the first implementation increment: create/read/list/availability, edits
+and cancellation in browser and API. Use `backend/openapi.json` as the served, implemented
+contract; the contract under `contracts/` remains the full future draft. Current
+initialization seeds room inventory, approved tariffs and country choices only. Historical
+booking/bar imports, reporting, bar entry, and satisfaction remain pending tasks.
+
+The implemented schema uses `bookings` with version/status and nullable source fields,
+`booking_rooms`, `booking_guests`, and `room_nights`. Guest name/country storage accepts
+255 Unicode characters; IDs and guest counts use unsigned database integers. These are
+storage boundaries, not guest-capacity rules. Dates follow the MySQL calendar range;
+there is no new business maximum for stay length. Names remain free text, arrival uses
+a date picker, and numeric selectors can extend without treating their initial option
+count as a policy limit.
+
+Compose defaults permit a fresh clone without `.env`, retain local MySQL port 3307,
+and preserve the database volume. Reused volumes must retain their existing credentials.
+Images are pinned to the verified Node 24 and MySQL 8.4 digests; npm versions are pinned
+in `backend/package-lock.json`. The separate test profile uses a disposable database;
+it is not part of ordinary application startup. No database reset is part of testing.

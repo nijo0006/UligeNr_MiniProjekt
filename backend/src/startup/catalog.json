@@ -1,0 +1,148 @@
+{
+  "countries": [
+    "Australia",
+    "Brazil",
+    "Canada",
+    "China",
+    "Denmark",
+    "Egypt",
+    "France",
+    "Germany",
+    "India",
+    "Italy",
+    "Japan",
+    "Mexico",
+    "Nigeria",
+    "Pakistan",
+    "Russia",
+    "South Korea",
+    "Spain",
+    "Sweden",
+    "United Kingdom",
+    "United States",
+    "Vietnam"
+  ],
+  "rates": [
+    {
+      "roomType": "Standard Single",
+      "season": "low",
+      "nightlyPrice": "1031.00"
+    },
+    {
+      "roomType": "Standard Single",
+      "season": "mid",
+      "nightlyPrice": "1152.00"
+    },
+    {
+      "roomType": "Standard Single",
+      "season": "high",
+      "nightlyPrice": "1339.00"
+    },
+    {
+      "roomType": "Grand Lit",
+      "season": "low",
+      "nightlyPrice": "1230.00"
+    },
+    {
+      "roomType": "Grand Lit",
+      "season": "mid",
+      "nightlyPrice": "1405.00"
+    },
+    {
+      "roomType": "Grand Lit",
+      "season": "high",
+      "nightlyPrice": "1592.00"
+    },
+    {
+      "roomType": "Standard Double",
+      "season": "low",
+      "nightlyPrice": "1416.00"
+    },
+    {
+      "roomType": "Standard Double",
+      "season": "mid",
+      "nightlyPrice": "1488.00"
+    },
+    {
+      "roomType": "Standard Double",
+      "season": "high",
+      "nightlyPrice": "1782.00"
+    },
+    {
+      "roomType": "Superior Double",
+      "season": "low",
+      "nightlyPrice": "1602.00"
+    },
+    {
+      "roomType": "Superior Double",
+      "season": "mid",
+      "nightlyPrice": "1785.00"
+    },
+    {
+      "roomType": "Superior Double",
+      "season": "high",
+      "nightlyPrice": "1968.00"
+    },
+    {
+      "roomType": "Junior Suite",
+      "season": "low",
+      "nightlyPrice": "1990.00"
+    },
+    {
+      "roomType": "Junior Suite",
+      "season": "mid",
+      "nightlyPrice": "2180.00"
+    },
+    {
+      "roomType": "Junior Suite",
+      "season": "high",
+      "nightlyPrice": "2359.00"
+    },
+    {
+      "roomType": "Spa Executive",
+      "season": "low",
+      "nightlyPrice": "2241.00"
+    },
+    {
+      "roomType": "Spa Executive",
+      "season": "mid",
+      "nightlyPrice": "2397.00"
+    },
+    {
+      "roomType": "Spa Executive",
+      "season": "high",
+      "nightlyPrice": "2631.00"
+    },
+    {
+      "roomType": "Suite",
+      "season": "low",
+      "nightlyPrice": "2740.00"
+    },
+    {
+      "roomType": "Suite",
+      "season": "mid",
+      "nightlyPrice": "3046.00"
+    },
+    {
+      "roomType": "Suite",
+      "season": "high",
+      "nightlyPrice": "3231.00"
+    },
+    {
+      "roomType": "LOFT Suite",
+      "season": "low",
+      "nightlyPrice": "3220.00"
+    },
+    {
+      "roomType": "LOFT Suite",
+      "season": "mid",
+      "nightlyPrice": "3468.00"
+    },
+    {
+      "roomType": "LOFT Suite",
+      "season": "high",
+      "nightlyPrice": "3731.00"
+    }
+  ],
+  "countrySource": "20 workbook countries plus Denmark from the approved booking/reporting acceptance examples."
+}

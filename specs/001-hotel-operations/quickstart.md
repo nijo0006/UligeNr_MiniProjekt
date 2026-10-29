@@ -1,8 +1,7 @@
-# Planned Quickstart and Validation
+# Quickstart and Validation
 
-Status: future validation guide. There is no application or Compose file implemented yet;
-the commands and endpoints below are design targets, not instructions for running a
-finished program. Tableau integration is deferred to the user.
+Status: booking maintenance (US1–US4) is implemented. Reporting, bar sales, satisfaction
+and historical import are still pending. Tableau integration is deferred to the user.
 
 ## Host prerequisites
 
@@ -13,7 +12,7 @@ no automatic install, connector, publishing, or refresh setup is promised.
 ## Clean-clone acceptance
 
 From the cloned repository root, `docker compose up` must build/start the normal services,
-wait for database health, migrate and seed automatically, and expose these planned URLs:
+wait for database health, migrate and seed automatically, and expose these URLs:
 
 - `http://localhost:3000/` — browser frontend
 - `http://localhost:3000/api/health` — readiness; ready only after required initialization
@@ -23,7 +22,7 @@ wait for database health, migrate and seed automatically, and expose these plann
 No .env copy, host npm install, manual schema creation, or separate seed command is allowed
 for the standard local path. Document local-only defaults and port changes in the README.
 
-## End-to-end checks after implementation
+## Full-feature acceptance checklist (includes pending work)
 
 1. Verify 214 unique rooms across the eight fixture types and all 24 approved tariff cells.
 2. Verify unchanged complete source totals: 1,000 bookings, DKK 11,234,034 room revenue,
@@ -52,13 +51,30 @@ for the standard local path. Document local-only defaults and port changes in th
 
 ## Tests and quality gates
 
-Plan `node --test` for business tests and the same runner for MySQL integration tests
-inside a Compose test profile. Browser tests use a separate optional test service;
-ordinary startup does not run test suites or require browser tooling on the host.
-Pin exact test/package versions during implementation. Contract validation must exercise
+Use `npm test` from backend for business tests and
+`docker compose --profile test run --build --rm test` for isolated MySQL/API tests.
+The optional `npm run test:browser` uses local Google Chrome; ordinary startup requires
+no browser test tooling or host Node. Package versions are pinned in the lockfile. Contract validation must exercise
 all operations and errors, including stale versions, missing bookings, room conflicts,
 nullable source guest counts, and rejection of client-supplied prices.
 
 Do not claim the full feature passes while the independent business gaps in research.md
-or Tableau end-to-end connection and refresh remain unresolved. No tests were run against
-an application during planning because that application does not exist yet.
+or Tableau end-to-end connection and refresh remain unresolved. The original planning checks did not execute an application. Implementation verification
+is recorded below.
+
+
+## Booking-slice verification — 2026-10-29
+
+- Seven pricing/input unit tests passed.
+- Eleven MySQL/API integration tests passed in a separate test database.
+- One browser create → reload → edit → cancel test passed, including confirmation dismissal.
+- Served OpenAPI validated; Swagger UI and frontend were reachable.
+- An isolated Compose project started with an empty volume and `--env-file /dev/null`.
+  Its database healthcheck required an authenticated TCP query before app startup.
+- Created a two-night May/June booking for DKK 2,491.00 in that isolated project,
+  removed/recreated its containers without deleting the volume, and verified the entire
+  returned booking was unchanged. Normal project data was not reset.
+
+These results cover booking maintenance, pricing, availability and startup only.
+The full-feature checks above for reporting, source totals, bar and satisfaction
+remain pending; see tasks.md.
