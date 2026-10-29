@@ -6,7 +6,7 @@
 
 **Created**: 2026-10-27
 
-**Last Updated**: 2026-10-27 — team clarification answers Q1–Q20 integrated.
+**Last Updated**: 2026-10-28 — pricing, date selection, demonstration dates, and guest-name entry updated.
 
 **Status**: Draft — confirmed answers incorporated; remaining business decisions are listed below.
 
@@ -28,6 +28,10 @@ registration confirmed in Q8. The English story form is “As <role>, I want <go
 - **K5 — Team clarifications**: The Q1–Q20 answers supplied on 2026-10-27 below.
   Explicit team decisions supersede the previous draft's assumptions, including the
   one-year dataset assumption and the unspecified seasonal month boundaries.
+- **K6 — Follow-up decisions (2026-10-28)**: Seasonal tariff supplied, arrival selected
+  with a date picker, departure calculated from nights, season-based demonstration
+  dates authorized, and manual guest-name entry allowed. Standard Single low-season
+  low-season price is confirmed as DKK 1,031; the user now authorizes generated demonstration room inventory.
 - Browser booking maintenance, API booking access, and an interactive Tableau dashboard
   are requirements from K1 and the current specification, not technology choices made here.
 - Scope now includes daily closing-shift bar-sales registration, multiple guests and rooms
@@ -44,12 +48,15 @@ registration confirmed in Q8. The English story form is “As <role>, I want <go
   and rooms (Q9). Source booking counts MUST NOT be presented as verified person counts.
 - Bar source data are undated totals per drink; there is no daily history to reconstruct.
 - K5 requires arrival and departure for all bookings and states that the data cover three
-  years (Q2, Q12). Exact years and historical date assignment remain unresolved (R2).
-  No historical dates, room assignments, or questionnaire responses are fabricated.
+  years (Q2, Q12). K6 authorizes clearly labelled demonstration booking dates based on
+  the source seasons in 2024, 2025, and 2026; generation/allocation details remain R2. Original source
+  data stay distinct from demonstration enrichment. No room assignments or questionnaire
+  responses are generated without authorization.
 - Workbook labels such as “annual revenue” use a one-year assumption that K5 replaces.
   Workbook totals remain whole-source reconciliation values, not verified annual totals.
 - Historical prices can fall outside K1's approximate price ranges. Original source
-  amounts are reference evidence; no new seasonal tariff is inferred from those ranges.
+  amounts are reference evidence and are not overwritten with the new K6 tariff.
+  The supplied tariff applies to new calculations; source reconciliation retains source prices.
 - Reference checks below apply only to the unchanged source dataset, before generated
   dates, extra guests/rooms, cancellations, or new transactions affect the result.
 
@@ -106,6 +113,114 @@ Numbering matches the questions in the previous specification.
 - Q: Q20 — Is high bar revenue a data error? → A: No. Bar sales can come from people
   without a hotel booking. Such sales must not be discarded or require a booking link.
 
+### Session 2026-10-28
+
+These follow-up decisions supersede the earlier no-manual-name-entry and automatically
+chosen-arrival wording. They do not authorize invented historical facts.
+
+- Q: What are the seasonal nightly rates? → A: Use the supplied DKK tariff below.
+  The follow-up confirms Standard Single low season as DKK 1,031, superseding the
+  earlier DKK 950 line. All 24 tariff cells are now confirmed.
+- Q: How should arrival and departure be entered? → A: The receptionist selects arrival
+  using a date picker; departure is calculated as arrival plus the number of nights.
+- Q: May missing historical dates be generated as demonstration data? → A: Yes, based
+  on the source seasons. Generated dates must remain labelled as demonstration data;
+  approved demonstration years are 2024, 2025, and 2026; seasonal generation details remain R2.
+- Q: Is an actual or demonstration room inventory available/authorized? → A: Yes.
+  After the meaning of inventory was explained, the user explicitly requested generated
+  room inventory, superseding the earlier prohibition. Use clearly labelled synthetic
+  room numbers/type mappings for 214 rooms across all eight types; no actual inventory
+  has been supplied.
+- Q: May guest names be entered manually while fixed options remain selectable? → A: Yes.
+  First and last names may be typed; country and room type remain selections, and
+  price is never manually entered.
+
+- Q: How should a stay crossing seasons be priced? → A: Use each night's own seasonal
+  rate, then sum the nightly charges across the booked rooms. This resolves new-booking
+  cross-season pricing; historical source amounts remain unchanged.
+
+- Q: Which three years should generated historical booking dates use? → A: 2024, 2025,
+  and 2026, consistent with each booking's recorded season and clearly labelled as
+  demonstration dates. This assigns a demonstration horizon, not verified dates to
+  the original source. Allocation across years and detailed generation remain R2.
+
+- Q: How are mixed-country bookings counted? → A: Count the booking, all guests
+  belonging to it, and its room revenue under the booking holder's country. Do not
+  split the booking across guests' individual countries or duplicate its revenue.
+  Guest count and booking count remain separate measures. This does not assign a
+  country to independent walk-in bar sales or supply missing historical person counts.
+
+- Q: Which guest satisfaction scale and calculation should be used? → A: One overall
+  questionnaire rating from 1 to 5, linked to a room. Show the arithmetic mean of that
+  room's ratings to one decimal place; show null if it has no responses. Do not invent
+  historical responses. Collection workflow and multi-room response linkage remain R6.
+
+- Q: How should daily bar sales and corrections be registered? → A: The closing shift
+  selects a sales date and records the total quantity sold per drink for that date.
+  There is one effective quantity per date/drink pair. Saving a correction replaces
+  the prior quantity rather than adding to it, preventing double-counting. This is
+  daily aggregate entry, not individual transaction capture.
+
+- Q: How should wine, beer, and bar percentages be reported? → A: Use separate
+  Cocktails, Coffee, Wine, and Beer categories. The cocktail/coffee comparison divides
+  each category's revenue by cocktail revenue plus coffee revenue only, so those two
+  shares total 100% before display rounding when the denominator is positive. Overall
+  bar revenue and units include all four categories. Missing wine/beer menu data are
+  not permission to invent drinks, prices, or historical sales.
+
+- Q: How should browser and API reporting refresh? → A: Refresh the browser after
+  successful booking creation, edits, and cancellation; API reporting reflects saved
+  changes on the next request. The user asks whether Tableau Desktop can refresh
+  automatically, so its refresh mechanism remains under investigation; manual-only
+  Tableau refresh has not been confirmed as the final requirement.
+
+- Q: Which Tableau edition is available? → A: Tableau Desktop Public Edition.
+  The exact version is not supplied. Automatic refresh remains a requested capability
+  to assess, not a confirmed supported feature or an approved cloud integration.
+  Local operation and data delivery from the JSON API remain requirements.
+
+**Nightly tariff for new booking calculations (DKK per room per night)**:
+
+| Room type | Low | Mid | High |
+| --- | ---: | ---: | ---: |
+| Standard Single | 1,031 | 1,152 | 1,339 |
+| Grand Lit | 1,230 | 1,405 | 1,592 |
+| Standard Double | 1,416 | 1,488 | 1,782 |
+| Superior Double | 1,602 | 1,785 | 1,968 |
+| Junior Suite | 1,990 | 2,180 | 2,359 |
+| Spa Executive | 2,241 | 2,397 | 2,631 |
+| Suite | 2,740 | 3,046 | 3,231 |
+| LOFT Suite | 3,220 | 3,468 | 3,731 |
+
+For each booked room, calculate each night's charge using that room type's tariff
+for the season of that night's date. Include arrival night and exclude departure
+night: departure = arrival + nights. A room's total is the sum of its nightly charges;
+a booking's total is the sum across all booked rooms. Do not apply the arrival-date
+season to the entire stay. These rates do not replace historical source prices.
+
+**Generated demonstration room inventory**:
+
+Fixture: [fixtures/room-inventory.json](fixtures/room-inventory.json).
+The following distribution and sequential room numbers are implementation assumptions
+for the authorized demonstration dataset, not claims about the hotel's actual rooms.
+The first and last number in each range are included.
+
+| Room type | Demonstration room numbers | Count |
+| --- | --- | ---: |
+| Standard Single | 001–030 | 30 |
+| Grand Lit | 031–054 | 24 |
+| Standard Double | 055–114 | 60 |
+| Superior Double | 115–158 | 44 |
+| Junior Suite | 159–178 | 20 |
+| Spa Executive | 179–194 | 16 |
+| Suite | 195–206 | 12 |
+| LOFT Suite | 207–214 | 8 |
+| **Total** | **001–214** | **214** |
+
+The fixture contains inventory only. Assigning historical bookings to these rooms,
+overlap/availability rules, room capacities, and satisfaction responses are separate
+decisions; this generation request does not resolve or fabricate those records.
+
 ## User Scenarios & Testing *(mandatory)*
 
 Stories retain **The Three Cs**: Card, Conversation, Confirmation. MoSCoW priorities remain
@@ -125,15 +240,19 @@ invent person counts, room assignments, or annual allocations missing from K3.
 
 **Conversation**:
 
-- Q1/Q5: select first name, last name, country, room type, and nights; the system supplies the identifier, dates, season, and price. No manual price entry is available.
-- Q9: support multiple guests and rooms and identify one guest as the booking holder. Available guest/name choices and room selection rules remain R3/R5.
-- R1/R2: the tariff and date-generation basis must be agreed before a definitive creation calculation can be tested.
+- K6: enter first/last name manually; select country, room type, nights, and arrival (date picker). The system generates BookingID, departure, season, and price. No manual price entry is available.
+- Q9: support multiple guests and rooms and identify one guest as the booking holder. Guest names may be typed; room selection rules remain R5.
+- K6 confirms all 24 seasonal tariff cells, including Standard Single low season at DKK 1,031. Departure equals selected arrival plus nights. Each night uses the season of its own date; sum nightly charges for each room, then sum rooms for the booking total.
 
 **Confirmation (acceptance criteria)**:
 
-1. Given valid selections and an agreed date-generation basis and tariff, when a booking is created, then it is retrievable with a generated unique BookingID, arrival, departure, derived season, and calculated total price.
+1. Given valid booking details including typed names, a date-picker arrival, nights, and a confirmed tariff cell, when a booking is created, then it is retrievable with a generated unique BookingID, the selected arrival, departure equal to arrival plus nights, derived season, and calculated total price.
 2. Given a newly saved booking, when the save succeeds, then the booking page refreshes and includes that booking without a separate manual refresh (Q7).
-3. Given the booking form, when the user enters booking details, then only valid selectable values are offered and no control permits manual entry or override of the price (Q5).
+3. Given the booking form, when details are entered, then first/last names allow typing, arrival uses a date picker, fixed options use valid selections, and price has no manual entry or override.
+4. Given arrival 10 July 2026, three nights, and one Standard Double room, when departure and price are calculated, then departure is 13 July 2026 and total price is DKK 5,346.0 (3 × 1,782).
+5. Given arrival 10 January 2026, two nights, and one Standard Single room, when departure and price are calculated, then departure is 12 January 2026 and total price is DKK 2,062.0 (2 × 1,031).
+6. Given one Standard Single room arriving 31 May 2026 for two nights, when price and departure are calculated, then departure is 2 June, the 31 May night costs DKK 1,152, the 1 June night costs DKK 1,339, and total price is DKK 2,491.0; departure day is not charged.
+7. Given two Standard Single rooms for that same stay, when the booking total is calculated, then each room costs DKK 2,491.0 and the booking total is DKK 4,982.0.
 
 ---
 
@@ -147,7 +266,7 @@ invent person counts, room assignments, or annual allocations missing from K3.
 
 **Conversation**:
 
-- The same selection and automatic-price requirements apply to editing. BookingID is the generated identity, not a user-entered replacement.
+- The same name-entry, date-picker, valid-selection, and automatic-price requirements apply to editing. BookingID is the generated identity, not a user-entered replacement. Changing arrival or nights recalculates departure as arrival plus nights.
 - Exactly which fields are editable and how concurrent changes are resolved remain R7; no rule is invented.
 
 **Confirmation (acceptance criteria)**:
@@ -194,7 +313,7 @@ invent person counts, room assignments, or annual allocations missing from K3.
 
 **Confirmation (acceptance criteria)**:
 
-1. Given valid booking data under the agreed rules, when the booking system creates a booking, then it is retrievable with a system-generated unique identifier, dates, and price.
+1. Given valid booking data including supplied arrival and nights, when the booking system creates a booking, then it is retrievable with a generated unique identifier, the supplied arrival, departure calculated from nights, and generated price under the agreed tariff.
 2. Given an existing booking, when an allowed update succeeds, then the same BookingID retrieves the updated details and calculated price.
 3. Given an active booking, when it is deleted/cancelled, then it is no longer active and is excluded from indicators.
 4. Given an invalid value, when the booking system submits it, then the operation is rejected with an explanation and without changing stored booking data.
@@ -212,7 +331,7 @@ invent person counts, room assignments, or annual allocations missing from K3.
 
 **Conversation**:
 
-- Q7 confirms automatic booking-page refresh after creation; it does not specify a maximum dashboard/indicator update delay (R9).
+- Refresh the booking page after successful creation, edits, and cancellation. API reporting must reflect saved changes on the next request. Tableau refresh behavior remains under investigation (R9).
 - Q8 adds daily dated bar updates. The original undated totals remain source evidence until R2 is settled.
 
 **Confirmation (acceptance criteria)**:
@@ -220,6 +339,8 @@ invent person counts, room assignments, or annual allocations missing from K3.
 1. Given booking revenue R for an agreed period and a new booking contributing X in that period, when current indicators are recalculated, then booking revenue is R + X.
 2. Given a cancelled/deleted booking, when current indicators are recalculated, then the booking is excluded.
 3. Given an agreed grouping change to a booking, when current indicators are recalculated, then its contribution moves to the correct group without being counted twice.
+4. Given a successful booking creation, edit, or cancellation, when the next reporting API request is made after the save, then the result reflects that change without waiting for a scheduled batch refresh.
+5. Given a successful browser booking edit or cancellation, when the operation completes, then the booking page automatically refreshes to reflect the result.
 
 ---
 
@@ -234,12 +355,12 @@ invent person counts, room assignments, or annual allocations missing from K3.
 **Conversation**:
 
 - Q9 confirms both booking and guest counts and multiple guests/rooms per booking. One guest is the named booking holder.
-- K3 can verify booking counts only: 1,000 across 20 countries, South Korea 63. These are not verified person counts. Country attribution for group bookings remains R4.
+- K3 can verify booking counts only: 1,000 across 20 countries, South Korea 63. These are not verified person counts. For group bookings, count the booking and all its guests under the booking holder's country; historical person counts remain missing (R4).
 
 **Confirmation (acceptance criteria)**:
 
 1. Given the unchanged source dataset, when booking counts by country are shown, then all 20 countries sum to 1,000 bookings and South Korea has 63 bookings.
-2. Given a fixture with known guests and the agreed country-attribution rule, when counts are shown, then both guest and booking counts match independent counts and are labelled distinctly.
+2. Given a Danish booking holder, two Danish guests in total, and one Swedish guest on one booking, when counts are grouped by country, then Denmark receives one booking and three guests, Sweden receives no contribution from that booking, and the two measures are labelled distinctly.
 3. Given no person-count data for a reporting scope, when its guest count is requested, then the result is null rather than a booking count relabelled as guests.
 
 ---
@@ -255,13 +376,13 @@ invent person counts, room assignments, or annual allocations missing from K3.
 **Conversation**:
 
 - Q3: high is June–August; mid is April–May and September–December; low is January–March. December is mid season despite the earlier general assignment description.
-- Exact rates and the date used for season derivation, including cross-season stays, remain R1/R2. Historical season codes can be reconciled without inventing historical dates.
+- K6 confirms the complete nightly tariff. New stays use each night’s date for seasonal pricing. Historical date-generation details remain R2. Approved generated historical dates must be labelled as demonstration data and agree with the recorded source season under the agreed date rule.
 
 **Confirmation (acceptance criteria)**:
 
 1. Given the unchanged source records grouped by their recorded season codes, when room revenue is aggregated, then all 8 room types and 3 seasons match K3, with totals low DKK 3,354,077.0, mid DKK 3,809,387.0, and high DKK 4,070,570.0.
 2. Given an agreed relevant date in each month, when the season is derived, then it matches the Q3 month map and is not manually selected.
-3. Given a multi-room booking with agreed room-level revenue allocation, when revenue is grouped, then each room contribution is counted once under its correct type and season.
+3. Given a newly priced multi-room booking, when room revenue is grouped by season, then each room-night charge contributes once under its room type and that night’s season; no full-booking total is duplicated across rooms or seasons.
 
 ---
 
@@ -271,16 +392,16 @@ invent person counts, room assignments, or annual allocations missing from K3.
 
 **Why this priority**: Supports the assignment’s requested capability and the team’s confirmed clarifications. Priority remains proposed under A1.
 
-**Independent Test**: Compare country totals against K3 for unchanged source records and against a group-booking fixture once allocation is agreed.
+**Independent Test**: Compare country totals against K3 for unchanged source records and verify that a mixed-country booking contributes its revenue exactly once to its holder’s country.
 
 **Conversation**:
 
-- Q10 confirms all-inclusive booking totals. Attribution of a multi-country booking and of walk-in bar sales to countries is unresolved (R4).
+- Q10 confirms all-inclusive booking totals. All booking room revenue is attributed to the booking holder's country, regardless of other guests' countries. Country attribution of walk-in bar sales remains unresolved (R4).
 
 **Confirmation (acceptance criteria)**:
 
 1. Given unchanged source booking data, when booking revenue is grouped by its recorded country, then all country totals match K3 and sum to DKK 11,234,034.0 across the complete source dataset.
-2. Given a booking with multiple guests and the agreed country-allocation rule, when revenue is grouped, then total allocated booking revenue equals the booking total without duplication.
+2. Given a Danish booking holder, other guests from any countries, and DKK 3,000 in booking room revenue, when revenue is grouped by country, then Denmark receives DKK 3,000.0 exactly once and no part is assigned to another guest’s country.
 
 ---
 
@@ -294,8 +415,8 @@ invent person counts, room assignments, or annual allocations missing from K3.
 
 **Conversation**:
 
-- Q11 requires a room-number-to-room-type inventory. The example “small = 1, 2, 3” does not establish actual room assignments.
-- K3 supports a room-type ranking only. Actual numbered-room ranking requires R5; multi-room price allocation requires R1.
+- Q11 requires a room-number-to-room-type inventory. The example “small = 1, 2, 3” does not establish actual room assignments. K6 now authorizes the generated demonstration inventory. Room-level revenue still requires booking-to-room assignments (R5).
+- K3 supports a room-type ranking only. Actual numbered-room ranking requires R5; new room totals follow the nightly rule; historical room assignments still require R5.
 
 **Confirmation (acceptance criteria)**:
 
@@ -315,7 +436,7 @@ invent person counts, room assignments, or annual allocations missing from K3.
 
 **Conversation**:
 
-- Country allocation for multi-country bookings remains R4; most guests and highest revenue are distinct measures.
+- Bookings are attributed to the booking holder's country for guest counts, booking counts, and room revenue; most guests and highest revenue are distinct measures.
 
 **Confirmation (acceptance criteria)**:
 
@@ -371,20 +492,21 @@ invent person counts, room assignments, or annual allocations missing from K3.
 
 **Card**: As a hotel administrator/decision-maker, I want to see questionnaire-based guest satisfaction for each room, so that I can identify differences in guest experience between rooms.
 
-**Why this priority**: Existing Should priority is retained; the questionnaire source is confirmed but scoring still requires agreement. Priority remains proposed under A1.
+**Why this priority**: Existing Should priority is retained; the questionnaire source, 1–5 scale, and per-room mean are confirmed, while response collection remains to be designed. Priority remains proposed under A1.
 
-**Independent Test**: Use questionnaire responses linked to known room numbers and an agreed scale and aggregate.
+**Independent Test**: Use known room-linked ratings on the 1–5 scale and independently calculate the arithmetic mean for each room.
 
 **Conversation**:
 
-- Q14 confirms questionnaires linked to rooms as the source. Collection workflow, response scale, and aggregation remain R6.
-- K3 has no satisfaction records. This clarification settles the source, not the missing historical scores.
+- Q14 confirms questionnaires linked to rooms. Each response supplies one overall rating from 1 to 5. The room score is the sum of its ratings divided by its response count, displayed to one decimal place. Collection workflow and multi-room response linkage remain R6.
+- K3 has no satisfaction records. No historical ratings are generated or inferred from booking revenue, country, or room type.
 
 **Confirmation (acceptance criteria)**:
 
-1. Given questionnaire responses linked to rooms and an approved scoring rule, when satisfaction is shown, then each room’s result matches an independent calculation using only responses linked to that room.
+1. Given three ratings of 2, 4, and 5 linked to one room, when its satisfaction is displayed, then the result is 3.7 out of 5; responses for other rooms do not contribute.
 2. Given a room with no questionnaire responses, when its satisfaction is requested, then the result is null.
 3. Given a numeric satisfaction result, when it is displayed, then it uses one decimal place (Q19).
+4. Given a submitted rating below 1 or above 5, when it is validated, then it is rejected and does not change the room’s satisfaction score.
 
 ---
 
@@ -399,13 +521,13 @@ invent person counts, room assignments, or annual allocations missing from K3.
 **Conversation**:
 
 - Q15 selects this inventory overview instead of earlier proposed ADR, average stay, or revenue-per-booking indicators.
-- Q11 provides the categorization requirement, but not the actual mapping. Source booking counts must not be used as inventory counts (R5).
+- Q11 provides the categorization requirement, but not the actual mapping. K6 now authorizes the demonstration inventory in fixtures/room-inventory.json. Source booking counts must not be used as inventory counts.
 - This describes room stock, so creating or cancelling a booking must not change the inventory counts.
 
 **Confirmation (acceptance criteria)**:
 
 1. Given an approved inventory of numbered rooms and their types, when the overview is shown, then each type’s count equals the number of rooms assigned to that type.
-2. Given an approved complete inventory for the 214-room hotel, when type counts are summed, then they total 214.
+2. Given the generated demonstration inventory, when counts are shown, then Standard Single is 30, Grand Lit 24, Standard Double 60, Superior Double 44, Junior Suite 20, Spa Executive 16, Suite 12, and LOFT Suite 8, totalling 214 rooms.
 3. Given an unchanged room inventory, when a booking is created or cancelled, then the inventory counts remain unchanged.
 
 ---
@@ -442,7 +564,7 @@ invent person counts, room assignments, or annual allocations missing from K3.
 **Conversation**:
 
 - Revenue per source drink follows the workbook formula price × sold units. Q8 adds dated daily sales going forward.
-- Wine/beer require categorization beyond cocktail/coffee (Q16); actual catalog, prices, and grouping remain R8.
+- The four categories are Cocktails, Coffee, Wine, and Beer. Wine/beer are separate from each other and from cocktail/coffee. Their actual menu items and prices remain R8; the source has only cocktail and coffee items.
 
 **Confirmation (acceptance criteria)**:
 
@@ -458,18 +580,19 @@ invent person counts, room assignments, or annual allocations missing from K3.
 
 **Why this priority**: Supports the assignment’s requested capability and the team’s confirmed clarifications. Priority remains proposed under A1.
 
-**Independent Test**: Compare against K3 for the original two-category dataset and use a separate fixture containing additional drink categories after R8 is resolved.
+**Independent Test**: Compare against K3, then use a fixture with all four categories to verify that wine/beer affect overall totals but not the cocktail/coffee comparison denominator.
 
 **Conversation**:
 
 - Q16 explicitly selects revenue, not units, as the percentage basis. Additional category treatment must not silently put wine/beer into cocktail or coffee.
-- With additional categories, the percentage denominator and whether the view is a cocktail/coffee subset or whole-bar mix remain R8.
+- Cocktail share = cocktail revenue / (cocktail revenue + coffee revenue) × 100; coffee share uses the same denominator. Wine and beer are excluded from this comparison but included in overall bar revenue and unit totals. Zero-denominator behavior remains R10.
 
 **Confirmation (acceptance criteria)**:
 
 1. Given the unchanged two-category source data, when revenue percentages are shown, then cocktails are 52.8% and coffee is 47.2%, calculated from revenue rather than sold units.
 2. Given no data in the reporting scope, when percentages are requested, then they are null.
-3. Given data with wine/beer, when categories are reported, then those sales are not misclassified as cocktail or coffee; percentage calculations follow the agreed R8 denominator.
+3. Given revenue of DKK 300 for Cocktails, DKK 100 for Coffee, DKK 200 for Wine, and DKK 400 for Beer, when reporting is calculated, then the cocktail/coffee comparison shows 75.0% and 25.0%, while overall bar revenue is DKK 1,000.0.
+4. Given units sold in all four categories, when overall bar units are shown, then all four categories contribute; wine/beer are not misclassified as cocktail or coffee.
 
 ---
 
@@ -485,7 +608,7 @@ invent person counts, room assignments, or annual allocations missing from K3.
 
 - Q17: Helene Christine also sees bar results alongside the administrator, with no role-specific rights (Q6).
 - Q18 deliberately defers final interactions: try alternatives and decide later. No specific filter or layout is approved.
-- Q7 confirms booking-page refresh only. Indicator/dashboard refresh timing remains R9; technical calculation placement belongs in Plan.
+- Browser refresh after booking creation/edit/cancellation and current API results on the next request are confirmed. The user requests investigation of automatic Tableau Desktop refresh; its mechanism and interval remain R9. Technical calculation placement belongs in Plan.
 
 **Confirmation (acceptance criteria)**:
 
@@ -502,18 +625,21 @@ invent person counts, room assignments, or annual allocations missing from K3.
 
 **Why this priority**: Supports the assignment’s requested capability and the team’s confirmed clarifications. Priority remains proposed under A1.
 
-**Independent Test**: Record an agreed daily fixture with known drink quantities and sales date, then retrieve daily and annual reporting contributions.
+**Independent Test**: Record daily quantities per drink, correct and resubmit a date/drink pair, and verify that daily and annual reports use only the latest quantity once.
 
 **Conversation**:
 
 - Q8 introduces this function explicitly; it is no longer excluded from scope. Q20 means no hotel booking is required for a bar customer.
-- Q5’s valid-option interaction rule is retained; no manual price override is added. The daily entry granularity, catalog, correction workflow, and duplicates remain R8.
+- The closing shift selects a sales date and records each drink’s total quantity sold that day. A date/drink pair has one effective quantity; corrections replace it rather than add another sale. Valid quantity controls and catalog/prices remain R8; no manual price override is added.
 
 **Confirmation (acceptance criteria)**:
 
 1. Given an agreed daily sales fixture and valid selectable options, when the closing shift records that day’s sales, then the saved records retain the sales date and the fixture’s drink quantities and revenue.
 2. Given two dated daily sales records, when daily reporting is requested, then each day can be distinguished and reports the corresponding sales rather than an undated cumulative total.
 3. Given dated sales for non-resident bar customers, when registration completes, then no hotel booking link is required and the sales contribute to drink, daily, and applicable annual totals.
+4. Given 10 units recorded for one date/drink pair, when the closing shift corrects the quantity to 12, then the pair contributes 12 units rather than 22 and its reporting contribution is recalculated using 12.
+5. Given 12 units already saved for a date/drink pair, when the same quantity is saved again, then the pair still contributes 12 units exactly once.
+6. Given the same drink on two different sales dates, when one date’s quantity is corrected, then the other date’s quantity remains unchanged.
 
 ---
 
@@ -532,13 +658,22 @@ invent person counts, room assignments, or annual allocations missing from K3.
   two bookings. This does not define repeated-request handling or detect equivalent
   real-world reservations with different IDs (R7).
 - Booking selections expose only valid values and never permit manual prices (Q5).
-  Catalog population, name selection, and historic out-of-range prices still need R1/R3.
+  Guest names are the approved free-text exception (K6). Valid night options remain
+  R3. Preserve historical prices; do not silently reprice them using the new tariff.
 - Deleted/cancelled bookings are excluded from indicators (Q4), while independent bar
   sales remain valid without a booking (Q20).
-- Cross-season/year stays, group-country attribution, and multi-room price allocation
-  remain unresolved; no arbitrary split or arrival-year rule is introduced (R1/R2/R4).
-- Concurrent changes, missing bookings, repeated daily entry, correction, and tied
-  ranking presentation remain R7/R8. No new conflict or tie-break policy is invented.
+- Cross-season pricing uses each night’s seasonal tariff, summed across rooms.
+  Historical date enrichment, annual reporting allocation, and walk-in bar country attribution
+  remain unresolved; no arrival-year reporting rule is introduced (R2/R4).
+- Saving the same date/drink pair replaces its effective quantity; repeated saves
+  do not add quantities or duplicate sales. Concurrent edits, missing bookings, and
+  tied ranking presentation remain R7. No conflict or tie-break policy is invented.
+
+Approved historical-date enrichment acceptance: given raw bookings with a source
+season and an agreed generation policy for 2024, 2025, and 2026, when demonstration dates are
+created, then arrival/departure follow nights, the agreed seasonal date matches the
+source season, generated dates are labelled synthetic, and raw prices and source
+identifiers remain traceable. No actual historical date is claimed.
 
 ## Requirements *(mandatory)*
 
@@ -546,31 +681,31 @@ invent person counts, room assignments, or annual allocations missing from K3.
 
 | ID | Requirement | Acceptance coverage |
 | --- | --- | --- |
-| FR-001 | Receptionists MUST be able to create bookings through a browser frontend using valid selections. | Story 1 |
+| FR-001 | Receptionists MUST be able to create bookings through a browser frontend using typed names, a date-picker arrival, and valid fixed-option selections. | Story 1 |
 | FR-002 | Receptionists MUST be able to edit allowed booking details through the browser; generated identity and prices are not manually editable. | Story 2; R7 |
 | FR-003 | Receptionists MUST be able to delete/cancel bookings; those bookings MUST be excluded from active bookings and indicators. | Story 3 |
 | FR-004 | The existing booking system MUST be able to create, edit, and delete/cancel bookings through the API. | Story 4 |
 | FR-005 | Booking behavior across the browser and API follows the same rules (proposed A5); no actor-specific access rights are required (Q6). | Stories 1–4 |
-| FR-006 | The browser MUST offer valid selection controls, not manual typing or price entry; invalid submitted booking values MUST be rejected without changing booking data. | Stories 1–4; R3/R7 |
-| FR-007 | Operational indicators MUST reflect accepted booking changes; the booking page MUST refresh after every new booking. Indicator/dashboard maximum delay remains R9. | Stories 1, 5, 18 |
-| FR-008 | The system MUST distinguish booking counts from person counts and support guest and booking reporting by country without inventing missing people. | Story 6; R4 |
+| FR-006 | The browser MUST allow typed guest names, a date picker for arrival, and valid selection controls for fixed options; price entry MUST NOT be allowed; invalid submitted booking values MUST be rejected without changing booking data. | Stories 1–4; R3/R7 |
+| FR-007 | The booking page MUST refresh after successful creation, edits, and cancellation. API reporting MUST reflect saved changes on the next request. Tableau refresh mechanism and delay remain R9. | Stories 1, 5, 18 |
+| FR-008 | The system MUST distinguish booking counts from person counts and attribute each booking and all its guests to the booking holder's country, without inventing missing people. | Story 6; R4 |
 | FR-009 | The system MUST show revenue by room type and season; derive season from dates using the confirmed month map. | Story 7; R1/R2 |
-| FR-010 | The system MUST show revenue by country under an agreed attribution rule. | Story 8; R4 |
+| FR-010 | The system MUST attribute each booking's room revenue exactly once to the booking holder's country. | Story 8; R4 |
 | FR-011 | The system MUST categorize numbered rooms by type and rank individual rooms by revenue when room assignments and allocation are available. | Story 9; R1/R5 |
 | FR-012 | The system MUST rank countries by revenue. | Story 10; R4 |
 | FR-013 | Annual hotel revenue MUST include all-inclusive booking totals and bar revenue for the same year, with distinct component totals. | Story 11; R2 |
 | FR-014 | Annual occupancy MUST use sold room-nights / (214 × 365), expressed as a percentage. Cancelled/deleted bookings do not contribute. | Story 12; R2 |
-| FR-015 | The system SHOULD show questionnaire-based satisfaction linked to individual rooms; scale and aggregation require agreement. | Story 13; R6 |
+| FR-015 | The system SHOULD show each room’s arithmetic mean of overall questionnaire ratings from 1 to 5, displayed to one decimal place, or null when it has no responses. | Story 13; R6 |
 | FR-016 | The selected additional indicator MUST show room types and the number of rooms of each type. | Story 14; R5 |
 | FR-017 | Annual bar sales MUST show both revenue and units sold and be visible to Helene Christine and the administrator. | Story 15; R2 |
-| FR-018 | The system MUST show revenue per drink and retain appropriate categories for drinks beyond cocktail and coffee. | Story 16; R8 |
-| FR-019 | Cocktail/coffee percentages MUST use revenue; additional-category denominator behavior remains R8. | Story 17 |
+| FR-018 | The system MUST show revenue per drink with separate Cocktails, Coffee, Wine, and Beer categories. Overall bar revenue and units MUST include all four categories. | Story 16; R8 |
+| FR-019 | Cocktail/coffee percentages MUST use only combined cocktail and coffee revenue as their denominator, excluding wine and beer; display one decimal place. Zero-denominator behavior remains R10. | Story 17 |
 | FR-020 | The system MUST provide indicators through the API to an interactive Tableau dashboard. Final interactions are deferred for exploration. | Story 18 |
-| FR-021 | The source bookings and bar data MUST be usable as starting data without fabricated dates or room assignments. All operational bookings require arrival/departure; historical enrichment is unresolved. | Stories 1, 5–17; A6/R2 |
+| FR-021 | The source bookings and bar data MUST be usable as starting data. Authorized historical booking-date enrichment MUST use 2024, 2025, and 2026, be clearly labelled demonstration data, and be based on source seasons; original source values remain identifiable. The authorized generated room inventory MUST be labelled demonstration data; historical booking-to-room assignments remain unresolved (R5). | Stories 1, 5–17; A6/R2 |
 | FR-022 | No-data results MUST be null. Displayed numeric amounts and percentages MUST use one decimal place; counts remain counts. | Stories 6, 9, 13, 15–18; R10 |
-| FR-023 | The system MUST generate a unique BookingID, price, arrival, and departure for each booking; no manual price override is permitted. | Stories 1, 2, 4; R1/R2 |
+| FR-023 | The system MUST generate a unique BookingID and price, accept selected arrival, and calculate departure as arrival plus nights. Price MUST use the confirmed seasonal tariff with no manual override. Each occupied night MUST use its own date’s seasonal rate; sum nights per room and room totals per booking, excluding departure night. | Stories 1, 2, 4; R1/R2 |
 | FR-024 | A booking MUST support multiple guests and multiple rooms and be held in one guest's name. | Stories 1, 6–9, 12; R4/R5 |
-| FR-025 | The closing shift MUST be able to register dated bar sales once daily, enabling comparisons across sales days. | Story 19; R8 |
+| FR-025 | The closing shift MUST select a sales date and record daily total quantities per drink. Each date/drink pair MUST have one effective quantity; corrections MUST replace rather than add, enabling daily comparisons without double-counting. | Story 19; R8 |
 | FR-026 | Bar sales MUST NOT require a booking and MUST include sales to non-resident customers in applicable bar and combined totals. | Stories 11, 15, 19 |
 
 ### Key Entities *(include if feature involves data)*
@@ -578,27 +713,34 @@ invent person counts, room assignments, or annual allocations missing from K3.
 These are conceptual requirements, not a technical data model.
 
 - **Booking**: Unique system-generated BookingID (primary identifier), named booking
-  holder, selected first/last name and country, multiple guests and rooms, room type,
-  nights, generated arrival/departure, date-derived season, and all-inclusive generated
+  holder, manually entered first/last name, selected country, multiple guests and rooms,
+  room type, nights, date-picker arrival, departure calculated from nights, date-derived
+  season, and all-inclusive generated
   price. Operational fields and source fields are distinguished; missing historical
   dates/guests/rooms are not assumed present.
 - **Guest / Booking Holder**: People associated with a booking; one holds the booking.
-  Counting and country attribution for groups require R4.
+  For country reporting, the booking and all its guests use the booking holder's
+  country. Missing historical guest counts and walk-in bar attribution remain R4.
 - **Room / Room Type**: Individual room number mapped to one of the eight source types:
   Standard Single, Grand Lit, Standard Double, Superior Double, Junior Suite,
-  Spa Executive, Suite, LOFT Suite. Actual inventory and assignments require R5.
+  Spa Executive, Suite, LOFT Suite. The generated demonstration inventory provides
+  the room-number/type mapping; historical booking assignments still require R5.
 - **Season**: Low = January–March; mid = April, May, September–December;
-  high = June–August. Which stay date controls season is not yet agreed.
+  high = June–August. For pricing, season is derived separately for each occupied
+  night; a booking can span multiple seasons.
 - **Reporting Period**: Source horizon of three years; annual reporting for dated records.
-  Exact years and historical period allocation remain R2.
+  Demonstration booking dates based on source seasons are authorized and must be labelled;
+  demonstration years are 2024, 2025, and 2026; generation/allocation details remain R2.
 - **Hotel Capacity**: 214 rooms from K1, with the confirmed annual occupancy denominator
   214 × 365. K1 describes 1–4 people per room and approximate maximum guest capacity 428;
   those facts do not provide a complete type-by-type capacity mapping.
-- **Drink / Daily Bar Sale**: Drink, category, price, quantity, calculated revenue, and
-  sales day for new daily entries. Source rows are undated aggregates, not daily sales.
+- **Drink / Daily Bar Sale**: Drink, category, price, daily quantity, calculated revenue,
+  and selected sales date. Each date/drink pair has one effective quantity; corrections
+  replace that quantity. Source rows are undated aggregates, not daily sales.
   A hotel booking is optional for bar customers.
-- **Questionnaire Response**: Satisfaction information linked to room number; scale,
-  aggregate, collection method, and treatment of multi-room stays require R6.
+- **Questionnaire Response**: One overall rating from 1 to 5 linked to a room number.
+  Room satisfaction is the arithmetic mean of its responses, displayed to one decimal;
+  no responses gives null. Collection and treatment of multi-room stays remain R6.
 
 ## Success Criteria *(mandatory)*
 
@@ -610,11 +752,11 @@ Proposed acceptance measures (A8), not invented service-level targets.
   unresolved rules must be settled before that story is declared complete.
 - **SC-002**: Unchanged source booking and bar totals match K3, displayed to one decimal
   where appropriate, without relabelling three-year undated totals as annual figures.
-- **SC-003**: Every successful new booking appears on the automatically refreshed
-  booking page. Recalculated indicators reflect accepted creation, edits, and cancellation;
-  a maximum dashboard refresh delay still requires R9.
+- **SC-003**: After every successful creation, edit, or cancellation, the booking page
+  refreshes to reflect the result. The next reporting API request reflects the saved
+  change. Tableau's refresh mechanism and interval still require R9.
 - **SC-004**: A receptionist completes browser booking maintenance using only valid
-  selections and without entering prices. First-attempt unaided demonstration remains
+  selections (with typed guest names and a date-picker arrival) and without entering prices. First-attempt unaided demonstration remains
   a proposed acceptance measure, not an assignment-provided performance target.
 - **SC-005**: Dashboard values match supplied indicator values for the same scope;
   at least one agreed exploratory interaction changes that scope correctly.
@@ -633,8 +775,9 @@ requires numbered rooms. A3 (one-year source) is explicitly rejected by Q12.
 - **A1 — MoSCoW priorities**: Existing priorities remain proposed delivery priorities.
 - **A5 — Consistent channel rules**: Browser and API use the same business rules;
   equal rights are confirmed by Q6, while shared channel validation remains this proposal.
-- **A6 — Starting data**: K3 provides starting data and new operations build on it;
-  the import/enrichment of missing fields must be agreed before implementation.
+- **A6 — Starting data**: K3 provides starting data and new operations build on it. K6
+  authorizes labelled, season-based demonstration booking dates; generation details and
+  other missing-field enrichment still require agreement.
 - **A8 — Success measures**: The measures above are proposed ways to evaluate the feature.
 - **A9 — Source references**: Workbook values are source-reconciliation checks only for
   unchanged raw inputs. They do not override Q12 or supply missing historical attributes.
@@ -643,41 +786,51 @@ requires numbered rooms. A3 (one-year source) is explicitly rejected by Q12.
 
 Each item records the part still unanswered; it does not reopen the confirmed part of Q1–Q20.
 
-- **R1 — Exact automatic prices (Q1/Q5/Q9)**: What rate applies to each room type and
-  season? How are multi-room totals and revenue per room calculated? Are cross-season
-  stays priced per night or by a single season? K1 gives approximate ranges, not tariffs.
-- **R2 — Dates, seasons, and three-year allocation (Q1/Q2/Q3/Q12)**: What are the three
-  years? How can arrival be generated from the stated selections, and how are arrival,
-  departure, and nights related? Which date determines season? How are cross-year stays
-  allocated? How are dates assigned to historical bookings and years to aggregate bar
-  sales without inventing evidence? Do not silently use the current date or split totals equally.
-- **R3 — Selection-only entry (Q5)**: Where do selectable names, guests, dates, countries,
-  and valid night counts come from? How are new guests added when manual typing is prohibited?
-  No guest catalog or name-generation rule is supplied.
-- **R4 — Guest counts and country allocation (Q9/Q10)**: How are multiple guests and
-  their countries recorded, how are mixed-country booking counts/revenue allocated,
-  and what should country reporting include for walk-in bar revenue? Historical person
-  counts are absent. Do not multiply the booking total by the number of guests.
-- **R5 — Room inventory and assignment (Q9/Q11/Q15)**: What is the actual room-number/type
-  mapping, how are rooms assigned to group bookings, and how are historical rooms identified?
-  The team's “small” example is illustrative, not actual inventory. Availability/overlap
-  and capacity rules are not specified.
-- **R6 — Satisfaction scoring (Q14)**: Which questionnaire, response scale, aggregation,
-  collection flow, and multi-room response attribution are intended? The source and
-  per-room linkage are confirmed; the score itself is not yet defined.
+- **R1 — Resolved: new booking pricing**: All 24 tariff cells are confirmed. Calculate
+  each occupied room-night using its own date's seasonal rate, sum nights for each room,
+  and sum rooms for the booking. Exclude departure night. Historical source totals
+  are preserved; assigning historical amounts to room numbers remains R5.
+- **R2 — Remaining historical/date rules**: Arrival selection and departure = arrival
+  plus nights are confirmed. Labelled demonstration booking dates based on recorded
+  seasons in 2024, 2025, and 2026 are authorized. How should demonstration
+  dates preserve a source booking’s single recorded season, and how are cross-year
+  revenues allocated? Historical aggregate bar dates are not established by the booking
+  season permission. Preserve raw records and do not label synthetic dates as observed facts.
+- **R3 — Remaining fixed-option validity**: Typed guest names and a date-picker arrival
+  are confirmed. What night counts are valid selections? Country/type catalogs can use
+  the supplied data, but any broader allowed catalogs require agreement. No selectable-name
+  catalog or random name generation is needed.
+- **R4 — Remaining country-reporting inputs (Q9/Q10)**: Booking counts, all guests
+  belonging to a booking, and its room revenue are attributed to the booking holder's
+  country. What should country reporting include for independent walk-in bar revenue?
+  Historical person counts are absent; do not infer them from booking counts or
+  multiply booking revenue by the number of guests.
+- **R5 — Remaining room assignments (Q9/Q11/Q15)**: Demonstration inventory generation
+  is authorized and the room-number/type fixture is supplied. How are rooms assigned
+  to group bookings and historical bookings? Availability/overlap and per-type capacity
+  rules remain unspecified. Inventory counts are now available; room-level revenue
+  and satisfaction still require associated bookings and responses. No actual room
+  inventory is claimed.
+- **R6 — Remaining satisfaction collection (Q14)**: The overall 1–5 rating, arithmetic
+  mean per room, one decimal, and null for no responses are confirmed. How are responses
+  collected and linked to rooms for multi-room stays? Historical responses are absent;
+  no authorization to generate satisfaction data has been supplied.
 - **R7 — Remaining booking behavior (Q1/Q5/Q6)**: Which fields may be edited? How are
   simultaneous changes, unknown IDs, repeat submissions, and ties presented? Unique
   BookingID prevents duplicate identifiers, not equivalent bookings with different IDs.
   Equal rights do not specify whether login is required.
-- **R8 — Daily bar capture and category definitions (Q8/Q16)**: Is a daily entry per drink,
-  or individual sale? How are quantities selected, corrections and repeat daily entries
-  handled, and prices/catalog populated? Should wine and beer have separate categories
-  or one shared additional category? Does the cocktail/coffee split exclude those
-  categories from its denominator or show a whole-bar mix? No extra menu values are invented.
-- **R9 — Reporting refresh and exploration (Q7/Q18)**: Automatic booking-page refresh
-  after creation is confirmed. Indicator/dashboard delay, refresh after edits/deletion,
-  source failure behavior, and the final exploratory interaction choice are not specified.
-  Interaction design is deliberately deferred; no arbitrary latency threshold is introduced.
+- **R8 — Remaining bar inputs (Q8/Q16)**: Daily quantity per date/drink and replacement
+  on correction are confirmed. Cocktails, Coffee, Wine, and Beer are separate categories;
+  the cocktail/coffee comparison excludes wine/beer, while overall totals include them.
+  How are valid quantities selected and prices/catalog populated, including missing
+  wine/beer menu items? No extra menu values or historical sales are invented.
+- **R9 — Remaining Tableau refresh and exploration (Q7/Q18)**: Browser refresh after
+  successful booking creation/edit/cancellation and current API results on the next
+  request are confirmed. The installed edition is Tableau Desktop Public Edition;
+  its exact version is unknown. Which supported integration/refresh mechanism should
+  be used within the local-only setup? Do not promise automatic
+  API polling or mark manual refresh as accepted. Source-failure behavior and final
+  dashboard interactions remain unspecified; interaction design is deliberately deferred.
 - **R10 — Display boundary cases (Q19)**: Null for no data and one decimal for amounts/
   percentages are confirmed. Does a zero denominator with records also return null,
   and which tie-rounding rule applies? No-data null must not erase a genuine numeric zero.

@@ -1,0 +1,872 @@
+{
+  "metadata": {
+    "dataKind": "synthetic-demonstration",
+    "generatedOn": "2026-10-28",
+    "authorization": "User explicitly requested generated room inventory after withdrawing the earlier prohibition.",
+    "totalRooms": 214,
+    "assumptions": [
+      "Room numbers and counts per type are generated demonstration choices, not actual Hotel Kong Arthur inventory.",
+      "The total of 214 and the eight room-type names come from project requirements.",
+      "Room numbering does not imply actual floors or layout.",
+      "This inventory assigns no bookings, guests, prices, capacities, or questionnaire responses."
+    ]
+  },
+  "rooms": [
+    {
+      "roomNumber": "001",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "002",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "003",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "004",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "005",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "006",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "007",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "008",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "009",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "010",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "011",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "012",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "013",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "014",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "015",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "016",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "017",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "018",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "019",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "020",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "021",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "022",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "023",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "024",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "025",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "026",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "027",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "028",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "029",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "030",
+      "roomType": "Standard Single"
+    },
+    {
+      "roomNumber": "031",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "032",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "033",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "034",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "035",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "036",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "037",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "038",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "039",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "040",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "041",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "042",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "043",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "044",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "045",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "046",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "047",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "048",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "049",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "050",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "051",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "052",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "053",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "054",
+      "roomType": "Grand Lit"
+    },
+    {
+      "roomNumber": "055",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "056",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "057",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "058",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "059",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "060",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "061",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "062",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "063",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "064",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "065",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "066",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "067",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "068",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "069",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "070",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "071",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "072",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "073",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "074",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "075",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "076",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "077",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "078",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "079",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "080",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "081",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "082",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "083",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "084",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "085",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "086",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "087",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "088",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "089",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "090",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "091",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "092",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "093",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "094",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "095",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "096",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "097",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "098",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "099",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "100",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "101",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "102",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "103",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "104",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "105",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "106",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "107",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "108",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "109",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "110",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "111",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "112",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "113",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "114",
+      "roomType": "Standard Double"
+    },
+    {
+      "roomNumber": "115",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "116",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "117",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "118",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "119",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "120",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "121",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "122",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "123",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "124",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "125",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "126",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "127",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "128",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "129",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "130",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "131",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "132",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "133",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "134",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "135",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "136",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "137",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "138",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "139",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "140",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "141",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "142",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "143",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "144",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "145",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "146",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "147",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "148",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "149",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "150",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "151",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "152",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "153",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "154",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "155",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "156",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "157",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "158",
+      "roomType": "Superior Double"
+    },
+    {
+      "roomNumber": "159",
+      "roomType": "Junior Suite"
+    },
+    {
+      "roomNumber": "160",
+      "roomType": "Junior Suite"
+    },
+    {
+      "roomNumber": "161",
+      "roomType": "Junior Suite"
+    },
+    {
+      "roomNumber": "162",
+      "roomType": "Junior Suite"
+    },
+    {
+      "roomNumber": "163",
+      "roomType": "Junior Suite"
+    },
+    {
+      "roomNumber": "164",
+      "roomType": "Junior Suite"
+    },
+    {
+      "roomNumber": "165",
+      "roomType": "Junior Suite"
+    },
+    {
+      "roomNumber": "166",
+      "roomType": "Junior Suite"
+    },
+    {
+      "roomNumber": "167",
+      "roomType": "Junior Suite"
+    },
+    {
+      "roomNumber": "168",
+      "roomType": "Junior Suite"
+    },
+    {
+      "roomNumber": "169",
+      "roomType": "Junior Suite"
+    },
+    {
+      "roomNumber": "170",
+      "roomType": "Junior Suite"
+    },
+    {
+      "roomNumber": "171",
+      "roomType": "Junior Suite"
+    },
+    {
+      "roomNumber": "172",
+      "roomType": "Junior Suite"
+    },
+    {
+      "roomNumber": "173",
+      "roomType": "Junior Suite"
+    },
+    {
+      "roomNumber": "174",
+      "roomType": "Junior Suite"
+    },
+    {
+      "roomNumber": "175",
+      "roomType": "Junior Suite"
+    },
+    {
+      "roomNumber": "176",
+      "roomType": "Junior Suite"
+    },
+    {
+      "roomNumber": "177",
+      "roomType": "Junior Suite"
+    },
+    {
+      "roomNumber": "178",
+      "roomType": "Junior Suite"
+    },
+    {
+      "roomNumber": "179",
+      "roomType": "Spa Executive"
+    },
+    {
+      "roomNumber": "180",
+      "roomType": "Spa Executive"
+    },
+    {
+      "roomNumber": "181",
+      "roomType": "Spa Executive"
+    },
+    {
+      "roomNumber": "182",
+      "roomType": "Spa Executive"
+    },
+    {
+      "roomNumber": "183",
+      "roomType": "Spa Executive"
+    },
+    {
+      "roomNumber": "184",
+      "roomType": "Spa Executive"
+    },
+    {
+      "roomNumber": "185",
+      "roomType": "Spa Executive"
+    },
+    {
+      "roomNumber": "186",
+      "roomType": "Spa Executive"
+    },
+    {
+      "roomNumber": "187",
+      "roomType": "Spa Executive"
+    },
+    {
+      "roomNumber": "188",
+      "roomType": "Spa Executive"
+    },
+    {
+      "roomNumber": "189",
+      "roomType": "Spa Executive"
+    },
+    {
+      "roomNumber": "190",
+      "roomType": "Spa Executive"
+    },
+    {
+      "roomNumber": "191",
+      "roomType": "Spa Executive"
+    },
+    {
+      "roomNumber": "192",
+      "roomType": "Spa Executive"
+    },
+    {
+      "roomNumber": "193",
+      "roomType": "Spa Executive"
+    },
+    {
+      "roomNumber": "194",
+      "roomType": "Spa Executive"
+    },
+    {
+      "roomNumber": "195",
+      "roomType": "Suite"
+    },
+    {
+      "roomNumber": "196",
+      "roomType": "Suite"
+    },
+    {
+      "roomNumber": "197",
+      "roomType": "Suite"
+    },
+    {
+      "roomNumber": "198",
+      "roomType": "Suite"
+    },
+    {
+      "roomNumber": "199",
+      "roomType": "Suite"
+    },
+    {
+      "roomNumber": "200",
+      "roomType": "Suite"
+    },
+    {
+      "roomNumber": "201",
+      "roomType": "Suite"
+    },
+    {
+      "roomNumber": "202",
+      "roomType": "Suite"
+    },
+    {
+      "roomNumber": "203",
+      "roomType": "Suite"
+    },
+    {
+      "roomNumber": "204",
+      "roomType": "Suite"
+    },
+    {
+      "roomNumber": "205",
+      "roomType": "Suite"
+    },
+    {
+      "roomNumber": "206",
+      "roomType": "Suite"
+    },
+    {
+      "roomNumber": "207",
+      "roomType": "LOFT Suite"
+    },
+    {
+      "roomNumber": "208",
+      "roomType": "LOFT Suite"
+    },
+    {
+      "roomNumber": "209",
+      "roomType": "LOFT Suite"
+    },
+    {
+      "roomNumber": "210",
+      "roomType": "LOFT Suite"
+    },
+    {
+      "roomNumber": "211",
+      "roomType": "LOFT Suite"
+    },
+    {
+      "roomNumber": "212",
+      "roomType": "LOFT Suite"
+    },
+    {
+      "roomNumber": "213",
+      "roomType": "LOFT Suite"
+    },
+    {
+      "roomNumber": "214",
+      "roomType": "LOFT Suite"
+    }
+  ]
+}
