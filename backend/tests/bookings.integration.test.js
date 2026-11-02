@@ -7,7 +7,7 @@ import { initialize } from '../src/startup/initialize.js';
 import { BookingRepository } from '../src/data/bookingRepository.js';
 import { createApp } from '../src/presentation/app.js';
 
-if (!process.env.MYSQL_DATABASE?.endsWith('_test')) throw new Error('Integration tests require a dedicated database ending in _test; refusing to change application data.');
+if (!process.env.POSTGRES_DB?.endsWith('_test')) throw new Error('Integration tests require a dedicated database ending in _test; refusing to change application data.');
 let pool, server, base;
 const payload = (overrides = {}) => ({ holderFirstName: 'Frederik', holderLastName: 'Johansen', holderCountry: 'Denmark', guestCount: 1, roomNumbers: ['001'], arrival: '2026-05-31', nights: 2, ...overrides });
 async function call(path, method = 'GET', body) {
@@ -110,4 +110,25 @@ test('frontend and Swagger UI are available and health is database-backed', asyn
   const docs=await fetch(base+'/docs/'); assert.equal(docs.status,200); assert.match(await docs.text(),/swagger-ui/);
   const seed=JSON.parse(await readFile(new URL('../src/startup/catalog.json',import.meta.url),'utf8'));
   assert.equal((await call('/catalog')).data.countries.length,seed.countries.length);
+});
+
+// Migration-sensitive behavior: PostgreSQL folds unquoted aliases and has different
+// date, NUMERIC and BIGINT parsers than the previous driver.
+test('PostgreSQL preserves filtered availability, JSON types and the existing integer range', async () => {
+  const created = await call('/bookings','POST',payload({guestCount:4294967295}));
+  assert.equal(created.status,201);
+  assert.equal(created.data.guestCount,4294967295);
+  assert.equal(typeof created.data.bookingId,'number');
+  assert.equal(typeof created.data.totalPrice,'string');
+  assert.equal(created.data.arrival,'2026-05-31');
+  assert.deepEqual(created.data.nightCharges.map(n=>n.charge),['1152.00','1339.00']);
+  const typeOnly = await call('/rooms?roomType=Standard%20Single');
+  assert.equal(typeOnly.status,200);
+  assert.ok(typeOnly.data.length>0);
+  assert.ok(typeOnly.data.every(r=>r.roomType==='Standard Single' && typeof r.synthetic==='boolean'));
+  const filtered = await call('/rooms?roomType=Standard%20Single&arrival=2026-05-31&departure=2026-06-02');
+  assert.equal(filtered.status,200);
+  assert.ok(!filtered.data.some(r=>r.roomNumber==='001'));
+  const editing = await call(`/rooms?roomType=Standard%20Single&arrival=2026-05-31&departure=2026-06-02&excludeBookingId=${created.data.bookingId}`);
+  assert.ok(editing.data.some(r=>r.roomNumber==='001'));
 });

@@ -13,16 +13,16 @@ this does not resolve other open business rules or the user-deferred Tableau wor
 ## Summary
 
 Build a locally runnable hotel operations application with a JavaScript backend,
-a browser frontend using HTML, CSS, and JavaScript, and MySQL storage. The backend
+a browser frontend using HTML, CSS, and JavaScript, and PostgreSQL storage. The backend
 retains the constitution's presentation/API, business logic, and data access layers.
 Provide the booking and reporting capabilities in the specification and supply
 reporting data through the API to Tableau Desktop.
 
 The delivery goal is to clone the GitHub repository and run `docker compose up`
 to build and start the application, without installing a backend runtime, frontend
-build tools, or MySQL directly on the host. Docker with Compose and Git are host
+build tools, or PostgreSQL directly on the host. Docker with Compose and Git are host
 prerequisites. First startup may need network access to obtain images and dependencies.
-This is a planned acceptance condition, not a claim that runnable code already exists.
+The booking increment is runnable; the remaining reporting/bar/satisfaction scope is pending.
 
 ## Technical Context
 
@@ -31,18 +31,18 @@ by the team. Technical design selects Node.js 24 LTS with Express 5 and ES modul
 Pin exact supported package patches and container digests during implementation;
 see research.md for rationale and alternatives.
 
-**Primary Dependencies**: Docker and Docker Compose, MySQL, and Tableau Desktop Public Edition are
-confirmed. Select Express 5, mysql2 promise driver, locally packaged Swagger UI,
+**Primary Dependencies**: Docker and Docker Compose, PostgreSQL, and Tableau Desktop Public Edition are
+confirmed. Select Express 5, node-postgres (pg) driver, locally packaged Swagger UI,
 and plain browser fetch/DOM code served by Express. No frontend framework or build
 pipeline is added. Tableau connection/refresh is user-owned and deferred.
 
-**Storage**: MySQL 8.4 LTS with InnoDB, confirmed technical direction. Plan persistent Docker-managed storage so ordinary
-container restarts do not erase operational data. Exact version, schema, migrations,
-and initial-data handling remain design work. Historical enrichment requires the
+**Storage**: PostgreSQL 18, confirmed technical direction. Plan persistent Docker-managed storage so ordinary
+container restarts do not erase operational data. Booking tables and catalog initialization
+are implemented; wider report/bar/import data structures remain pending. Historical enrichment requires the
 business decisions in spec R2/R5; the team now permits labelled, season-based demonstration booking dates. Preserve
 raw records and do not represent generated dates as actual historical facts.
 
-**Testing**: Node built-in test runner/assertions, MySQL integration tests in containers,
+**Testing**: Node built-in test runner/assertions, PostgreSQL integration tests in containers,
 and an optional Playwright browser-test service. Required validation will cover business
 calculations against agreed fixtures, API/OpenAPI consistency, browser booking flows,
 database integration, Tableau data consistency, and clean-checkout Compose startup.
@@ -86,7 +86,7 @@ Source: [Tableau Desktop installation guide](https://help.tableau.com/current/de
 | I. Three-layer architecture | Separate presentation/API, business logic, and data access responsibilities. | Independent draft aligned; implementation pending. |
 | II. REST with JSON | Browser and reporting integrations use the backend REST/JSON interface. | Draft REST/JSON contract available. |
 | III. OpenAPI and Swagger UI | Deliver an OpenAPI contract viewable in Swagger UI. | OpenAPI draft and Swagger UI serving planned. |
-| IV. MySQL | MySQL is the application database. | Confirmed. |
+| IV. PostgreSQL | PostgreSQL is the application database. | Confirmed. |
 | V. Docker and single-command startup | Application services build/start through one Compose command. | Validation pending; Tableau Desktop host boundary requires acknowledgement. |
 
 **Gate result**: Independent technical draft available for review; not a fully passed feature gate. The user explicitly
@@ -123,7 +123,7 @@ backend/src/presentation/   # Express routes, controllers, JSON errors, HTTP ver
 backend/src/services/       # pricing, reporting, availability, lifecycle, transactions
 backend/src/data/           # prepared SQL, repositories, connection pool
 backend/src/startup/        # migrations, deterministic import/seed readiness
-backend/tests/             # unit, API contract, and real MySQL integration cases
+backend/tests/             # unit, API contract, and real PostgreSQL integration cases
 frontend/                  # plain HTML, CSS, JavaScript served by app
 browser-tests/             # optional Playwright tests
 compose.yaml               # app, db; optional test profile
@@ -228,7 +228,7 @@ cancellation and next-request API freshness are confirmed. The user asks about
 automatic Tableau Desktop refresh; manual-only refresh is not yet an accepted final
 choice. The user has confirmed Public Edition. Its connector set is limited; do not
 assume the generic REST API Connector is available in that edition. Where available,
-that connector is extract-only and documents manual refresh; do not substitute a direct MySQL connection for the required API path.
+that connector is extract-only and documents manual refresh; do not substitute a direct PostgreSQL connection for the required API path.
 Built-in published extract schedules run on Server/Cloud. Do not rely on the old
 Windows Data Extract command-line utility: Tableau marks it deprecated and unavailable
 in later releases. Any local automation must be researched and tested for this setup,
@@ -315,14 +315,30 @@ booking/bar imports, reporting, bar entry, and satisfaction remain pending tasks
 
 The implemented schema uses `bookings` with version/status and nullable source fields,
 `booking_rooms`, `booking_guests`, and `room_nights`. Guest name/country storage accepts
-255 Unicode characters; IDs and guest counts use unsigned database integers. These are
-storage boundaries, not guest-capacity rules. Dates follow the MySQL calendar range;
+255 Unicode characters; IDs and guest counts use checked non-negative BIGINT storage with the existing API integer bounds. These are
+storage boundaries, not guest-capacity rules. The existing API date range (1000–9999) is preserved;
 there is no new business maximum for stay length. Names remain free text, arrival uses
 a date picker, and numeric selectors can extend without treating their initial option
 count as a policy limit.
 
-Compose defaults permit a fresh clone without `.env`, retain local MySQL port 3307,
+Compose defaults permit a fresh clone without `.env`, use local PostgreSQL port 5433,
 and preserve the database volume. Reused volumes must retain their existing credentials.
-Images are pinned to the verified Node 24 and MySQL 8.4 digests; npm versions are pinned
+Images are pinned to the verified Node 24 and PostgreSQL 18 digests; npm versions are pinned
 in `backend/package-lock.json`. The separate test profile uses a disposable database;
 it is not part of ordinary application startup. No database reset is part of testing.
+
+
+## PostgreSQL amendment — 2026-11-02
+
+The user selected PostgreSQL following the week-2 assignment. Constitution IV is now
+PostgreSQL; the three-layer architecture, JSON contract, Swagger UI and one-command
+Docker startup remain unchanged. Use pg with numbered parameter bindings, RETURNING
+IDs, transactional DDL/catalog initialization under a transaction-scoped advisory lock,
+and READ COMMITTED transactions with sorted room row locks. Preserve decimal strings,
+calendar date strings, booking IDs, versions and all existing booking behavior.
+
+Normal database: db:5432, host localhost:5433, dedicated postgres_data volume. Retain
+the original MySQL volume and Git tag uge-1-mysql-demo-2026-11-02. Existing local
+booking records are transferred once with a private snapshot and verified table-by-table;
+this is distinct from the still-pending Excel historical-data import.
+The week-2 report endpoints/frontend calculations remain separate pending report tasks.

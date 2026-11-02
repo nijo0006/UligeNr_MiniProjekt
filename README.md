@@ -1,6 +1,6 @@
 # Hotel Kong Arthur
 
-A local booking prototype built with JavaScript, Express, MySQL, and a plain
+A local booking prototype built with JavaScript, Express, PostgreSQL, and a plain
 HTML/CSS/JavaScript frontend. The backend follows the project's three-layer constitution.
 
 ## Start
@@ -13,8 +13,8 @@ docker compose up
 
 Open **http://localhost:3000** for the booking page and
 **http://localhost:3000/api/docs** for Swagger UI. The first build downloads dependencies;
-the app waits for MySQL, creates its tables, and seeds the room/country/tariff catalog
-automatically. No host Node/MySQL installation or manual migration command is needed.
+the app waits for PostgreSQL, creates its tables, and seeds the room/country/tariff catalog
+automatically. No host Node/PostgreSQL installation or manual migration command is needed.
 Use `docker compose up -d` to leave services running in the background.
 
 | Service | Local address |
@@ -23,17 +23,34 @@ Use `docker compose up -d` to leave services running in the background.
 | Swagger UI | http://localhost:3000/api/docs |
 | Implemented OpenAPI JSON | http://localhost:3000/api/openapi.json |
 | Readiness | http://localhost:3000/api/health |
-| MySQL for a host database client | 127.0.0.1:3307 |
+| PostgreSQL for a host database client | 127.0.0.1:5433 |
 
-The app connects internally to `db:3306`. Compose binds exposed ports to the local
+The app connects internally to `db:5432`. Compose binds exposed ports to the local
 computer. It uses local-development credentials by default; optional `.env` overrides
 are documented in `.env.example`. Keep existing `.env` credentials when reusing an
-already initialized MySQL volume: changing environment values does not reset database
+already initialized PostgreSQL volume: changing environment values does not reset database
 passwords. `.env` is ignored by Git and excluded from the application image.
 
-If port 3000 or 3307 is occupied, set `APP_PORT` or `MYSQL_HOST_PORT` in an optional
+If port 3000 or 5433 is occupied, set `APP_PORT` or `POSTGRES_HOST_PORT` in an optional
 `.env` file. `docker compose stop` stops the application without deleting its data.
 Normal restarts preserve bookings and do not repeat catalog seeds.
+
+## PostgreSQL change — week 2
+
+PostgreSQL replaces MySQL under Constitution v2.0.0. The previous working code is
+preserved at Git tag `uge-1-mysql-demo-2026-11-02`; migration work is on
+`feature/postgresql`. The old `mysql_data` Docker volume is retained, while the current
+application uses a separate `postgres_data` volume. Legacy `MYSQL_*` values in an old
+`.env` are ignored; see `.env.example` for optional `POSTGRES_*` overrides.
+
+Five existing local booking records were copied and reconciled table-by-table, including
+IDs, prices, statuses and room-night charges. This one-time transfer is separate from
+the still-pending Excel import. The private snapshot contains guest data and stays outside
+Git. `backend/scripts/migrate-mysql-snapshot.js <private-snapshot.json>` can import that
+format into an empty, initialized target; it refuses a target containing bookings and
+verifies records before commit. This script is not required on a fresh clone.
+
+The week-2 analysis endpoints and frontend indicators remain pending report tasks.
 
 ## Implemented booking slice
 
@@ -67,7 +84,7 @@ flowchart LR
     Services --> Data[Repositories and parameterized SQL]
     Swagger[Swagger UI and OpenAPI]
   end
-  Data --> DB[(MySQL db container / persistent volume)]
+  Data --> DB[(PostgreSQL db container / persistent volume)]
   Browser --> Swagger
 ```
 
@@ -75,7 +92,7 @@ flowchart LR
 - `backend/src/services`: validation, seasonal pricing, booking lifecycle, transaction orchestration.
 - `backend/src/data`: connection pool, prepared SQL, row locking and persistence.
 - `backend/src/startup`: versioned table/catalog initialization.
-- `frontend`: plain browser code; it never connects directly to MySQL.
+- `frontend`: plain browser code; it never connects directly to PostgreSQL.
 
 Prices are summed per occupied room-night using that night's season, including arrival
 and excluding departure. December is mid season. Money is stored exactly and returned
@@ -108,7 +125,7 @@ npm ci
 npm test
 ```
 
-API/MySQL integration tests run in a separate disposable database, never the application
+API/PostgreSQL integration tests run in a separate disposable database, never the application
 database. From the repository root:
 
 ```bash

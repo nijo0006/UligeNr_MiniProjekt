@@ -5,7 +5,7 @@ and historical import are still pending. Tableau integration is deferred to the 
 
 ## Host prerequisites
 
-Git, Docker with the Compose plugin, and a browser. No host Node, npm, or MySQL is required.
+Git, Docker with the Compose plugin, and a browser. No host Node, npm, or PostgreSQL is required.
 First build may download images/packages. Tableau Public Edition is a separate host tool;
 no automatic install, connector, publishing, or refresh setup is promised.
 
@@ -52,7 +52,7 @@ for the standard local path. Document local-only defaults and port changes in th
 ## Tests and quality gates
 
 Use `npm test` from backend for business tests and
-`docker compose --profile test run --build --rm test` for isolated MySQL/API tests.
+`docker compose --profile test run --build --rm test` for isolated PostgreSQL/API tests.
 The optional `npm run test:browser` uses local Google Chrome; ordinary startup requires
 no browser test tooling or host Node. Package versions are pinned in the lockfile. Contract validation must exercise
 all operations and errors, including stale versions, missing bookings, room conflicts,
@@ -78,3 +78,15 @@ is recorded below.
 These results cover booking maintenance, pricing, availability and startup only.
 The full-feature checks above for reporting, source totals, bar and satisfaction
 remain pending; see tasks.md.
+
+
+## PostgreSQL verification — 2026-11-02
+
+The current Compose setup uses PostgreSQL 18, with application port 3000 and an optional
+host database connection on 5433. Previous MySQL evidence above describes the original
+implementation. The old volume is retained; postgres_data is separate.
+
+Commands: `npm test` in backend; `docker compose --profile test run --build --rm test`
+from the root; `npm run test:browser` in backend with Chrome installed.
+The database migration also checks every transferred row before committing, including
+booking identity, status, dates and exact prices. Final executed results are in converge.md.

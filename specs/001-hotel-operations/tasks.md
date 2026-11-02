@@ -198,3 +198,14 @@ Review scope: 26 functional requirements, 19 stories, seven success criteria, fi
 - [ ] T044 Complete the unresolved dependent business choices in spec R3/R4/R7/R8/R10 and T037 before claiming full-feature acceptance; preserve already approved choices and do not invent missing historical person counts or menu items (partial; HIGH).
 - [ ] T045 Implement room-linked satisfaction entry and reporting in backend/src/services/satisfactionService.js and frontend/satisfaction.js per FR-015, US13 and T035; verify one-decimal means, null without responses and valid booking/room links (missing; MEDIUM).
 - [ ] T046 Complete API-to-Tableau dashboard delivery and matching-value verification per FR-020, US18, SC-005 and T033 only after the user selects the deferred integration; current booking API alone does not satisfy dashboard delivery (partial; MEDIUM; DEFERRED).
+
+
+## Phase 24: PostgreSQL migration — 2026-11-02
+
+Earlier completed tasks and verification entries describe the original MySQL increment;
+this phase supersedes its database choice per Constitution IV v2.0.0 and the user's request.
+
+- [x] T047 Preserve the working MySQL implementation with a Git tag and take a private local data snapshot.
+- [x] T048 Replace mysql2, schema, initialization, queries and Docker services with PostgreSQL; preserve the JSON booking contract.
+- [x] T049 Update constitution, plan, research and startup documentation; keep the old database volume and transfer existing bookings without changing IDs or prices.
+- [x] T050 Verify unit, PostgreSQL integration, migration reconciliation, browser and container-recreation persistence checks, then show the running app visually.

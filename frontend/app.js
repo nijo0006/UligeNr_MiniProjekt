@@ -103,7 +103,7 @@ async function editBooking(id) {
 function renderBookings() {
   const container = $('#bookings'); container.replaceChildren();
   $('#reservation-count').textContent = `${bookings.length} active ${bookings.length === 1 ? 'reservation' : 'reservations'}`;
-  if (!bookings.length) { const empty = document.createElement('div'); empty.className = 'empty'; const title = document.createElement('strong'); title.textContent = 'Ready for your first guest'; const p = document.createElement('p'); p.textContent = 'Create a booking to see it here. Changes are saved in MySQL.'; empty.append(title,p); container.append(empty); }
+  if (!bookings.length) { const empty = document.createElement('div'); empty.className = 'empty'; const title = document.createElement('strong'); title.textContent = 'Ready for your first guest'; const p = document.createElement('p'); p.textContent = 'Create a booking to see it here. Changes are saved in PostgreSQL.'; empty.append(title,p); container.append(empty); }
   for (const booking of bookings) {
     const article = document.createElement('article'); article.className = 'reservation'; article.dataset.bookingId = booking.bookingId;
     const top = document.createElement('div'); top.className = 'reservation-top'; const details = document.createElement('div');

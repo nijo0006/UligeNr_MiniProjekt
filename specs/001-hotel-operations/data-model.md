@@ -2,7 +2,7 @@
 
 Status: design draft for confirmed application behavior. See research.md for unresolved
 gates and spec.md for authoritative rules. No SQL migrations are created by this document.
-Use InnoDB foreign keys, DATE for stay/sales days, UTC timestamps for audit/versioning,
+Use PostgreSQL foreign keys, DATE for stay/sales days, UTC timestamps for audit/versioning,
 and DECIMAL or exact minor units for money. Synthetic provenance is separate from facts.
 
 ## Tables and responsibilities

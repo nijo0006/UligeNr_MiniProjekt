@@ -1,41 +1,39 @@
 import { readFile } from 'node:fs/promises';
 
 export async function initialize(pool) {
-  const connection = await pool.getConnection();
-  let locked = false;
+  const connection = await pool.connect();
+  let transaction = false;
   try {
-    const [[lock]] = await connection.execute("SELECT GET_LOCK('hotel_application_startup_v1', 30) AS acquired");
-    if (lock.acquired !== 1) throw new Error('Another application startup is still initializing the database.');
-    locked = true;
+    await connection.query('BEGIN');
+    transaction = true;
+    await connection.query("SELECT pg_advisory_xact_lock(718205419)");
     const sql = await readFile(new URL('./schema.sql', import.meta.url), 'utf8');
     for (const statement of sql.split(';').map(s => s.trim()).filter(Boolean)) await connection.query(statement);
-    const [applied] = await connection.execute('SELECT version FROM schema_migrations WHERE version = ?', ['booking-catalog-v1']);
+    const { rows: applied } = await connection.query('SELECT version FROM schema_migrations WHERE version = $1', ['booking-catalog-v1']);
     if (!applied.length) {
       const catalog = JSON.parse(await readFile(new URL('./catalog.json', import.meta.url), 'utf8'));
       const inventory = JSON.parse(await readFile(new URL('../../../specs/001-hotel-operations/fixtures/room-inventory.json', import.meta.url), 'utf8'));
       if (inventory.rooms.length !== 214 || new Set(inventory.rooms.map(r => r.roomNumber)).size !== 214 || catalog.rates.length !== 24) throw new Error('Invalid versioned seed catalog.');
-      await connection.beginTransaction();
-      try {
-        for (const name of new Set(inventory.rooms.map(r => r.roomType))) await connection.execute('INSERT INTO room_types (name) VALUES (?)', [name]);
-        for (const name of catalog.countries) await connection.execute('INSERT INTO countries (name) VALUES (?)', [name]);
-        for (const rate of catalog.rates) await connection.execute('INSERT INTO seasonal_rates (room_type, season, nightly_price) VALUES (?, ?, ?)', [rate.roomType, rate.season, rate.nightlyPrice]);
-        for (const room of inventory.rooms) await connection.execute('INSERT INTO rooms (room_number, room_type, synthetic) VALUES (?, ?, TRUE)', [room.roomNumber, room.roomType]);
-        await connection.execute('INSERT INTO schema_migrations (version) VALUES (?)', ['booking-catalog-v1']);
-        await connection.commit();
-      } catch (error) { await connection.rollback(); throw error; }
+
+      for (const name of new Set(inventory.rooms.map(r => r.roomType))) await connection.query('INSERT INTO room_types (name) VALUES ($1)', [name]);
+      for (const name of catalog.countries) await connection.query('INSERT INTO countries (name) VALUES ($1)', [name]);
+      for (const rate of catalog.rates) await connection.query('INSERT INTO seasonal_rates (room_type, season, nightly_price) VALUES ($1, $2, $3)', [rate.roomType, rate.season, rate.nightlyPrice]);
+      for (const room of inventory.rooms) await connection.query('INSERT INTO rooms (room_number, room_type, synthetic) VALUES ($1, $2, TRUE)', [room.roomNumber, room.roomType]);
+      await connection.query('INSERT INTO schema_migrations (version) VALUES ($1)', ['booking-catalog-v1']);
     }
-    const [countryRevision] = await connection.execute('SELECT version FROM schema_migrations WHERE version = ?', ['country-catalog-v2']);
+    const { rows: countryRevision } = await connection.query('SELECT version FROM schema_migrations WHERE version = $1', ['country-catalog-v2']);
     if (!countryRevision.length) {
       const catalog = JSON.parse(await readFile(new URL('./catalog.json', import.meta.url), 'utf8'));
-      await connection.beginTransaction();
-      try {
-        for (const name of catalog.countries) await connection.execute('INSERT INTO countries (name) VALUES (?) ON DUPLICATE KEY UPDATE name=name', [name]);
-        await connection.execute('INSERT INTO schema_migrations (version) VALUES (?)', ['country-catalog-v2']);
-        await connection.commit();
-      } catch (error) { await connection.rollback(); throw error; }
+
+      for (const name of catalog.countries) await connection.query('INSERT INTO countries (name) VALUES ($1) ON CONFLICT (name) DO NOTHING', [name]);
+      await connection.query('INSERT INTO schema_migrations (version) VALUES ($1)', ['country-catalog-v2']);
     }
+    await connection.query('COMMIT');
+    transaction = false;
+  } catch (error) {
+    if (transaction) await connection.query('ROLLBACK');
+    throw error;
   } finally {
-    if (locked) await connection.query("SELECT RELEASE_LOCK('hotel_application_startup_v1')");
     connection.release();
   }
 }
