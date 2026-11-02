@@ -162,7 +162,7 @@ relative to repository root. Test tasks exercise stated acceptance behavior.
 
 ## Phase 22: Polish and remaining feature gates
 
-- [ ] T036 Implement approved deterministic historical booking/bar enrichment in backend/src/startup/import.js with immutable lineage, source totals and synthetic labels; preserve raw workbook evidence.
+- [x] T036 Implement approved deterministic historical booking/bar enrichment in backend/src/startup/import.js with immutable lineage, source totals and synthetic labels; preserve raw workbook evidence.
 
 - [ ] T037 Complete unresolved R3/R4/R7/R8/R10 choices in specs/001-hotel-operations/spec.md before implementing their dependent selectors, ranking, missing-data and rounding behavior.
 
@@ -193,7 +193,7 @@ add login, guest capacity or duplicate-specific submission handling.
 Review scope: 26 functional requirements, 19 stories, seven success criteria, five constitution principles, and the architecture, contract, persistence, startup and test decisions. No constitution contradiction was found in the implemented booking slice. Findings: four missing areas and two partial areas; four HIGH and two MEDIUM. The full feature is not converged.
 
 - [ ] T041 Implement and verify the missing operational reporting portion of backend/src/services/reportService.js per FR-007–FR-014, FR-016, FR-022, US5–US12, US14 and T021–T029; verify fresh contributions, country attribution, nightly/year allocation, rankings, occupancy and inventory counts (missing; HIGH).
-- [ ] T042 Implement historical booking/bar import in backend/src/startup/import.js per FR-021, SC-002 and T036; preserve source totals and lineage, label synthetic dates/room allocations, prevent overlaps and double-counting (missing; HIGH).
+- [x] T042 Implement historical booking/bar import in backend/src/startup/import.js per FR-021, SC-002 and T036; preserve source totals and lineage, label synthetic dates/room allocations, prevent overlaps and double-counting (missing; HIGH).
 - [ ] T043 Implement daily bar entry and reports in backend/src/services/barService.js and frontend/bar.js per FR-017–FR-019, FR-025–FR-026, SC-006, US15–US17, US19 and T030–T034; verify replace-on-correction and non-resident sales (missing; HIGH).
 - [ ] T044 Complete the unresolved dependent business choices in spec R3/R4/R7/R8/R10 and T037 before claiming full-feature acceptance; preserve already approved choices and do not invent missing historical person counts or menu items (partial; HIGH).
 - [ ] T045 Implement room-linked satisfaction entry and reporting in backend/src/services/satisfactionService.js and frontend/satisfaction.js per FR-015, US13 and T035; verify one-decimal means, null without responses and valid booking/room links (missing; MEDIUM).
@@ -209,3 +209,35 @@ this phase supersedes its database choice per Constitution IV v2.0.0 and the use
 - [x] T048 Replace mysql2, schema, initialization, queries and Docker services with PostgreSQL; preserve the JSON booking contract.
 - [x] T049 Update constitution, plan, research and startup documentation; keep the old database volume and transfer existing bookings without changing IDs or prices.
 - [x] T050 Verify unit, PostgreSQL integration, migration reconciliation, browser and container-recreation persistence checks, then show the running app visually.
+
+
+## Phase 25: Annual room revenue — 2026-11-02
+
+This increment completes only the room-revenue part of US11/FR-013 and reporting
+freshness for this endpoint; T027/T041 remain open for the wider reporting scope.
+
+- [x] T051 Sum active saved room-night charges by calendar year in backend/src/data/reportRepository.js, preserving exact money and null without data.
+- [x] T052 Validate year and expose GET /api/reports/revenue through business/presentation layers; document the implemented JSON contract and errors in backend/openapi.json.
+- [x] T053 Show annual room revenue in frontend with year selection and refresh after booking changes; distinguish no data from request failures.
+- [x] T054 Verify cross-year/multi-room amounts, edit/cancel freshness, exact decimal sums, invalid years and the frontend flow using isolated PostgreSQL and browser checks.
+- [x] T055 Update README, plan, quickstart and verification evidence without marking combined room/bar reporting or historical import complete.
+
+
+## Phase 26: Guest and staff frontends — 2026-11-02
+
+- [x] T056 Add a guest booking entry point with automatic prices, room availability and own-booking confirmation; never load internal booking lists or reports.
+- [x] T057 Move booking management and annual room revenue to /staff; share form behavior without duplicating booking rules.
+- [x] T058 Add source-backed drink catalog initialization and daily bar sales storage without generating historical sales or wine/beer products.
+- [x] T059 Implement daily quantity replacement and annual bar/drink/category reports through three backend layers and OpenAPI; keep unresolved zero-denominator behavior explicit.
+- [x] T060 Build Helene Christine's staff bar overview and daily closing form, showing revenue, units and cocktail/coffee comparison from the API.
+- [x] T061 Verify guest-to-staff booking flow, API isolation in guest requests, staff lifecycle, daily corrections and bar reporting; inspect desktop/mobile visuals.
+- [x] T062 Update specification, plan, README and verification evidence; document the existing no-login prototype boundary and pending historical data.
+
+
+## Phase 27: Historical Excel import — 2026-11-02
+
+- [x] T063 Extract and validate original workbook rows, source checksums, 1,000 bookings/5,379 nights and the exact room/bar control totals without modifying Excel.
+- [x] T064 Implement deterministic season/type/availability-correct booking placement and dated bar quantity distribution across 2024–2026, preserving existing operational data.
+- [x] T065 Import once transactionally with immutable lineage, source-preserved prices and unknown guest counts; verify rollback and restart preservation.
+- [x] T066 Expose import/provenance metadata, make history visible and searchable by year on staff frontend, and retain valid editing/cancellation behavior.
+- [x] T067 Verify isolated unit/API tests, live pre-existing-record preservation, browser history flow, source controls and restart idempotence; update documentation.

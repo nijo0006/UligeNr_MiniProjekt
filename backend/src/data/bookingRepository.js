@@ -55,23 +55,28 @@ export class BookingRepository {
     }
     return null;
   }
-  async get(id, lock = false) {
-    const { rows } = await this.database.query(`SELECT * FROM bookings WHERE id=$1${lock ? ' FOR UPDATE' : ''}`, [id]);
-    if (!rows.length) return null;
-    const row = rows[0];
-    const { rows: rooms } = await this.database.query('SELECT room_number FROM booking_rooms WHERE booking_id=$1 ORDER BY room_number', [id]);
-    const { rows: guests } = await this.database.query('SELECT first_name AS "firstName",last_name AS "lastName" FROM booking_guests WHERE booking_id=$1 ORDER BY id', [id]);
-    const { rows: charges } = await this.database.query('SELECT room_number AS "roomNumber",night_date AS date,season,exact_charge AS charge FROM room_nights WHERE booking_id=$1 ORDER BY room_number,night_date', [id]);
-    return { bookingId: row.id, holderFirstName: row.holder_first_name, holderLastName: row.holder_last_name,
-      holderCountry: row.holder_country, guestCount: row.guest_count, guests,
-      roomNumbers: rooms.map(r => r.room_number), arrival: row.arrival, departure: row.departure,
-      nights: row.nights, version: row.version, status: row.status, totalPrice: row.total_price,
-      nightCharges: charges, syntheticDates: Boolean(row.synthetic_dates),
-      syntheticRoomAssignment: Boolean(row.synthetic_room_assignment), sourceId: row.source_id };
+  async hydrate(rows) {
+    if (!rows.length) return [];
+    const ids=rows.map(r=>r.id);
+    const roomResult=await this.database.query('SELECT booking_id,room_number FROM booking_rooms WHERE booking_id=ANY($1::bigint[]) ORDER BY room_number',[ids]);
+    const guestResult=await this.database.query('SELECT booking_id,first_name AS "firstName",last_name AS "lastName" FROM booking_guests WHERE booking_id=ANY($1::bigint[]) ORDER BY id',[ids]);
+    const nightResult=await this.database.query('SELECT booking_id,room_number AS "roomNumber",night_date AS date,season,exact_charge AS charge FROM room_nights WHERE booking_id=ANY($1::bigint[]) ORDER BY room_number,night_date',[ids]);
+    const group=result=>{const map=new Map();for(const {booking_id,...row} of result.rows){if(!map.has(booking_id))map.set(booking_id,[]);map.get(booking_id).push(row);}return map;};
+    const rooms=group(roomResult),guests=group(guestResult),charges=group(nightResult);
+    return rows.map(row=>({bookingId:row.id,holderFirstName:row.holder_first_name,holderLastName:row.holder_last_name,
+      holderCountry:row.holder_country,guestCount:row.guest_count,guests:guests.get(row.id)??[],
+      roomNumbers:(rooms.get(row.id)??[]).map(r=>r.room_number),arrival:row.arrival,departure:row.departure,
+      nights:row.nights,version:row.version,status:row.status,totalPrice:row.total_price,
+      nightCharges:charges.get(row.id)??[],syntheticDates:row.synthetic_dates,
+      syntheticRoomAssignment:row.synthetic_room_assignment,sourceId:row.source_id,pricingMode:row.pricing_mode}));
+  }
+  async get(id,lock=false) {
+    const {rows}=await this.database.query(`SELECT * FROM bookings WHERE id=$1${lock?' FOR UPDATE':''}`,[id]);
+    return (await this.hydrate(rows))[0]??null;
   }
   async list() {
-    const { rows } = await this.database.query("SELECT id FROM bookings WHERE status='active' ORDER BY id DESC");
-    return Promise.all(rows.map(row => this.get(row.id)));
+    const {rows}=await this.database.query("SELECT * FROM bookings WHERE status='active' ORDER BY id DESC");
+    return this.hydrate(rows);
   }
   async create(data, calculation) {
     const result = await this.database.query(`INSERT INTO bookings
@@ -81,8 +86,8 @@ export class BookingRepository {
     return this.get(result.rows[0].id);
   }
   async update(id, data, calculation) {
-    const result = await this.database.query(`UPDATE bookings SET holder_first_name=$1,holder_last_name=$2,holder_country=$3,guest_count=$4,arrival=$5,departure=$6,nights=$7,total_price=$8,version=version+1 WHERE id=$9 AND version=$10 AND status='active'`,
-      [data.holderFirstName,data.holderLastName,data.holderCountry,data.guestCount,data.arrival,calculation.departure,data.nights,calculation.totalPrice,id,data.version]);
+    const result = await this.database.query(`UPDATE bookings SET holder_first_name=$1,holder_last_name=$2,holder_country=$3,guest_count=$4,arrival=$5,departure=$6,nights=$7,total_price=$8,version=version+1,pricing_mode='nightly-calculated',synthetic_dates=$11,synthetic_room_assignment=$12 WHERE id=$9 AND version=$10 AND status='active'`,
+      [data.holderFirstName,data.holderLastName,data.holderCountry,data.guestCount,data.arrival,calculation.departure,data.nights,calculation.totalPrice,id,data.version,calculation.syntheticDates,calculation.syntheticRoomAssignment]);
     if (result.rowCount !== 1) throw new Error('Locked booking version unexpectedly changed.');
     await this.database.query('DELETE FROM room_nights WHERE booking_id=$1', [id]);
     await this.database.query('DELETE FROM booking_rooms WHERE booking_id=$1', [id]);

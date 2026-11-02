@@ -61,3 +61,84 @@ runs at http://localhost:3000; Swagger UI is at /api/docs.
 This completes the database change only. Operational reports, frontend indicators,
 Excel historical import, bar operations, satisfaction and deferred Tableau delivery
 remain open in the existing tasks; this is not completion of the full week-2 assignment.
+
+
+## Annual room-revenue increment — 2026-11-02
+
+Implemented the room portion of FR-013/US11, FR-007 report freshness and FR-022 no-data
+behavior. GET /api/reports/revenue?year=YYYY sums exact saved charges for active
+room-nights in that calendar year, including future booked stays. It excludes cancellation
+and departure nights, attributes cross-year stays per night and returns null without data.
+The browser displays one decimal, selects years, links to JSON and refreshes after booking
+mutations. Failed report requests display Unavailable without replacing a saved booking
+result with a fabricated revenue amount. OpenAPI 0.2.0 documents this implemented endpoint.
+
+Validation: seven unit tests, sixteen PostgreSQL/API integration tests and one Chrome
+browser flow passed. Browser checks include year selection, report outage/recovery and
+automatic revenue changes after create/edit/cancel. The live 2026 room total was 33329.00
+when verified, matching the three pre-existing active booking totals. Desktop and mobile
+screenshots were captured. The browser test cancelled its own verification booking.
+
+T051–T055 are complete. T027 and T041 stay open: combined room/bar totals and the other
+reports are not complete. Historical Excel import, bar, satisfaction and Tableau are
+still pending/deferred. No new business rules or historical records were invented.
+
+
+## Guest/staff frontend increment — 2026-11-02
+
+Delivered separate guest HTML/JS at / and staff HTML/JS at /staff, with shared form helpers
+and the same API. Guests create stays and see their own confirmation; the guest frontend
+does not request booking lists or operational reports. Staff retain booking lifecycle
+and room reporting, and gain Helene Christine's bar revenue/units, drink revenue,
+cocktail/coffee comparison and daily closing entry. No login/access-control change is claimed.
+
+Added versioned source-menu seed, drinks and daily_bar_sales tables, BarRepository,
+BarService, BarRoutes and OpenAPI 0.3.0. One date/drink pair has one effective quantity;
+corrections retain price snapshots. Exact money is aggregated without doubling the source
+workbook totals. No historical bar sales or missing wine/beer products were generated.
+R8 selector/menu completeness and R10 zero-denominator/tie-rounding choices remain open;
+prototype quantity controls and undefined-comparison presentation are documented in plan.
+
+Validation: 7 unit tests, 20 isolated PostgreSQL/API tests and 3 Chrome browser flows passed.
+A first integration run found an ambiguous PostgreSQL parameter type; explicit date/BIGINT
+casts fixed it and all integration checks passed. Browser checks found ambiguous new
+field labels; explicit accessible names and exact lookups fixed them. Guest-to-staff
+booking and staff editing/cancellation passed. The bar UI test uses HTTP fixtures so
+no fabricated live sales remain; real saves/corrections are covered in the isolated DB.
+Desktop screenshots reviewed. Existing user bookings were not changed.
+
+T056–T062 complete. Earlier bar/source tasks are not treated as complete reconciliation
+of the historical dataset. Broader hotel metrics, satisfaction, Excel history and Tableau
+remain on the outstanding task list.
+
+
+## Historical import verification — 2026-11-02
+
+Completed the authorized FR-021 historical enrichment/import. Source extraction is
+read-only and checks workbook/payload SHA-256 plus exact controls. All 1000 bookings
+have recorded nightly prices that reconcile to original totals; those source prices
+are stored without applying the current tariff. Deterministic season/type/availability
+placement spans 2024–2026 and preserves original IDs as separate source identity.
+Operational IDs, existing bookings and existing bar date/drink rows are preserved.
+Missing person counts remain null. No satisfaction responses are generated.
+
+Source bar units are allocated to dated demonstration rows with source-price snapshots;
+per-drink totals reconcile and raw aggregates do not contribute twice. Original source
+payloads and import/reference totals are immutable. A version/checksum marker prevents
+repeat import after edits/cancellation; a failure rolls back the complete transaction.
+
+Validation: 10 unit tests, 24 isolated PostgreSQL/API tests and 4 Chrome browser flows
+passed. Dedicated tests verify a failure after operational rows were inserted still
+rolls back every imported row and preserves existing daily sales. Live pre-import
+comparison preserved all original 12 bookings, 12 room allocations and 40 room-nights.
+Source additions reconcile to 1000 / 5379 / DKK11234034.00 and 179958 bar units /
+DKK13448640.34. Forced app recreation left fingerprints for all seven data/evidence
+tables identical, with one import marker. Workbook bytes remain unchanged.
+
+Staff exposes source/reference totals and marked historical bookings with year/search/
+pagination controls. Annual report APIs expose generated-data provenance. Browser
+verified 2025 room/bar results and unknown counts; desktop/mobile screenshots reviewed.
+
+T036/T042 and T063–T067 are complete. Other hotel indicators, satisfaction, unresolved
+business inputs and deferred Tableau delivery remain open; the full hotel feature is
+not declared complete.

@@ -1,0 +1,185 @@
+{
+  "source": "Hotel_Kong_Arthur_data-1.xlsx; Bar - Drinks; source menu names/categories/prices only. Historical aggregate sales are not imported.",
+  "drinks": [
+    {
+      "drinkId": 1,
+      "name": "Margarita",
+      "category": "Cocktails",
+      "unitPrice": "72.47"
+    },
+    {
+      "drinkId": 2,
+      "name": "Mojito",
+      "category": "Cocktails",
+      "unitPrice": "142.38"
+    },
+    {
+      "drinkId": 3,
+      "name": "Old Fashioned",
+      "category": "Cocktails",
+      "unitPrice": "129.17"
+    },
+    {
+      "drinkId": 4,
+      "name": "Martini",
+      "category": "Cocktails",
+      "unitPrice": "132.17"
+    },
+    {
+      "drinkId": 5,
+      "name": "Daiquiri",
+      "category": "Cocktails",
+      "unitPrice": "102.44"
+    },
+    {
+      "drinkId": 6,
+      "name": "Negroni",
+      "category": "Cocktails",
+      "unitPrice": "149.48"
+    },
+    {
+      "drinkId": 7,
+      "name": "Whiskey Sour",
+      "category": "Cocktails",
+      "unitPrice": "95.73"
+    },
+    {
+      "drinkId": 8,
+      "name": "Cosmopolitan",
+      "category": "Cocktails",
+      "unitPrice": "91.40"
+    },
+    {
+      "drinkId": 9,
+      "name": "Mai Tai",
+      "category": "Cocktails",
+      "unitPrice": "76.40"
+    },
+    {
+      "drinkId": 10,
+      "name": "Pina Colada",
+      "category": "Cocktails",
+      "unitPrice": "111.06"
+    },
+    {
+      "drinkId": 11,
+      "name": "Bloody Mary",
+      "category": "Cocktails",
+      "unitPrice": "127.20"
+    },
+    {
+      "drinkId": 12,
+      "name": "Gin and Tonic",
+      "category": "Cocktails",
+      "unitPrice": "127.06"
+    },
+    {
+      "drinkId": 13,
+      "name": "Sidecar",
+      "category": "Cocktails",
+      "unitPrice": "103.96"
+    },
+    {
+      "drinkId": 14,
+      "name": "Manhattan",
+      "category": "Cocktails",
+      "unitPrice": "86.61"
+    },
+    {
+      "drinkId": 15,
+      "name": "Espresso Martini",
+      "category": "Cocktails",
+      "unitPrice": "86.15"
+    },
+    {
+      "drinkId": 16,
+      "name": "French 75",
+      "category": "Cocktails",
+      "unitPrice": "134.31"
+    },
+    {
+      "drinkId": 17,
+      "name": "Caipirinha",
+      "category": "Cocktails",
+      "unitPrice": "106.43"
+    },
+    {
+      "drinkId": 18,
+      "name": "Mint Julep",
+      "category": "Cocktails",
+      "unitPrice": "143.54"
+    },
+    {
+      "drinkId": 19,
+      "name": "Tom Collins",
+      "category": "Cocktails",
+      "unitPrice": "104.27"
+    },
+    {
+      "drinkId": 20,
+      "name": "Long Island Iced Tea",
+      "category": "Cocktails",
+      "unitPrice": "146.23"
+    },
+    {
+      "drinkId": 21,
+      "name": "Espresso",
+      "category": "Coffee",
+      "unitPrice": "69.10"
+    },
+    {
+      "drinkId": 22,
+      "name": "Americano",
+      "category": "Coffee",
+      "unitPrice": "40.84"
+    },
+    {
+      "drinkId": 23,
+      "name": "Latte",
+      "category": "Coffee",
+      "unitPrice": "63.19"
+    },
+    {
+      "drinkId": 24,
+      "name": "Cappuccino",
+      "category": "Coffee",
+      "unitPrice": "50.87"
+    },
+    {
+      "drinkId": 25,
+      "name": "Macchiato",
+      "category": "Coffee",
+      "unitPrice": "61.41"
+    },
+    {
+      "drinkId": 26,
+      "name": "Mocha",
+      "category": "Coffee",
+      "unitPrice": "60.59"
+    },
+    {
+      "drinkId": 27,
+      "name": "Flat White",
+      "category": "Coffee",
+      "unitPrice": "33.43"
+    },
+    {
+      "drinkId": 28,
+      "name": "Cortado",
+      "category": "Coffee",
+      "unitPrice": "54.50"
+    },
+    {
+      "drinkId": 29,
+      "name": "Iced Coffee",
+      "category": "Coffee",
+      "unitPrice": "34.79"
+    },
+    {
+      "drinkId": 30,
+      "name": "Affogato",
+      "category": "Coffee",
+      "unitPrice": "63.60"
+    }
+  ]
+}

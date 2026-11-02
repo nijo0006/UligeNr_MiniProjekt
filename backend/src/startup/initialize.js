@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
+import { importHistoricalData } from './import.js';
 
-export async function initialize(pool) {
+export async function initialize(pool, { history = true } = {}) {
   const connection = await pool.connect();
   let transaction = false;
   try {
@@ -28,6 +29,14 @@ export async function initialize(pool) {
       for (const name of catalog.countries) await connection.query('INSERT INTO countries (name) VALUES ($1) ON CONFLICT (name) DO NOTHING', [name]);
       await connection.query('INSERT INTO schema_migrations (version) VALUES ($1)', ['country-catalog-v2']);
     }
+    const { rows: barSeed } = await connection.query('SELECT version FROM schema_migrations WHERE version=$1', ['source-drink-menu-v1']);
+    if (!barSeed.length) {
+      const { drinks } = JSON.parse(await readFile(new URL('./drinks.json', import.meta.url), 'utf8'));
+      if (drinks.length !== 30) throw new Error('Invalid source drink menu.');
+      for (const drink of drinks) await connection.query('INSERT INTO drinks (id,name,category,unit_price) VALUES ($1,$2,$3,$4)', [drink.drinkId,drink.name,drink.category,drink.unitPrice]);
+      await connection.query('INSERT INTO schema_migrations (version) VALUES ($1)', ['source-drink-menu-v1']);
+    }
+    if (history) await importHistoricalData(connection);
     await connection.query('COMMIT');
     transaction = false;
   } catch (error) {

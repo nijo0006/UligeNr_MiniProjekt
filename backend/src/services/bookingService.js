@@ -33,6 +33,7 @@ export class BookingService {
       const existing = editing ? await repo.get(id, true) : null;
       if (editing && !existing) throw new AppError(404, 'BOOKING_NOT_FOUND', 'Booking not found');
       if (existing && (existing.version !== data.version || existing.status !== 'active')) throw new AppError(409, 'STALE_BOOKING', 'The booking has changed. Reload the current booking before saving.');
+      if (data.guestCount === null && !(existing?.sourceId && existing.guestCount === null)) throw badInput('An unknown guest count can only be retained on an imported booking whose count is unknown.');
       if (!await repo.countryExists(data.holderCountry)) throw badInput('Select a country from the catalog.');
       const affected = [...new Set([...data.roomNumbers, ...(existing?.roomNumbers ?? [])])];
       const locked = await repo.lockRooms(affected);
@@ -43,6 +44,8 @@ export class BookingService {
       if (occupied) throw new AppError(409, 'ROOM_UNAVAILABLE', `Room ${occupied} is no longer available for this stay. Select available rooms.`);
       const { rates } = await repo.catalog();
       const calculation = calculateStay(data.arrival, data.nights, rooms, rates);
+      calculation.syntheticDates = Boolean(existing?.syntheticDates && existing.arrival === data.arrival && existing.departure === calculation.departure);
+      calculation.syntheticRoomAssignment = Boolean(existing?.syntheticRoomAssignment && [...existing.roomNumbers].sort().join(',') === [...data.roomNumbers].sort().join(','));
       return editing ? repo.update(id, data, calculation) : repo.create(data, calculation);
     });
   }

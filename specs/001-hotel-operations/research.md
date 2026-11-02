@@ -27,7 +27,7 @@ parameterized queries and one acquired client per transaction. DATE values remai
 YYYY-MM-DD strings; NUMERIC(18,2) values remain exact decimal strings. BIGINT identifiers
 are converted only within JavaScript's safe integer range. Keep the existing API date
 and identifier bounds so switching storage does not change the booking contract.
-**Rationale**: The week-2 supplement forbids PostgreSQL. A relational replacement preserves
+**Rationale**: The week-2 supplement forbids MySQL. A relational replacement preserves
 the booking model and supports the planned grouped revenue/occupancy queries.
 **Alternatives considered**: MongoDB would require a document-model redesign.
 Sources: [pg types](https://node-postgres.com/features/types),

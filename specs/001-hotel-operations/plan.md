@@ -342,3 +342,87 @@ the original MySQL volume and Git tag uge-1-mysql-demo-2026-11-02. Existing loca
 booking records are transferred once with a private snapshot and verified table-by-table;
 this is distinct from the still-pending Excel historical-data import.
 The week-2 report endpoints/frontend calculations remain separate pending report tasks.
+
+
+## Annual room-revenue increment — 2026-11-02
+
+Implement the room portion of FR-013/US11, plus FR-007 freshness and FR-022 no-data
+behavior, through GET /api/reports/revenue?year=YYYY. Bar and combined hotel totals
+remain pending. Keep SQL aggregation in data/reportRepository.js, year validation and
+response composition in services/reportService.js, and HTTP routing in presentation/reportRoutes.js.
+
+The required year is one four-digit value from 1000 to 9999, matching the current booking
+API date bounds. Query active booking room-night charges over the half-open calendar-year
+interval. Sum NUMERIC exactly; return {year, currency: "DKK", roomRevenue: decimal-string|null}.
+No-data SUM remains null. Do not relabel this as combined hotel revenue or restrict it
+to stays completed before today. Preserve saved charges rather than repricing a report.
+
+Frontend: annual room-revenue card, year selection from approved demonstration years,
+current year and saved stays, explicit room-only scope, JSON link, refresh on booking
+changes and an independent visible failure state. Ignore obsolete responses if the
+user changes years quickly. Contract: backend/openapi.json version 0.2.0.
+Verification: cross-year/multi-room allocation, cancellation/edit freshness, decimal
+precision, no data versus zero, invalid years, and a browser flow fetching real API totals.
+
+
+## Guest/staff frontend split — 2026-11-02
+
+User requested two frontends, including Helene Christine's functions on the staff side.
+Serve guest entry at / (alias /guest), staff entry at /staff. They have separate HTML and
+JavaScript entry points, with a shared booking-form controller and API/formatting helpers.
+Keep one Express container and one PostgreSQL container so docker compose up remains
+the complete startup command. Guest code must not request the booking list or reports.
+
+Staff contains the existing booking administration and annual room revenue plus the bar
+functions in US15–US17/US19. Add drinks and daily_bar_sales with an idempotent source-menu
+seed. Read only the 30 source drink names/categories/prices; do not import undated
+aggregate sales into annual reporting. No synthetic sales or wine/beer products are seeded.
+SQL save uses one date/drink key, replaces quantity and preserves the first saved unit price.
+SQL stores exact revenue; business layer computes bar/category totals and the cocktail/coffee
+comparison, excluding wine/beer from its denominator. API contract is version 0.3.0.
+
+Input implementation assumption for the prototype: daily quantity is a non-negative
+whole count, selected from an extendable dropdown, bounded only by its storage range;
+zero allows correction to no units sold. This does not resolve all R8 product/input choices.
+For a recorded zero comparison denominator, expose mixStatus=undefined and no numeric
+percentage, displaying Not defined; R10's desired business treatment and rounding remain open.
+
+No authentication or access restrictions are added, following the existing explicit local
+prototype decision. Separating guest/staff interfaces does not secure staff API endpoints.
+Broader hotel reports, satisfaction, historical workbook import and Tableau remain pending.
+
+
+## Historical Excel import — 2026-11-02
+
+The user explicitly requested execution of the approved booking/bar enrichment. The
+read-only extractor records workbook SHA-256, payload checksum, Excel row references
+and unchanged original values in workbook-history.json. Runtime needs neither Python
+nor Excel: normal initialize() imports this checked-in fixture inside its startup transaction.
+
+Inspection confirmed all 1,000 source bookings have a recorded price-per-night field
+whose product with nights equals the original total. Therefore room_nights can retain
+that actual source rate exactly, without fabricating nightly allocations or using today's
+tariffs. Label pricing_mode=source-preserved; a deliberate booking edit recalculates
+the tariff and keeps immutable original evidence. Unknown source guest counts remain null
+and can remain null on edit; an ordinary/new booking still requires a positive count.
+
+Generation is deterministic in source-row order: rotate preferred years 2024/2025/2026,
+rotate season-valid arrival dates and type-compatible room numbers, and reject overlap
+with existing or newly assigned stays. Every occupied night stays in the source season
+and year. Report inability to place a booking rather than changing source facts.
+
+Distribute each source drink's integer quantity across available daily keys in 2024–2026
+using quotient/remainder and a fixed rotation. Skip existing date/drink keys and preserve
+all existing daily entries. Use original source prices; reconcile each drink's units and
+revenue. Only generated daily records are reportable, not the source aggregates again.
+
+Use immutable source_records and historical_imports evidence guarded against update/delete.
+A version/checksum marker makes restart a no-op even after edits/cancellation; changed source
+bytes require a reviewed new import version. Keep existing operational IDs; preserve Excel
+Booking ID separately as source identity. Lock room rows in order and bar writes during
+import. Failures roll back the complete import and its completion marker.
+
+Staff shows import reference totals, demonstration-date labels, year filtering, search and
+25-row display pagination. Bookings are loaded with four bulk queries instead of per-booking
+round trips. Annual APIs expose containsSyntheticData and /api/reports/history exposes
+immutable source/reference totals. Pagination is a UI display choice, not a booking limit.

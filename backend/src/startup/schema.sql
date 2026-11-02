@@ -44,3 +44,37 @@ CREATE TABLE IF NOT EXISTS room_nights (
 );
 
 CREATE INDEX IF NOT EXISTS allocation_room ON booking_rooms (room_number,booking_id);
+CREATE TABLE IF NOT EXISTS drinks (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  category VARCHAR(10) NOT NULL CHECK (category IN ('Cocktails','Coffee','Wine','Beer')),
+  unit_price NUMERIC(18,2) NOT NULL CHECK (unit_price >= 0)
+);
+CREATE TABLE IF NOT EXISTS daily_bar_sales (
+  sales_date DATE NOT NULL,
+  drink_id INTEGER NOT NULL REFERENCES drinks(id),
+  quantity BIGINT NOT NULL CHECK (quantity BETWEEN 0 AND 4294967295),
+  unit_price_snapshot NUMERIC(18,2) NOT NULL,
+  exact_revenue NUMERIC(18,2) NOT NULL,
+  PRIMARY KEY (sales_date,drink_id)
+);
+CREATE TABLE IF NOT EXISTS source_records (
+  source_id TEXT PRIMARY KEY,
+  source_file TEXT NOT NULL,
+  worksheet TEXT NOT NULL,
+  source_row INTEGER NOT NULL,
+  record_kind VARCHAR(10) NOT NULL CHECK (record_kind IN ('booking','bar')),
+  original_payload JSONB NOT NULL,
+  checksum TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS historical_imports (
+  version TEXT PRIMARY KEY,
+  source_checksum TEXT NOT NULL,
+  generator_version TEXT NOT NULL,
+  summary JSONB NOT NULL,
+  imported_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS pricing_mode VARCHAR(20) NOT NULL DEFAULT 'nightly-calculated' CHECK (pricing_mode IN ('nightly-calculated','source-preserved'));
+CREATE UNIQUE INDEX IF NOT EXISTS booking_source_identity ON bookings (source_id) WHERE source_id IS NOT NULL;
+ALTER TABLE daily_bar_sales ADD COLUMN IF NOT EXISTS synthetic BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE daily_bar_sales ADD COLUMN IF NOT EXISTS source_id TEXT REFERENCES source_records(source_id);

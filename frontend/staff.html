@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hotel Kong Arthur · Staff</title><link rel="stylesheet" href="/styles.css">
+</head>
+<body class="staff-page">
+  <header><div class="brand"><span class="monogram" aria-hidden="true">KA</span><div><strong>HOTEL KONG ARTHUR</strong><span>Staff workspace</span></div></div><nav class="top-nav"><a href="#overview">Overview</a><a href="#reservations">Bookings</a><a href="#bar">Helene’s bar</a><a href="/">Guest website ↗</a></nav></header>
+  <main>
+    <div class="page-heading"><div><p class="eyebrow">STAFF WORKSPACE</p><h1>A clear view of the hotel.</h1><p>Bookings, room revenue and Helene Christine’s bar, in one place.</p></div><span class="badge">Reception · Management · Bar</span></div>
+    <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+    <section id="history-summary" class="panel history-panel" aria-labelledby="history-title"><p class="eyebrow">EXCEL HISTORY</p><h2 id="history-title">Historical data</h2><p id="history-status" role="status">Checking import…</p><div id="history-controls" hidden></div></section>
+    <section id="overview" class="panel revenue-panel" aria-labelledby="revenue-title">
+      <div class="revenue-heading"><div><p class="eyebrow">OPERATIONS</p><h2 id="revenue-title">Annual room revenue</h2></div><label>Reporting year<select id="report-year" aria-label="Reporting year"></select></label></div>
+      <div class="revenue-result" aria-live="polite" aria-atomic="true" aria-busy="true">
+        <strong id="annual-room-revenue">Loading…</strong><span id="revenue-status">Reading saved room-night charges.</span>
+      </div>
+      <p class="hint">Booked room revenue, assigned to each night's calendar year. Cancelled bookings and bar revenue are excluded. Imported history uses clearly labelled demonstration dates.</p>
+      <div class="revenue-actions"><button id="refresh-revenue" class="text-button" type="button">Refresh revenue</button><a id="revenue-api" href="/api/reports/revenue?year=2026">View JSON ↗</a></div>
+    </section>
+    <div class="staff-stats"><div><span>Bookings · not cancelled</span><strong id="active-bookings">—</strong></div><div><span>Bar workspace</span><strong>Helene Christine</strong></div><div><span>Operations</span><strong>Reception &amp; management</strong></div></div><div id="reservations" class="layout">
+      <section class="panel booking-panel" aria-labelledby="form-title">
+        <div class="section-heading"><span class="step">01</span><div><h2 id="form-title">New booking</h2><p id="form-description">Prices are calculated for each night of your stay.</p></div></div>
+        <form id="booking-form">
+          <div class="fields"><label>First name<input name="holderFirstName" autocomplete="given-name" required maxlength="255"></label><label>Last name<input name="holderLastName" autocomplete="family-name" required maxlength="255"></label></div>
+          <div class="fields"><label>Booking holder’s country<select name="holderCountry" required><option value="">Select a country</option></select></label><label>Guests<select name="guestCount" required aria-label="Guests"></select></label></div>
+          <div class="fields"><label>Arrival<input type="date" name="arrival" required min="1000-01-01" max="9999-12-31"></label><label>Nights<select name="nights" required aria-label="Nights"></select></label></div>
+          <div class="stay-detail"><span>Departure</span><strong id="departure">Select your stay dates</strong></div>
+          <label>Room type<select id="room-type" aria-label="Room type"><option value="">All room types</option></select></label>
+          <fieldset><legend>Available rooms <span id="room-count"></span></legend><p class="hint">Select one or more rooms. Room numbers are demonstration inventory.</p><div id="rooms" class="rooms"><p class="empty-inline">Choose arrival and nights to see available rooms.</p></div></fieldset>
+          <div class="quote"><span>Calculated total</span><strong id="price">—</strong><small id="price-note">Each night uses its own seasonal rate.</small></div>
+          <div class="form-actions"><button type="submit" id="save">Create booking</button><button type="button" id="cancel-edit" class="secondary" hidden>Cancel editing</button></div>
+        </form>
+      </section>
+      <section class="panel list-panel" aria-labelledby="list-title">
+        <div class="section-heading"><span class="step">02</span><div><h2 id="list-title">Bookings &amp; history</h2><p id="reservation-count">Loading bookings…</p></div><button id="refresh" class="text-button" type="button">Refresh</button></div>
+        <div class="booking-filters"><label>Booking year<select id="booking-year" aria-label="Booking year"><option value="">All years</option></select></label><label>Search bookings<input id="booking-search" type="search" placeholder="Name, country, room or booking ID"></label></div><p id="booking-page-status" class="hint" aria-live="polite"></p><div id="bookings"></div><div class="pagination"><button id="previous-bookings" class="secondary" type="button">Previous bookings</button><button id="next-bookings" class="secondary" type="button">Next bookings</button></div>
+      </section>
+    </div>
+    <section id="bar" class="panel bar-panel" aria-labelledby="bar-title"><div class="revenue-heading"><div><p class="eyebrow">HELENE CHRISTINE</p><h2 id="bar-title">Cocktail bar &amp; coffee</h2></div><label>Bar reporting year<select id="bar-year" aria-label="Bar reporting year"></select></label></div><p>Daily closing totals and bar performance. Sales include visitors without a hotel booking.</p><div id="bar-error" class="notice error" role="status" hidden></div><div class="bar-stats"><div><span>Annual bar revenue</span><strong id="bar-revenue">Loading…</strong></div><div><span>Units sold</span><strong id="bar-units">—</strong></div><div><span>Cocktail / coffee revenue</span><strong id="bar-mix">—</strong><small id="bar-mix-note">Wine and beer are excluded from this comparison.</small></div></div><p class="hint">Reports use dated daily entries. Imported history uses demonstration sales dates. Wine and beer are not yet on the menu.</p><div class="bar-layout"><section><h3>Revenue per drink</h3><div class="table-wrap"><table><thead><tr><th>Drink</th><th>Category</th><th>Units</th><th>Revenue</th></tr></thead><tbody id="drink-revenue"></tbody></table></div></section><section class="closing-panel"><h3>Daily closing sales</h3><p>Record the total sold for one drink on one day. Saving again replaces that day’s quantity.</p><form id="bar-form"><label>Sales date<input id="sales-date" type="date" min="1000-01-01" max="9999-12-31" required></label><label>Drink<select id="drink" aria-label="Drink" required></select></label><label>Units sold today<select id="bar-quantity" aria-label="Units sold today" required></select></label><div class="stay-detail"><span>Fixed unit price</span><strong id="drink-price">—</strong></div><p id="daily-saved" class="hint" aria-live="polite"></p><button type="submit">Save daily sales</button></form><p id="bar-save-status" role="status" aria-live="polite"></p></section></div></section><footer>Demonstration room inventory · Excel history: see the source summary above · <a href="/api/openapi.json">OpenAPI specification</a></footer>
+  </main>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
