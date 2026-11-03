@@ -22,9 +22,9 @@ export async function refreshReports(year){
   for(const id of ['#occupancy','#sold-nights','#known-guests'])$(id).textContent='Loading…';
   for(const id of ['#country-report','#season-report','#room-report','#inventory-report','#satisfaction-report'])$(id).replaceChildren();
   try{
-    const [summary,countries,seasons,rooms,inventory,satisfaction]=await Promise.all([
+    const [summary,countries,seasons,rooms,inventory,satisfaction,stayFeedback]=await Promise.all([
       api(`/reports/summary${query}`),api(`/reports/countries${query}`),api(`/reports/room-types-seasons${query}`),
-      api(`/reports/rooms${query}`),api('/reports/inventory'),api('/reports/satisfaction?groupBy=roomType')
+      api(`/reports/rooms${query}`),api('/reports/inventory'),api('/reports/satisfaction?groupBy=roomType'),api('/reports/stay-feedback')
     ]);
     if(request!==requestNumber)return;
     $('#occupancy').textContent=summary.year===null?'Select one year':summary.occupancyPercent===null?'No data':`${summary.occupancyPercent.toFixed(1)}%`;
@@ -41,6 +41,11 @@ export async function refreshReports(year){
     });
     renderRoomChart(rooms,year);
     table('#inventory-report',inventory,r=>[r.roomType,count(r.roomCount),r.synthetic?'Demonstration inventory':'Hotel inventory']);
+    const {overall,recommendation}=stayFeedback;
+    $('#overall-rating').textContent=overall.meanRating===null?'No data':`${overall.meanRating.toFixed(1)} / 5`;
+    $('#overall-note').textContent=overall.responseCount?`Average of ${count(overall.responseCount)} ${overall.responseCount===1?'stay':'stays'} · guest questionnaire after check-out · all-time`:'No answers yet. Guests answer in the questionnaire emailed after check-out.';
+    $('#recommendation-percent').textContent=recommendation.recommendPercent===null?'No data':`${recommendation.recommendPercent.toFixed(1)}%`;
+    $('#recommendation-note').textContent=recommendation.responseCount?`${count(recommendation.recommendCount)} of ${count(recommendation.responseCount)} ${recommendation.responseCount===1?'guest':'guests'} answered yes · guest questionnaire after check-out · all-time`:'No answers yet. Guests answer in the questionnaire emailed after check-out.';
     table('#satisfaction-report',satisfaction,r=>[r.roomType,r.meanRating===null?'No data':`${r.meanRating.toFixed(1)} / 5`]);
   }catch(error){
     if(request!==requestNumber)return;

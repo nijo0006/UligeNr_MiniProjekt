@@ -11,7 +11,7 @@ import { reportRoutes } from './reportRoutes.js';
 import { BarService } from '../services/barService.js';
 import { barRoutes } from './barRoutes.js';
 
-export async function createApp(repository, reportRepository, barRepository, satisfactionRepository) {
+export async function createApp(repository, reportRepository, barRepository, satisfactionRepository, bookingOptions = {}) {
   const app = express();
   app.disable('x-powered-by');
   app.use(express.json({ limit: '64kb' }));
@@ -19,7 +19,7 @@ export async function createApp(repository, reportRepository, barRepository, sat
   app.get('/api/openapi.json', (_req, res) => res.json(contract));
   app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(contract, { customSiteTitle: 'Hotel Kong Arthur · Operations API' }));
   app.use('/api', (_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
-  app.use('/api', bookingRoutes(new BookingService(repository), repository));
+  app.use('/api', bookingRoutes(new BookingService(repository, bookingOptions), repository));
   app.use('/api', reportRoutes(new ReportService(reportRepository)));
   app.use('/api', barRoutes(new BarService(barRepository)));
   app.use('/api', satisfactionRoutes(new SatisfactionService(satisfactionRepository)));

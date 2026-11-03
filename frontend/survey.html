@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Hotel Kong Arthur · Rate your stay</title><link rel="preload" href="/assets/fonts/barlow-regular.ttf" as="font" type="font/ttf" crossorigin><link rel="stylesheet" href="/styles.css"></head>
+<body class="staff-page survey-page"><header><span class="brand"><img class="brand-wordmark" src="/assets/kong-arthur-logo.svg" alt="Hotel Kong Arthur" width="122" height="44"></span></header>
+<main>
+  <p class="eyebrow">GUEST EXPERIENCE</p>
+  <h1>How was your stay?</h1>
+  <p id="survey-intro">Thank you for staying with us. Please rate your stay overall and each of your rooms from 1 (poor) to 5 (excellent), and tell us whether you would recommend us.</p>
+  <div id="survey-notice" class="notice" role="status" aria-live="polite" hidden></div>
+  <form id="survey-form" hidden novalidate>
+    <fieldset id="survey-overall" class="survey-room" hidden>
+      <legend>Your stay overall</legend>
+      <p class="room-meta">How would you rate your stay at Hotel Kong Arthur overall?</p>
+    </fieldset>
+    <div id="survey-rooms"></div>
+    <fieldset id="survey-recommend" class="survey-room" hidden>
+      <legend>Would you recommend us?</legend>
+      <p class="room-meta">Would you recommend Hotel Kong Arthur to friends or family?</p>
+      <div class="rating-scale recommend-scale">
+        <label><input type="radio" name="wouldRecommend" value="true" aria-label="Yes, I would recommend Hotel Kong Arthur"><span>Yes</span></label>
+        <label><input type="radio" name="wouldRecommend" value="false" aria-label="No, I would not recommend Hotel Kong Arthur"><span>No</span></label>
+      </div>
+    </fieldset>
+    <button type="submit" id="survey-submit">Send my answers</button>
+  </form>
+  <div id="survey-thanks" class="survey-thanks" hidden><h2>Thank you!</h2><p>Your feedback helps us make every stay at Hotel Kong Arthur better.</p></div>
+</main>
+<script type="module" src="/survey.js"></script></body></html>

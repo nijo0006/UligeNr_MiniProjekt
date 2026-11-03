@@ -11,11 +11,17 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-hotel_kong_arthur}
       POSTGRES_USER: ${POSTGRES_USER:-hotel_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hotel_local_password}
+      # Story 24: questionnaire emails go to the local Mailpit inbox, not real guests.
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:3000}
     ports:
       - "127.0.0.1:${APP_PORT:-3000}:3000"
     depends_on:
       db:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 5s
@@ -41,6 +47,12 @@ services:
       timeout: 3s
       retries: 12
       start_period: 20s
+
+  mailpit:
+    image: axllent/mailpit:v1.27.0
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
 
   test-db:
     image: postgres:18-bookworm@sha256:5c4783a8cc3f0074912164f94dfa1be4e043438f0f707cf968d7af9a0d31a2c8
