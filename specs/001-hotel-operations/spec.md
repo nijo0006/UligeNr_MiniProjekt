@@ -311,7 +311,9 @@ for this prototype; questionnaire responses are not generated.
   only cancelled bookings are excluded. Guests answer through a questionnaire page reached
   by a link unique to their booking, rating each booked room separately. These responses
   become the only source for Story 13; receptionist entry of ratings is removed.
-  Completed stays remain editable but can no longer be cancelled. Recorded as Story 24.
+  Completed stays remain editable but can no longer be cancelled. The questionnaire also
+  asks once per stay whether the guest would recommend the hotel to others (yes/no); the
+  share answering yes is shown with room satisfaction. Recorded as Story 24.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -836,7 +838,7 @@ are interface separation; this request does not establish authentication or new 
 **Conversation**:
 
 - Completing a booking is a receptionist action on the Bookings page and through the API. It changes the booking status from `active` to `completed`. Completion is only allowed on or after the booking’s arrival date; a stay that has not started cannot be checked out. A completed booking is a finished stay, not a cancellation: its revenue, room-nights, guests and country still count in every indicator. It can still be edited (for example to correct a name or room), stays completed and triggers no new email, but it can no longer be cancelled.
-- The questionnaire email is sent automatically when completion is saved, to the booking holder’s email. It contains a link unique to that booking. The questionnaire page asks for one overall rating from 1 to 5 for each room on the booking.
+- The questionnaire email is sent automatically when completion is saved, to the booking holder’s email. It contains a link unique to that booking. The questionnaire page asks for one overall rating from 1 to 5 for each room on the booking, and once per stay whether the guest would recommend Hotel Kong Arthur to friends or family (yes/no).
 - The questionnaire page is the only guest-facing page. It shows nothing except that booking’s rooms and the rating form, so the retired guest frontend (Story 20) is not reintroduced.
 - For the local prototype, sent emails may be delivered to a local test mailbox instead of real recipients.
 
@@ -853,6 +855,8 @@ are interface separation; this request does not establish authentication or new 
 9. Given an invalid or unknown questionnaire link, when it is opened or submitted, then no booking information is shown and no rating is recorded.
 10. Given an imported historical booking without an email address, when it is completed, then it becomes `completed`, no email is sent, and the receptionist is told that no questionnaire could be sent.
 11. Given that sending the email fails, when the booking is completed, then the completion is still saved and the receptionist is told that the questionnaire was not sent.
+12. Given a questionnaire link, when the guest answers yes or no to whether they would recommend the hotel, then one answer is saved for that stay, alone or together with room ratings; a second answer for the same stay is rejected without changing the first.
+13. Given three answered stays, two answering yes, when the recommendation result is displayed, then it shows 66.7% (2 of 3 guests); with no answers it shows no data (null).
 
 ### Deferred Scope
 
@@ -935,7 +939,7 @@ room type, nights, and price, when demonstration records are generated, then:
 | FR-025 | The closing shift MUST select a sales date and record daily total quantities per drink. Each date/drink pair MUST have one effective quantity; corrections MUST replace rather than add, enabling daily comparisons without double-counting. | Story 19; R8 |
 | FR-026 | Bar sales MUST NOT require a booking and MUST include sales to non-resident customers in applicable bar and combined totals. | Stories 11, 15, 19 |
 | FR-027 | Receptionists MUST be able to complete an active booking through the browser and API, changing its status to `completed`. Repeated completion MUST change nothing; cancelled or unknown bookings MUST NOT be completed, and a booking MUST NOT be completed before its arrival date. Completed bookings MUST remain editable under the normal booking rules without changing status or resending the email, MUST NOT be cancelled, and MUST remain included in all indicators, as active bookings are. | Story 24 |
-| FR-028 | When a booking is completed, the system MUST send one satisfaction questionnaire email to the booking holder’s email address, with a link unique to that booking, and MUST NOT send it again for the same booking. Through the link, the guest MUST be able to give one 1–5 rating per room on the booking; invalid links MUST NOT reveal booking data or record ratings. Bookings without an email address are completed without an email, and a failed email MUST NOT undo completion; in both cases the receptionist is informed. | Stories 13, 24 |
+| FR-028 | When a booking is completed, the system MUST send one satisfaction questionnaire email to the booking holder’s email address, with a link unique to that booking, and MUST NOT send it again for the same booking. Through the link, the guest MUST be able to give one 1–5 rating per room on the booking; invalid links MUST NOT reveal booking data or record ratings. Bookings without an email address are completed without an email, and a failed email MUST NOT undo completion; in both cases the receptionist is informed. The questionnaire MUST also ask once per stay whether the guest would recommend the hotel (yes/no), and the system MUST show the all-time share of yes answers, displayed to one decimal, or null without answers. | Stories 13, 24 |
 
 ### Key Entities *(include if feature involves data)*
 
@@ -984,7 +988,8 @@ These are conceptual requirements, not a technical data model.
   only from the guest questionnaire.
 - **Satisfaction Questionnaire Invitation**: Created when a booking is completed. Linked to
   one booking, with a unique link, the email address it was sent to, and whether sending
-  succeeded. At most one per booking; each room on the booking can be rated once through it.
+  succeeded. At most one per booking; each room on the booking can be rated once through it,
+  and it holds the stay's single yes/no answer to whether the guest would recommend the hotel.
 
 ## Success Criteria *(mandatory)*
 

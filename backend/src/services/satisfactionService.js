@@ -12,18 +12,22 @@ export class SatisfactionService {
     return result;
   }
   async submitQuestionnaire(token,body){
-    const valid=body&&!Array.isArray(body)&&typeof body==='object'&&Object.keys(body).every(key=>key==='ratings')&&Array.isArray(body.ratings)&&body.ratings.length>0&&
-      body.ratings.every(r=>r&&typeof r==='object'&&!Array.isArray(r)&&Object.keys(r).every(key=>['roomNumber','rating'].includes(key))&&
+    const ratings=body?.ratings??[];
+    const valid=body&&!Array.isArray(body)&&typeof body==='object'&&Object.keys(body).every(key=>['ratings','wouldRecommend'].includes(key))&&
+      (body.wouldRecommend===undefined||typeof body.wouldRecommend==='boolean')&&Array.isArray(ratings)&&(ratings.length>0||body.wouldRecommend!==undefined)&&
+      ratings.every(r=>r&&typeof r==='object'&&!Array.isArray(r)&&Object.keys(r).every(key=>['roomNumber','rating'].includes(key))&&
         typeof r.roomNumber==='string'&&r.roomNumber&&r.roomNumber.length<=10&&Number.isInteger(r.rating)&&r.rating>=1&&r.rating<=5)&&
-      new Set(body.ratings.map(r=>r.roomNumber)).size===body.ratings.length;
+      new Set(ratings.map(r=>r.roomNumber)).size===ratings.length;
     const checked=this.token(token);
-    if(!valid)throw badInput('Supply ratings: a list with one whole-number rating from 1 to 5 per room on the booking.');
-    const result=await this.repository.submitQuestionnaire(checked,body.ratings);
+    if(!valid)throw badInput('Supply ratings (one whole-number rating from 1 to 5 per room on the booking) and/or wouldRecommend (true or false).');
+    const result=await this.repository.submitQuestionnaire(checked,ratings,body.wouldRecommend);
     if(result.error==='not_found')throw questionnaireNotFound();
     if(result.error==='unrelated_room')throw badInput('Rate only the rooms included in this stay.');
+    if(result.error==='already_recommended')throw new AppError(409,'ALREADY_ANSWERED','You have already told us whether you would recommend us. Thank you!');
     if(result.error==='already_answered')throw new AppError(409,'ALREADY_ANSWERED',`Room ${result.roomNumber} has already been rated. Thank you!`);
     return result;
   }
+  recommendation(){return this.repository.recommendation();}
   report(groupBy='room'){
     if(!['room','roomType'].includes(groupBy))throw badInput('Select groupBy=room or groupBy=roomType.');
     return this.repository.report(groupBy);

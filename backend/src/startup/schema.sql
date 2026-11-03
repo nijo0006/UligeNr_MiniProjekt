@@ -103,3 +103,6 @@ CREATE TABLE IF NOT EXISTS satisfaction_invitations (
 );
 ALTER TABLE satisfaction_responses ADD COLUMN IF NOT EXISTS source VARCHAR(13) NOT NULL DEFAULT 'reception' CHECK (source IN ('reception','questionnaire'));
 CREATE UNIQUE INDEX IF NOT EXISTS satisfaction_questionnaire_once ON satisfaction_responses (booking_id, room_number) WHERE source = 'questionnaire';
+-- Story 24: one "would you recommend us?" answer per completed stay.
+ALTER TABLE satisfaction_invitations ADD COLUMN IF NOT EXISTS would_recommend BOOLEAN NULL;
+ALTER TABLE satisfaction_invitations ADD COLUMN IF NOT EXISTS recommended_at TIMESTAMPTZ NULL;

@@ -1198,7 +1198,7 @@
     "/api/questionnaires/{token}/responses": {
       "post": {
         "operationId": "submitQuestionnaire",
-        "summary": "Submit 1\u20135 ratings per room through a questionnaire link",
+        "summary": "Submit 1\u20135 ratings per room and/or whether the guest would recommend the hotel",
         "description": "Each room can be rated once through the questionnaire; all ratings in one request are saved together or not at all. Responses count in the room satisfaction report; this guest questionnaire is the only way ratings are recorded.",
         "parameters": [
           {
@@ -1253,11 +1253,40 @@
             }
           },
           "409": {
-            "description": "Room already rated (ALREADY_ANSWERED)",
+            "description": "Room already rated or recommendation already given (ALREADY_ANSWERED)",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reports/recommendation": {
+      "get": {
+        "operationId": "getRecommendationReport",
+        "summary": "Share of guests who would recommend the hotel",
+        "description": "All-time. Counts one answer per completed stay from the guest questionnaire; recommendPercent is null without answers.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationReport"
                 }
               }
             }
@@ -2443,7 +2472,8 @@
         "type": "object",
         "additionalProperties": false,
         "required": [
-          "rooms"
+          "rooms",
+          "recommendationAnswered"
         ],
         "properties": {
           "rooms": {
@@ -2468,19 +2498,18 @@
                 }
               }
             }
+          },
+          "recommendationAnswered": {
+            "type": "boolean"
           }
         }
       },
       "QuestionnaireInput": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "ratings"
-        ],
         "properties": {
           "ratings": {
             "type": "array",
-            "minItems": 1,
             "items": {
               "type": "object",
               "additionalProperties": false,
@@ -2500,8 +2529,14 @@
                 }
               }
             }
+          },
+          "wouldRecommend": {
+            "type": "boolean",
+            "description": "Would the guest recommend the hotel to others? Answered once per stay."
           }
-        }
+        },
+        "description": "Supply ratings and/or wouldRecommend; at least one of them.",
+        "minProperties": 1
       },
       "QuestionnaireResult": {
         "type": "object",
@@ -2533,6 +2568,30 @@
                 }
               }
             }
+          },
+          "wouldRecommend": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RecommendationReport": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "responseCount",
+          "recommendCount",
+          "recommendPercent"
+        ],
+        "properties": {
+          "responseCount": {
+            "type": "integer"
+          },
+          "recommendCount": {
+            "type": "integer"
+          },
+          "recommendPercent": {
+            "type": "number",
+            "nullable": true
           }
         }
       }

@@ -495,7 +495,7 @@ test('guests rate each room once through the questionnaire link and responses jo
   const token = tokenOf(sentEmails[0]);
   const form = await call(`/questionnaires/${token}`);
   assert.equal(form.status,200);
-  assert.deepEqual(form.data,{ rooms:[{ roomNumber:'001', roomType:'Standard Single', answered:false },{ roomNumber:'002', roomType:'Standard Single', answered:false }] });
+  assert.deepEqual(form.data,{ rooms:[{ roomNumber:'001', roomType:'Standard Single', answered:false },{ roomNumber:'002', roomType:'Standard Single', answered:false }], recommendationAnswered:false });
   for (const ratings of [[{roomNumber:'001',rating:0}],[{roomNumber:'001',rating:4.5}],[],[{roomNumber:'001',rating:4},{roomNumber:'001',rating:5}]])
     assert.equal((await call(`/questionnaires/${token}/responses`,'POST',{ ratings })).status,400,JSON.stringify(ratings));
   const unrelated = await call(`/questionnaires/${token}/responses`,'POST',{ ratings:[{roomNumber:'001',rating:5},{roomNumber:'003',rating:5}] });
@@ -515,3 +515,28 @@ test('guests rate each room once through the questionnaire link and responses jo
   assert.equal((await call(`/questionnaires/${'A'.repeat(32)}/responses`,'POST',{ ratings:[{roomNumber:'001',rating:5}] })).status,404);
   assert.ok((await call('/openapi.json')).data.paths['/api/bookings/{bookingId}/complete']);
 });
+
+test('guests answer once whether they would recommend the hotel, alone or with room ratings (Story 24)', async () => {
+  assert.deepEqual((await call('/reports/recommendation')).data,{ responseCount:0, recommendCount:0, recommendPercent:null });
+  const tokens=[];
+  for (const room of ['001','002','003']) {
+    const created = await call('/bookings','POST',payload({ roomNumbers:[room] }));
+    await call(`/bookings/${created.data.bookingId}/complete`,'POST');
+    tokens.push(/token=([A-Za-z0-9_-]{32})/.exec(sentEmails.at(-1).text)[1]);
+  }
+  for (const body of [{ wouldRecommend:'yes' },{ wouldRecommend:null },{},{ ratings:[] },{ wouldRecommend:true, extra:1 }])
+    assert.equal((await call(`/questionnaires/${tokens[0]}/responses`,'POST',body)).status,400,JSON.stringify(body));
+  const only = await call(`/questionnaires/${tokens[0]}/responses`,'POST',{ wouldRecommend:true });
+  assert.equal(only.status,201); assert.deepEqual(only.data,{ responses:[], wouldRecommend:true });
+  const form = (await call(`/questionnaires/${tokens[0]}`)).data;
+  assert.equal(form.recommendationAnswered,true); assert.equal(form.rooms[0].answered,false);
+  const twice = await call(`/questionnaires/${tokens[0]}/responses`,'POST',{ ratings:[{roomNumber:'001',rating:4}], wouldRecommend:false });
+  assert.equal(twice.status,409); assert.equal(twice.data.code,'ALREADY_ANSWERED');
+  assert.equal((await call('/reports/satisfaction')).data.find(r=>r.roomNumber==='001').responseCount,0,'a rejected answer saves no rating either');
+  assert.equal((await call(`/questionnaires/${tokens[0]}/responses`,'POST',{ ratings:[{roomNumber:'001',rating:4}] })).status,201);
+  assert.equal((await call(`/questionnaires/${tokens[1]}/responses`,'POST',{ ratings:[{roomNumber:'002',rating:2}], wouldRecommend:false })).status,201);
+  assert.equal((await call(`/questionnaires/${tokens[2]}/responses`,'POST',{ wouldRecommend:true })).status,201);
+  const report=(await call('/reports/recommendation')).data;
+  assert.equal(report.responseCount,3); assert.equal(report.recommendCount,2); assert.equal(report.recommendPercent,2/3*100);
+});
+

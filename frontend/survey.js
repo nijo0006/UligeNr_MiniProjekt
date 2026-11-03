@@ -29,14 +29,21 @@ function roomFieldset(room) {
   return fieldset;
 }
 
+// Shows the unanswered questions; returns true when everything has been answered.
+function render({ rooms, recommendationAnswered }) {
+  if (rooms.every(room => room.answered) && recommendationAnswered) { showThanks(); return true; }
+  $('#survey-rooms').replaceChildren(...rooms.map(roomFieldset));
+  const recommend = $('#survey-recommend'); recommend.hidden = recommendationAnswered;
+  for (const input of recommend.querySelectorAll('input')) input.checked = false;
+  $('#survey-form').hidden = false;
+  return false;
+}
+
 function showThanks() { $('#survey-form').hidden = true; $('#survey-intro').hidden = true; $('#survey-thanks').hidden = false; }
 
 async function load() {
   try {
-    const { rooms } = await api(`/questionnaires/${encodeURIComponent(token)}`);
-    if (rooms.every(room => room.answered)) return showThanks();
-    $('#survey-rooms').replaceChildren(...rooms.map(roomFieldset));
-    $('#survey-form').hidden = false;
+    render(await api(`/questionnaires/${encodeURIComponent(token)}`));
   } catch (error) {
     $('#survey-intro').hidden = true;
     notice(`${error.message} Please use the link from your email, or contact the reception.`, true);
@@ -45,17 +52,16 @@ async function load() {
 
 $('#survey-form').addEventListener('submit', async event => {
   event.preventDefault();
-  const ratings = [...document.querySelectorAll('.survey-room:not(.answered)')]
+  const ratings = [...document.querySelectorAll('#survey-rooms .survey-room:not(.answered)')]
     .map(fieldset => ({ roomNumber: fieldset.dataset.roomNumber, checked: fieldset.querySelector('input:checked') }))
     .filter(room => room.checked).map(room => ({ roomNumber: room.roomNumber, rating: Number(room.checked.value) }));
-  if (!ratings.length) return notice('Please choose a rating from 1 to 5 for at least one room.', true);
+  const recommend = $('#survey-recommend').hidden ? null : document.querySelector('input[name=wouldRecommend]:checked');
+  const body = { ratings, ...(recommend ? { wouldRecommend: recommend.value === 'true' } : {}) };
+  if (!ratings.length && !recommend) return notice('Please rate at least one room or tell us whether you would recommend us.', true);
   const button = $('#survey-submit'); button.disabled = true; notice('');
   try {
-    await api(`/questionnaires/${encodeURIComponent(token)}/responses`, { method: 'POST', body: JSON.stringify({ ratings }) });
-    const { rooms } = await api(`/questionnaires/${encodeURIComponent(token)}`);
-    if (rooms.every(room => room.answered)) return showThanks();
-    $('#survey-rooms').replaceChildren(...rooms.map(roomFieldset));
-    notice('Thank you! Your rating is saved. You can still rate the remaining room(s).');
+    await api(`/questionnaires/${encodeURIComponent(token)}/responses`, { method: 'POST', body: JSON.stringify(body) });
+    if (!render(await api(`/questionnaires/${encodeURIComponent(token)}`))) notice('Thank you! Your answers are saved. You can still answer the remaining question(s).');
   } catch (error) { notice(error.message, true); await load(); }
   finally { button.disabled = false; }
 });
