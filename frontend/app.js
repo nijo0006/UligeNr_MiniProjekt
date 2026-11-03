@@ -12,7 +12,7 @@ function renderBookings() {
   $('#reservation-count').textContent = `${bookings.length} active ${bookings.length === 1 ? 'reservation' : 'reservations'}`;
   const year=$('#booking-year').value,search=$('#booking-search').value.trim().toLowerCase();
   const filtered=bookings.filter(b=>(!year || (b.arrival < `${Number(year)+1}-01-01` && b.departure > `${year}-01-01`)) &&
-    (search.startsWith('#') ? b.bookingId===Number(search.slice(1)) : `${b.bookingId} ${b.holderFirstName} ${b.holderLastName} ${b.holderCountry} ${b.roomNumbers.join(' ')} ${b.sourceId??''}`.toLowerCase().includes(search)));
+    (search.startsWith('#') ? b.bookingId===Number(search.slice(1)) : `${b.bookingId} ${b.holderFirstName} ${b.holderLastName} ${b.holderEmail??''} ${b.holderCountry} ${b.roomNumbers.join(' ')} ${b.sourceId??''}`.toLowerCase().includes(search)));
   bookingPage=Math.max(1,Math.min(bookingPage,Math.ceil(filtered.length/pageSize)));
   const start=(bookingPage-1)*pageSize,visible=filtered.slice(start,start+pageSize);
   $('#booking-page-status').textContent=filtered.length?`Showing ${start+1}–${Math.min(start+pageSize,filtered.length)} of ${filtered.length} matching bookings.`:'No bookings match this selection.';
@@ -24,7 +24,8 @@ function renderBookings() {
     const id = document.createElement('div'); id.className = 'id'; id.textContent = `BOOKING #${booking.bookingId}`;
     const name = document.createElement('h3'); name.textContent = `${booking.holderFirstName} ${booking.holderLastName}`;
     const amount = document.createElement('strong'); amount.className = 'amount'; amount.textContent = currency(booking.totalPrice);
-    details.append(id,name); top.append(details,amount);
+    const email = document.createElement('p'); email.className = 'email'; email.textContent = booking.holderEmail ?? 'No email (Excel)';
+    details.append(id,name,email); top.append(details,amount);
     const stay = document.createElement('p'); stay.textContent = `${booking.arrival} → ${booking.departure} · ${booking.nights} nights`;
     const rooms = document.createElement('p'); rooms.textContent = `Rooms ${booking.roomNumbers.join(', ')} · ${booking.guestCount ?? 'Unknown'} guests · ${booking.holderCountry}`;
     const actions = document.createElement('div'); actions.className = 'reservation-actions';

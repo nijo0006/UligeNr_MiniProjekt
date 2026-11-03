@@ -20,7 +20,7 @@ before(async()=>{
   server=(await createApp(new BookingRepository(pool),new ReportRepository(pool),new BarRepository(pool), new SatisfactionRepository(pool))).listen(0,'0.0.0.0');
   await new Promise(resolve=>server.once('listening',resolve));base=`http://127.0.0.1:${server.address().port}/api`;
   const room=(await call('/rooms')).data.find(r=>r.roomType==='Spa Executive');
-  existing=(await call('/bookings','POST',{holderFirstName:'Existing',holderLastName:'Preserved',holderCountry:'Denmark',guestCount:2,roomNumbers:[room.roomNumber],arrival:'2024-04-01',nights:1})).data;
+  existing=(await call('/bookings','POST',{holderFirstName:'Existing',holderLastName:'Preserved',holderEmail:'existing@example.com',holderCountry:'Denmark',guestCount:2,roomNumbers:[room.roomNumber],arrival:'2024-04-01',nights:1})).data;
   existingBar=(await call('/bar-sales/2024-01-01/1','PUT',{quantity:7})).data;
 });
 after(async()=>{if(server)await new Promise(resolve=>server.close(resolve));await pool?.end();if(schema)await admin.query(`DROP SCHEMA ${schema} CASCADE`);await admin?.end();});
@@ -67,7 +67,7 @@ test('repeat startup preserves edits/cancellations and source evidence is immuta
   const source=await readHistoricalSource();const original=source.payload.bookings[0];
   const book=(await call('/bookings')).data.find(b=>b.sourceId===sourceBookingId(original.sourceBookingId));
   const edit=await call(`/bookings/${book.bookingId}`,'PUT',{holderFirstName:'Edited',holderLastName:book.holderLastName,holderCountry:book.holderCountry,guestCount:null,guests:[],roomNumbers:book.roomNumbers,arrival:book.arrival,nights:book.nights,version:book.version});
-  assert.equal(edit.status,200);assert.equal(edit.data.guestCount,null);assert.equal(edit.data.pricingMode,'nightly-calculated');
+  assert.equal(edit.status,200);assert.equal(edit.data.guestCount,null);assert.equal(book.holderEmail,null);assert.equal(edit.data.holderEmail,null);assert.equal(edit.data.pricingMode,'nightly-calculated');
   await call(`/bookings/${book.bookingId}`,'DELETE');
   const before=(await call(`/bookings/${book.bookingId}`)).data;
   await initialize(pool);assert.deepEqual((await call(`/bookings/${book.bookingId}`)).data,before);

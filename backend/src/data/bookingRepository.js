@@ -63,7 +63,7 @@ export class BookingRepository {
     const nightResult=await this.database.query('SELECT booking_id,room_number AS "roomNumber",night_date AS date,season,exact_charge AS charge FROM room_nights WHERE booking_id=ANY($1::bigint[]) ORDER BY room_number,night_date',[ids]);
     const group=result=>{const map=new Map();for(const {booking_id,...row} of result.rows){if(!map.has(booking_id))map.set(booking_id,[]);map.get(booking_id).push(row);}return map;};
     const rooms=group(roomResult),guests=group(guestResult),charges=group(nightResult);
-    return rows.map(row=>({bookingId:row.id,holderFirstName:row.holder_first_name,holderLastName:row.holder_last_name,
+    return rows.map(row=>({bookingId:row.id,holderFirstName:row.holder_first_name,holderLastName:row.holder_last_name,holderEmail:row.holder_email,
       holderCountry:row.holder_country,guestCount:row.guest_count,guests:guests.get(row.id)??[],
       roomNumbers:(rooms.get(row.id)??[]).map(r=>r.room_number),arrival:row.arrival,departure:row.departure,
       nights:row.nights,version:row.version,status:row.status,totalPrice:row.total_price,
@@ -80,14 +80,14 @@ export class BookingRepository {
   }
   async create(data, calculation) {
     const result = await this.database.query(`INSERT INTO bookings
-      (holder_first_name,holder_last_name,holder_country,guest_count,arrival,departure,nights,total_price)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`, [data.holderFirstName, data.holderLastName, data.holderCountry, data.guestCount, data.arrival, calculation.departure, data.nights, calculation.totalPrice]);
+      (holder_first_name,holder_last_name,holder_country,guest_count,arrival,departure,nights,total_price,holder_email)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`, [data.holderFirstName, data.holderLastName, data.holderCountry, data.guestCount, data.arrival, calculation.departure, data.nights, calculation.totalPrice, data.holderEmail]);
     await this.writeDetails(result.rows[0].id, data, calculation);
     return this.get(result.rows[0].id);
   }
   async update(id, data, calculation) {
-    const result = await this.database.query(`UPDATE bookings SET holder_first_name=$1,holder_last_name=$2,holder_country=$3,guest_count=$4,arrival=$5,departure=$6,nights=$7,total_price=$8,version=version+1,pricing_mode='nightly-calculated',synthetic_dates=$11,synthetic_room_assignment=$12 WHERE id=$9 AND version=$10 AND status='active'`,
-      [data.holderFirstName,data.holderLastName,data.holderCountry,data.guestCount,data.arrival,calculation.departure,data.nights,calculation.totalPrice,id,data.version,calculation.syntheticDates,calculation.syntheticRoomAssignment]);
+    const result = await this.database.query(`UPDATE bookings SET holder_first_name=$1,holder_last_name=$2,holder_country=$3,guest_count=$4,arrival=$5,departure=$6,nights=$7,total_price=$8,version=version+1,pricing_mode='nightly-calculated',synthetic_dates=$11,synthetic_room_assignment=$12,holder_email=$13 WHERE id=$9 AND version=$10 AND status='active'`,
+      [data.holderFirstName,data.holderLastName,data.holderCountry,data.guestCount,data.arrival,calculation.departure,data.nights,calculation.totalPrice,id,data.version,calculation.syntheticDates,calculation.syntheticRoomAssignment,data.holderEmail]);
     if (result.rowCount !== 1) throw new Error('Locked booking version unexpectedly changed.');
     await this.database.query('DELETE FROM room_nights WHERE booking_id=$1', [id]);
     await this.database.query('DELETE FROM booking_rooms WHERE booking_id=$1', [id]);

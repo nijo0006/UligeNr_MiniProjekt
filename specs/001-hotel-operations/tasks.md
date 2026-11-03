@@ -280,3 +280,13 @@ US20 and the guest entry point from Phase 26 are retired at the user's request.
 - [x] T080 Show remaining API-calculated indicators in expandable Overview sections and add questionnaire entry on Bookings; preserve staff navigation and styling.
 - [x] T081 Update served OpenAPI/data-model documentation and verify report/feedback API, source reconciliation, repeat startup and browser desktop/mobile flows.
 - [x] T082 Reconcile completed reporting/bar/satisfaction tasks and final convergence; retain explicit Tableau and unresolved-input boundaries.
+
+
+## Phase 32: Booking-holder email requirement (Q1 correction) — 2026-11-03
+
+Q1 is corrected to include the booking holder's email address as a supplied field; Q5 is
+clarified so that only prices are excluded from manual entry.
+
+- [x] T083 Correct Q1/Q5, Stories 1–2, FR-001/FR-002 and Key Entities in spec.md; update data model, plan and both OpenAPI contracts with holderEmail.
+- [x] T084 Add nullable holder_email column, require and format-validate email for new bookings, and allow imported bookings without email to remain empty on edit.
+- [x] T085 Add the email field to the browser booking form and booking list, and extend pricing/integration tests for missing, invalid and imported-without-email cases.

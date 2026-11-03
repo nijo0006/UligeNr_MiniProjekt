@@ -191,7 +191,7 @@ an unknown one; determine persistence and API responses in detailed design. The 
 missing-ID and repeat-cancellation semantics apply to browser and API clients.
 
 **Confirmed booking-edit rule**: Permit changes to guest names, booking holder's
-country, guest count, selected room numbers, arrival, and nights. Keep BookingID fixed;
+email (required and format-validated, except that an imported booking without one may stay empty), booking holder's country, guest count, selected room numbers, arrival, and nights. Keep BookingID fixed;
 recompute departure, nightly seasonal charges, and booking total from the saved inputs.
 Check room availability again before accepting the update; never permit manual price
 replacement. Detect whether the client edited an outdated booking state: accept the

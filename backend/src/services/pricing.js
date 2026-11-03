@@ -29,14 +29,21 @@ export function money(minor) {
   if (!Number.isSafeInteger(minor) || minor < 0) throw badInput('Calculated price exceeds the supported exact-money range.');
   return `${Math.floor(minor / 100)}.${String(minor % 100).padStart(2, '0')}`;
 }
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export function validateBookingInput(body, editing = false) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) throw badInput('Booking input must be a JSON object.');
-  const allowed = ['holderFirstName', 'holderLastName', 'holderCountry', 'guestCount', 'guests', 'roomNumbers', 'arrival', 'nights', ...(editing ? ['version'] : [])];
+  const allowed = ['holderFirstName', 'holderLastName', 'holderEmail', 'holderCountry', 'guestCount', 'guests', 'roomNumbers', 'arrival', 'nights', ...(editing ? ['version'] : [])];
   if (Object.keys(body).some(key => !allowed.includes(key))) throw badInput('Unknown or calculated fields are not allowed in booking input.');
   for (const field of ['holderFirstName', 'holderLastName', 'holderCountry']) {
     if (typeof body[field] !== 'string' || !body[field].trim()) throw badInput(`${field} must be a non-empty name or country.`);
     // Storage-size validation, not a restriction on which guest names are allowed.
     if ([...body[field].trim()].length > 255) throw badInput(`${field} exceeds the storage length of 255 characters.`);
+  }
+  // Email is required for new bookings; an edit may send null only to keep an imported booking's missing email (checked in BookingService).
+  const holderEmail = editing && (body.holderEmail === undefined || body.holderEmail === null) ? null : body.holderEmail;
+  if (!(editing && holderEmail === null)) {
+    if (typeof holderEmail !== 'string' || !EMAIL_PATTERN.test(holderEmail.trim())) throw badInput('holderEmail must be a valid email address, e.g. name@example.com.');
+    if ([...holderEmail.trim()].length > 255) throw badInput('holderEmail exceeds the storage length of 255 characters.');
   }
   if (!(editing && body.guestCount === null) && (!Number.isSafeInteger(body.guestCount) || body.guestCount < 1)) throw badInput('guestCount must be a positive whole number.');
   if (!Array.isArray(body.roomNumbers) || !body.roomNumbers.length || body.roomNumbers.some(n => typeof n !== 'string') || new Set(body.roomNumbers).size !== body.roomNumbers.length) throw badInput('Select one or more unique room numbers.');
@@ -48,7 +55,7 @@ export function validateBookingInput(body, editing = false) {
     for (const key of ['firstName', 'lastName']) if (typeof guest[key] !== 'string' || !guest[key].trim() || [...guest[key].trim()].length > 255) throw badInput('Each guest name must contain 1–255 characters.');
   }
   stayDates(body.arrival, body.nights);
-  return { ...body, holderFirstName: body.holderFirstName.trim(), holderLastName: body.holderLastName.trim(), holderCountry: body.holderCountry.trim(), guests: guests.map(g => ({ firstName: g.firstName.trim(), lastName: g.lastName.trim() })) };
+  return { ...body, holderFirstName: body.holderFirstName.trim(), holderLastName: body.holderLastName.trim(), holderEmail: holderEmail === null ? null : holderEmail.trim(), holderCountry: body.holderCountry.trim(), guests: guests.map(g => ({ firstName: g.firstName.trim(), lastName: g.lastName.trim() })) };
 }
 export function calculateStay(arrival, nights, rooms, rates) {
   const { start, departure } = stayDates(arrival, nights);
