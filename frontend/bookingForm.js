@@ -1,4 +1,5 @@
 import {api,currency,option,extendNumbers} from './shared.js';
+import {roomPhotos} from './roomPhotos.js';
 export async function mountBookingForm(onSaved) {
 const $ = selector => document.querySelector(selector);
 const form = $('#booking-form');
@@ -9,6 +10,7 @@ let editing = null;
 let availableRooms = [];
 const selected = new Set();
 let availabilityRequest = 0;
+const typeButtons = new Map();
 function notice(message,error=false) {const node=$('#notice');node.hidden=!message;node.textContent=message;node.classList.toggle('error',error);}
 for(const name of ['nights','guestCount']) {
   extendNumbers(controls[name]);
@@ -39,9 +41,29 @@ function updateQuote() {
   }
   $('#price').textContent = currency(totalMinor / 100);
 }
+function drawRoomTypeGallery() {
+  const gallery=$('#room-type-gallery');
+  gallery.replaceChildren();
+  for(const [name,photo] of Object.entries(roomPhotos)) {
+    if(!catalog.roomTypes.includes(name))continue;
+    const button=document.createElement('button');button.type='button';button.className='room-type-card';
+    button.dataset.roomType=name;button.setAttribute('aria-label',`Show ${name} rooms`);button.setAttribute('aria-pressed','false');
+    const image=document.createElement('img');image.src=photo.image;image.alt=photo.alt;image.width=768;image.height=512;image.decoding='async';
+    const title=document.createElement('strong');title.textContent=name;
+    const detail=document.createElement('span');detail.className='room-type-detail';detail.textContent='View room type';
+    button.append(image,title,detail);
+    button.addEventListener('click',()=>{$('#room-type').value=name;drawRooms();});
+    image.addEventListener('error',()=>{image.hidden=true;button.classList.add('photo-unavailable');detail.textContent='Photo unavailable';});
+    typeButtons.set(name,button);gallery.append(button);
+  }
+}
 function drawRooms() {
   const container = $('#rooms'); container.replaceChildren();
   const filter = $('#room-type').value;
+  for(const [name,button] of typeButtons) {
+    button.setAttribute('aria-pressed',String(filter===name));
+    if(!button.classList.contains('photo-unavailable'))button.querySelector('.room-type-detail').textContent=dates()?`${availableRooms.filter(r=>r.roomType===name).length} rooms available`:'View room type';
+  }
   const visible = availableRooms.filter(r => !filter || r.roomType === filter);
   $('#room-count').textContent = visible.length ? `(${visible.length})` : '';
   if (!visible.length) { const p = document.createElement('p'); p.className = 'empty-inline'; p.textContent = dates() ? 'No available rooms match this stay.' : 'Choose arrival and nights to see available rooms.'; container.append(p); }
@@ -100,5 +122,6 @@ $('#cancel-edit').addEventListener('click', () => { resetForm(); notice(''); });
   catalog = await api('/catalog');
   for (const country of catalog.countries) controls.holderCountry.add(option(country));
   for (const type of catalog.roomTypes) $('#room-type').add(option(type));
+  drawRoomTypeGallery();drawRooms();
   return {edit:editBooking,reset:resetForm,refreshRooms:loadRooms,cancelEditing:id=>{if(editing?.bookingId===id)resetForm();}};
 }

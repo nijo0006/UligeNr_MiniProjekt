@@ -1,8 +1,6 @@
 import {api,currency} from './shared.js';
 import {mountBookingForm} from './bookingForm.js';
-import {updateReportingYears,refreshRevenue} from './revenue.js';
-import './bar.js';
-import './history.js';
+import {updateQuestionnaireBookings,openQuestionnaire} from './satisfaction.js';
 const $=selector=>document.querySelector(selector);
 let bookings=[];
 let bookingPage=1;
@@ -33,7 +31,8 @@ function renderBookings() {
     const edit = document.createElement('button'); edit.type = 'button'; edit.textContent = 'Edit booking'; edit.addEventListener('click', () => bookingForm.edit(booking.bookingId));
     const cancel = document.createElement('button'); cancel.type = 'button'; cancel.className = 'danger'; cancel.textContent = 'Cancel booking';
     cancel.addEventListener('click', async () => { if (!confirm(`Cancel booking #${booking.bookingId} for ${booking.holderFirstName} ${booking.holderLastName}?`)) return; try { await api(`/bookings/${booking.bookingId}`, { method: 'DELETE' }); bookingForm.cancelEditing(booking.bookingId); await loadBookings(); await bookingForm.refreshRooms(); notice(`Booking #${booking.bookingId} cancelled.`); } catch (error) { notice(error.message, true); } });
-    actions.append(edit,cancel); article.append(top,stay,rooms);
+    const questionnaire=document.createElement('button');questionnaire.type='button';questionnaire.textContent='Record satisfaction';questionnaire.addEventListener('click',()=>openQuestionnaire(booking));
+    actions.append(edit,cancel,questionnaire); article.append(top,stay,rooms);
     if(booking.sourceId){const provenance=document.createElement('p');provenance.className='source-label';provenance.textContent=`Excel booking ${booking.sourceId.split(':').at(-1)} · ${booking.syntheticDates?'demonstration dates':'updated dates'} · ${booking.pricingMode==='source-preserved'?'original Excel price':'recalculated tariff'}`;article.append(provenance);}
     article.append(actions); container.append(article);
   }
@@ -41,12 +40,11 @@ function renderBookings() {
 
 async function loadBookings(){
   bookings=await api('/bookings');
+  updateQuestionnaireBookings(bookings);
   const selectedYear=$('#booking-year').value,years=new Set([2024,2025,2026]);
   for(const b of bookings){const last=new Date(`${b.departure}T00:00:00Z`);last.setUTCDate(last.getUTCDate()-1);for(let year=Number(b.arrival.slice(0,4));year<=last.getUTCFullYear();year++)years.add(year);}
   $('#booking-year').replaceChildren(new Option('All years',''),...[...years].sort().reverse().map(y=>new Option(String(y),String(y))));$('#booking-year').value=selectedYear;
   renderBookings();
-  document.querySelector('#active-bookings').textContent=String(bookings.length);
-  updateReportingYears(bookings);await refreshRevenue();
 }
 $('#refresh').addEventListener('click',async()=>{try{await loadBookings();await bookingForm.refreshRooms();notice('Bookings refreshed.');}catch(error){notice(error.message,true);}});
 for(const id of ['#booking-year','#booking-search'])$(id).addEventListener(id==='#booking-search'?'input':'change',()=>{bookingPage=1;renderBookings();});

@@ -1,3 +1,4 @@
+import { SatisfactionRepository } from '../src/data/satisfactionRepository.js';
 import { BarRepository } from '../src/data/barRepository.js';
 import test, { before, beforeEach, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,12 +19,12 @@ async function call(path, method = 'GET', body) {
 }
 before(async () => {
   pool = createPool(); await initialize(pool,{history:false});
-  const app = await createApp(new BookingRepository(pool), new ReportRepository(pool), new BarRepository(pool));
+  const app = await createApp(new BookingRepository(pool), new ReportRepository(pool), new BarRepository(pool), new SatisfactionRepository(pool));
   server = app.listen(0, '0.0.0.0'); await new Promise(resolve => server.once('listening', resolve));
   base = `http://127.0.0.1:${server.address().port}/api`;
 });
 beforeEach(async () => {
-  for (const table of ['daily_bar_sales','room_nights','booking_rooms','booking_guests','bookings']) await pool.query(`DELETE FROM ${table}`);
+  for (const table of ['satisfaction_responses','daily_bar_sales','room_nights','booking_rooms','booking_guests','bookings']) await pool.query(`DELETE FROM ${table}`);
   await pool.query('DELETE FROM drinks WHERE id>30');
 });
 after(async () => { if (server) await new Promise(resolve => server.close(resolve)); if (pool) await pool.end(); });
@@ -103,14 +104,14 @@ test('serves valid implemented OpenAPI and rejects malformed JSON as JSON', asyn
   const result=await call('/openapi.json'); assert.equal(result.status,200);
   await SwaggerParser.validate(result.data);
   assert.ok(result.data.paths['/api/bar-sales']);
-  assert.ok(!result.data.paths['/api/satisfaction']);
+  assert.ok(result.data.paths['/api/satisfaction']);
   const response=await fetch(base+'/bookings',{method:'POST',headers:{'Content-Type':'application/json'},body:'{broken'});
   assert.equal(response.status,400); assert.equal((await response.json()).code,'INVALID_JSON');
   assert.equal((await call('/unimplemented')).status,404);
 });
 test('frontend and Swagger UI are available and health is database-backed', async () => {
   assert.equal((await call('/health')).data.status,'ready');
-  const page=await fetch(base.replace('/api','/staff')); assert.equal(page.status,200); assert.match(await page.text(),/booking-form/);
+  const page=await fetch(base.replace('/api','/staff/bookings')); assert.equal(page.status,200); assert.match(await page.text(),/booking-form/);
   const docs=await fetch(base+'/docs/'); assert.equal(docs.status,200); assert.match(await docs.text(),/swagger-ui/);
   const seed=JSON.parse(await readFile(new URL('../src/startup/catalog.json',import.meta.url),'utf8'));
   assert.equal((await call('/catalog')).data.countries.length,seed.countries.length);
@@ -140,7 +141,7 @@ test('PostgreSQL preserves filtered availability, JSON types and the existing in
 test('annual room revenue returns null without nights and validates the year', async () => {
   const report = await call('/reports/revenue?year=2026');
   assert.equal(report.status,200);
-  assert.deepEqual(report.data,{year:2026,currency:'DKK',roomRevenue:null,containsSyntheticData:false});
+  assert.deepEqual(report.data,{year:2026,currency:'DKK',roomRevenue:null,barRevenue:null,totalRevenue:null,containsSyntheticData:false});
   assert.equal(report.headers.get('cache-control'),'no-store');
   for (const query of ['', '?year=abc','?year=2026.5','?year=999','?year=10000','?year=2026&year=2025']) {
     const invalid = await call('/reports/revenue'+query);
@@ -155,7 +156,7 @@ test('annual room revenue splits New Year and counts each booked room-night once
   const created=await call('/bookings','POST',payload({arrival:'2025-12-31',roomNumbers:['001','002'],guestCount:50}));
   assert.equal(created.status,201);
   assert.equal(created.data.totalPrice,'4366.00');
-  assert.deepEqual((await call('/reports/revenue?year=2025')).data,{year:2025,currency:'DKK',roomRevenue:'2304.00',containsSyntheticData:false});
+  assert.deepEqual((await call('/reports/revenue?year=2025')).data,{year:2025,currency:'DKK',roomRevenue:'2304.00',barRevenue:null,totalRevenue:'2304.00',containsSyntheticData:false});
   assert.equal((await call('/reports/revenue?year=2026')).data.roomRevenue,'2062.00');
   assert.equal((await call('/reports/revenue?year=2024')).data.roomRevenue,null);
   // Departure is excluded even at the final year boundary supported by the booking API.
@@ -189,11 +190,82 @@ test('annual room revenue sums exact stored charges and distinguishes zero from 
   assert.equal((await call('/reports/revenue?year=2026')).data.roomRevenue,'0.00');
 });
 
-test('guest and staff frontends have distinct entry points and content', async () => {
-  const guest=await fetch(base.replace('/api','/'));const guestHtml=await guest.text();
-  assert.equal(guest.status,200);assert.match(guestHtml,/guest.js/);assert.ok(!guestHtml.includes('id="bookings"'));assert.ok(!guestHtml.includes('id="annual-room-revenue"'));
-  const staff=await fetch(base.replace('/api','/staff'));const staffHtml=await staff.text();
-  assert.equal(staff.status,200);assert.match(staffHtml,/Helene Christine/);assert.match(staffHtml,/id="bar-form"/);assert.match(staffHtml,/id="bookings"/);
+test('annual hotel revenue combines independent room/bar sources and refreshes after corrections and cancellation', async () => {
+  const booking = await call('/bookings','POST',payload({arrival:'2025-12-31',roomNumbers:['001','002']}));
+  assert.equal(booking.status,201);
+  const {rows:[drink]} = await pool.query("SELECT id FROM drinks WHERE category='Coffee' ORDER BY id LIMIT 1");
+  const save = (date,quantity) => call(`/bar-sales/${date}/${drink.id}`,'PUT',{quantity});
+  assert.equal((await save('2025-12-31',2)).status,200);
+  assert.equal((await save('2026-01-01',3)).status,200);
+  assert.equal((await save('2026-12-31',1)).status,200);
+  assert.equal((await save('2027-01-01',5)).status,200);
+  for (const [year,rooms] of [[2025,'2304.00'],[2026,'2062.00'],[2027,null]]) {
+    const report=(await call(`/reports/revenue?year=${year}`)).data;
+    const bar=(await call(`/reports/bar?year=${year}`)).data;
+    assert.equal(report.roomRevenue,rooms);
+    assert.equal(report.barRevenue,bar.revenue);
+    assert.equal(Number(report.totalRevenue),Number(rooms??0)+Number(bar.revenue));
+  }
+  const before=(await call('/reports/revenue?year=2026')).data;
+  const corrected=await save('2026-01-01',1);assert.equal(corrected.status,200);
+  const after=(await call('/reports/revenue?year=2026')).data;
+  assert.equal(after.barRevenue,(await call('/reports/bar?year=2026')).data.revenue);
+  assert.ok(Number(after.totalRevenue)<Number(before.totalRevenue));
+  assert.equal((await call(`/bookings/${booking.data.bookingId}`,'PUT',payload({arrival:'2026-01-01',nights:1,roomNumbers:['001','002'],version:1}))).status,200);
+  assert.equal((await call('/reports/revenue?year=2025')).data.roomRevenue,null);
+  assert.equal((await call(`/bookings/${booking.data.bookingId}`,'DELETE')).status,200);
+  const cancelled=(await call('/reports/revenue?year=2026')).data;
+  assert.equal(cancelled.roomRevenue,null);assert.equal(cancelled.totalRevenue,cancelled.barRevenue);
+});
+
+test('annual hotel total preserves exact decimals, genuine zero and amounts above JavaScript safe integer cents', async () => {
+  const booking=await call('/bookings','POST',payload());const id=booking.data.bookingId;
+  await pool.query("UPDATE room_nights SET exact_charge=CASE WHEN night_date='2026-05-31' THEN 0.10 ELSE 0.20 END WHERE booking_id=$1",[id]);
+  await pool.query("INSERT INTO daily_bar_sales(sales_date,drink_id,quantity,unit_price_snapshot,exact_revenue) VALUES ('2026-06-01',1,1,0.40,0.40)");
+  let report=(await call('/reports/revenue?year=2026')).data;
+  assert.equal(report.roomRevenue,'0.30');assert.equal(report.barRevenue,'0.40');assert.equal(report.totalRevenue,'0.70');
+  await pool.query('UPDATE room_nights SET exact_charge=0 WHERE booking_id=$1',[id]);
+  await pool.query('UPDATE daily_bar_sales SET exact_revenue=0,quantity=0');
+  report=(await call('/reports/revenue?year=2026')).data;
+  assert.equal(report.roomRevenue,'0.00');assert.equal(report.barRevenue,'0.00');assert.equal(report.totalRevenue,'0.00');
+  await call(`/bookings/${id}`,'DELETE');
+  report=(await call('/reports/revenue?year=2026')).data;
+  assert.equal(report.roomRevenue,null);assert.equal(report.totalRevenue,'0.00');
+  await pool.query("UPDATE bookings SET status='active' WHERE id=$1",[id]);
+  await pool.query("UPDATE room_nights SET exact_charge=CASE WHEN night_date='2026-05-31' THEN 90071992547409.91 ELSE 0 END WHERE booking_id=$1",[id]);
+  await pool.query('UPDATE daily_bar_sales SET exact_revenue=0.09');
+  assert.equal((await call('/reports/revenue?year=2026')).data.totalRevenue,'90071992547410.00');
+});
+
+test('annual hotel provenance covers either included source and ignores cancelled or out-of-year synthetic records', async () => {
+  const booking=await call('/bookings','POST',payload());const id=booking.data.bookingId;
+  await pool.query("INSERT INTO daily_bar_sales(sales_date,drink_id,quantity,unit_price_snapshot,exact_revenue,synthetic) VALUES ('2025-12-31',1,1,1,1,true),('2026-06-01',1,1,1,1,false)");
+  assert.equal((await call('/reports/revenue?year=2026')).data.containsSyntheticData,false);
+  assert.equal((await call('/reports/revenue?year=2025')).data.containsSyntheticData,true);
+  await pool.query("UPDATE daily_bar_sales SET synthetic=true WHERE sales_date='2026-06-01'");
+  assert.equal((await call('/reports/revenue?year=2026')).data.containsSyntheticData,true);
+  await pool.query("UPDATE daily_bar_sales SET synthetic=false WHERE sales_date='2026-06-01'");
+  await pool.query('UPDATE bookings SET synthetic_dates=true WHERE id=$1',[id]);
+  assert.equal((await call('/reports/revenue?year=2026')).data.containsSyntheticData,true);
+  await call(`/bookings/${id}`,'DELETE');
+  assert.equal((await call('/reports/revenue?year=2026')).data.containsSyntheticData,false);
+});
+
+test('staff home links to three separate workspaces and the retired guest page is unavailable', async () => {
+  const home=await fetch(base.replace('/api','/'));const html=await home.text();
+  assert.equal(home.status,200);
+  for(const route of ['overview','bookings','bar'])assert.ok(html.includes(`/staff/${route}`));
+  assert.ok(!html.includes('id="booking-form"'));assert.ok(!html.includes('id="bar-form"'));
+  for(const [route,present,absent] of [
+    ['overview','id="annual-room-revenue"','id="booking-form"'],
+    ['bookings','id="booking-form"','id="annual-room-revenue"'],
+    ['bar','id="bar-form"','id="booking-form"']
+  ]){
+    const page=await fetch(base.replace('/api',`/staff/${route}`));const content=await page.text();
+    assert.equal(page.status,200);assert.ok(content.includes(present));assert.ok(!content.includes(absent));
+  }
+  for(const path of ['/guest','/guest/','/guest.js'])assert.equal((await fetch(base.replace('/api',path))).status,404);
+  const alias=await fetch(base.replace('/api','/staff'));assert.equal(alias.status,200);assert.match(await alias.text(),/workspace-grid/);
 });
 
 test('bar catalog is source-backed and annual no-data results are null',async()=>{
@@ -232,4 +304,113 @@ test('bar mix excludes wine/beer while totals include all categories; invalid in
   assert.equal((await call('/reports/bar?year=2026')).data.revenue,'1000.00');
   await call('/bar-sales/2026-11-01/101','PUT',{quantity:0});await call('/bar-sales/2026-11-01/102','PUT',{quantity:0});
   const zero=(await call('/reports/bar?year=2026')).data;assert.equal(zero.cocktailPercent,null);assert.equal(zero.mixStatus,'undefined');
+});
+
+test('operational reports count booking holders once across rooms and expose unknown guest counts',async()=>{
+  const a=await call('/bookings','POST',payload({guestCount:3,roomNumbers:['001','002']}));
+  const b=await call('/bookings','POST',payload({guestCount:2,roomNumbers:['003']}));
+  assert.equal(a.status,201);assert.equal(b.status,201);
+  await pool.query('UPDATE bookings SET guest_count=NULL WHERE id=$1',[b.data.bookingId]);
+  let rows=(await call('/reports/countries?year=2026')).data;
+  assert.equal(rows.length,1);assert.equal(rows[0].bookingCount,2);assert.equal(rows[0].guestCount,null);
+  assert.equal(rows[0].knownGuestCount,3);assert.equal(rows[0].unknownGuestBookingCount,1);
+  assert.equal(rows[0].roomRevenue,'7473.00');
+  let summary=(await call('/reports/summary?year=2026')).data;
+  assert.equal(summary.bookingCount,2);assert.equal(summary.guestCount,null);assert.equal(summary.soldRoomNights,6);
+  assert.equal(summary.occupancyCapacity,78110);assert.equal(summary.occupancyPercent,6/78110*100);
+  assert.equal(summary.totalRevenue,'7473.00');
+  await call(`/bookings/${a.data.bookingId}`,'PUT',payload({version:1,holderCountry:'Sweden',roomNumbers:['001','002'],guestCount:3}));
+  rows=(await call('/reports/countries?year=2026')).data;
+  assert.equal(rows.find(r=>r.country==='Sweden').roomRevenue,'4982.00');
+  assert.equal(rows.find(r=>r.country==='Sweden').guestCount,3);
+  await call(`/bookings/${b.data.bookingId}`,'DELETE');
+  summary=(await call('/reports/summary?year=2026')).data;
+  assert.equal(summary.bookingCount,1);assert.equal(summary.guestCount,3);assert.equal(summary.unknownGuestBookingCount,0);
+});
+
+test('room/type/season reports preserve cross-year night allocation, exact totals, ties and inventory',async()=>{
+  const inventory=(await call('/reports/inventory')).data;
+  assert.equal(inventory.length,8);assert.equal(inventory.reduce((s,r)=>s+r.roomCount,0),214);
+  const created=await call('/bookings','POST',payload({arrival:'2025-12-31',roomNumbers:['001','002'],guestCount:5}));
+  for(const [year,amount] of [[2025,'2304.00'],[2026,'2062.00']]){
+    const summary=(await call(`/reports/summary?year=${year}`)).data;
+    assert.equal(summary.bookingCount,1);assert.equal(summary.guestCount,5);assert.equal(summary.soldRoomNights,2);
+    const rooms=(await call(`/reports/rooms?year=${year}`)).data;
+    assert.equal(rooms.length,214);assert.equal(rooms[0].roomNumber,'001');assert.equal(rooms[1].roomNumber,'002');
+    assert.equal(rooms[0].roomRevenue,rooms[1].roomRevenue);assert.equal(rooms[2].roomRevenue,null);
+    const seasons=(await call(`/reports/room-types-seasons?year=${year}`)).data;
+    assert.equal(seasons.length,24);
+    assert.equal(seasons.find(r=>r.roomType==='Standard Single'&&r.season===(year===2025?'mid':'low')).roomRevenue,amount);
+    assert.equal(seasons.filter(r=>r.roomRevenue!==null).length,1);
+  }
+  const all=(await call('/reports/summary')).data;
+  assert.equal(all.year,null);assert.equal(all.soldRoomNights,4);assert.equal(all.bookingCount,1);assert.equal(all.guestCount,5);
+  assert.equal(all.occupancyPercent,null);assert.equal(all.occupancyCapacity,null);
+  await call(`/bookings/${created.data.bookingId}`,'DELETE');
+  assert.deepEqual((await call('/reports/inventory')).data,inventory);
+  assert.ok((await call('/reports/rooms')).data.every(r=>r.roomRevenue===null));
+});
+
+test('report summaries include walk-in bar sales, provenance and empty scopes without inventing people',async()=>{
+  const empty=(await call('/reports/summary?year=2026')).data;
+  assert.equal(empty.roomRevenue,null);assert.equal(empty.barRevenue,null);assert.equal(empty.totalRevenue,null);
+  assert.equal(empty.bookingCount,0);assert.equal(empty.guestCount,null);assert.equal(empty.knownGuestCount,0);
+  assert.equal(empty.soldRoomNights,0);assert.equal(empty.occupancyPercent,null);
+  const sale=await call('/bar-sales/2026-06-01/1','PUT',{quantity:2});assert.equal(sale.status,200);
+  await pool.query('UPDATE daily_bar_sales SET synthetic=true');
+  const summary=(await call('/reports/summary?year=2026')).data;
+  assert.equal(summary.totalRevenue,sale.data.revenue);assert.equal(summary.barUnits,2);assert.equal(summary.containsSyntheticData,true);
+  assert.deepEqual((await call('/reports/countries')).data,[]);
+  assert.deepEqual((await call('/reports/drinks?year=2026')).data,(await call('/reports/bar?year=2026')).data.drinks);
+  for(const path of ['summary','countries','rooms','room-types-seasons']){
+    for(const query of ['?year=','?year=abc','?year=999','?year=10000','?year=2026&year=2025'])assert.equal((await call(`/reports/${path}${query}`)).status,400);
+    assert.equal((await call(`/reports/${path}?year=9999`)).status,200);
+    assert.equal((await call(`/reports/${path}`)).headers.get('cache-control'),'no-store');
+  }
+});
+
+test('country and type-season reports add exact stored fractional amounts without repricing',async()=>{
+  const a=await call('/bookings','POST',payload({arrival:'2026-05-31'}));
+  await pool.query("UPDATE room_nights SET exact_charge=CASE WHEN season='mid' THEN 0.10 ELSE 0.20 END WHERE booking_id=$1",[a.data.bookingId]);
+  await pool.query('UPDATE bookings SET synthetic_dates=true WHERE id=$1',[a.data.bookingId]);
+  const countries=(await call('/reports/countries')).data;
+  assert.equal(countries[0].roomRevenue,'0.30');assert.equal(countries[0].containsSyntheticData,true);
+  const seasons=(await call('/reports/room-types-seasons')).data;
+  assert.equal(seasons.find(r=>r.roomType==='Standard Single'&&r.season==='mid').roomRevenue,'0.10');
+  assert.equal(seasons.find(r=>r.roomType==='Standard Single'&&r.season==='high').roomRevenue,'0.20');
+});
+
+test('questionnaires validate booking-room membership and persist separate room means without generated scores',async()=>{
+  assert.ok((await call('/reports/satisfaction')).data.every(r=>r.meanRating===null&&r.responseCount===0));
+  const booking=await call('/bookings','POST',payload({roomNumbers:['001','002']}));const id=booking.data.bookingId;
+  const submit=(roomNumber,rating,extra={})=>call('/satisfaction','POST',{bookingId:id,roomNumber,rating,...extra});
+  for(const rating of [2,4,5])assert.equal((await submit('001',rating)).status,201);
+  assert.equal((await submit('002',2)).status,201);
+  for(const rating of [0,6,null,'4'])assert.equal((await submit('001',rating)).status,400);
+  assert.equal((await submit('003',4)).status,400);
+  assert.equal((await submit('001',4,{meanRating:5})).status,400);
+  assert.equal((await submit('001',4,{bookingId:4294967295})).status,404);
+  assert.equal((await call('/reports/satisfaction?year=2026')).status,400);
+  let report=(await call('/reports/satisfaction')).data;
+  assert.equal(report.length,214);assert.equal(report.find(r=>r.roomNumber==='001').responseCount,3);
+  assert.equal(report.find(r=>r.roomNumber==='001').meanRating,11/3);
+  assert.equal(report.find(r=>r.roomNumber==='002').meanRating,2);
+  assert.equal(report.find(r=>r.roomNumber==='003').meanRating,null);
+  await initialize(pool,{history:false});
+  assert.deepEqual((await call('/reports/satisfaction')).data,report);
+  assert.equal((await call(`/bookings/${id}`,'PUT',payload({roomNumbers:['003'],version:1}))).status,200);
+  assert.equal((await call('/reports/satisfaction')).data.find(r=>r.roomNumber==='001').responseCount,3);
+  assert.equal((await submit('001',4)).status,400);
+  await call(`/bookings/${id}`,'DELETE');
+  assert.equal((await submit('003',4)).status,409);
+  assert.ok((await call('/reports/satisfaction')).data.every(r=>r.meanRating===null&&r.responseCount===0));
+});
+
+test('questionnaire insertion serializes with booking cancellation',async()=>{
+  const booking=await call('/bookings','POST',payload());const id=booking.data.bookingId;
+  const [response,cancelled]=await Promise.all([
+    call('/satisfaction','POST',{bookingId:id,roomNumber:'001',rating:4}),call(`/bookings/${id}`,'DELETE')
+  ]);
+  assert.ok([201,409].includes(response.status));assert.equal(cancelled.status,200);
+  assert.equal((await call('/reports/satisfaction')).data.find(r=>r.roomNumber==='001').responseCount,0);
 });

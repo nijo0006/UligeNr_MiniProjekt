@@ -6,7 +6,7 @@
 
 **Created**: 2026-10-27
 
-**Last Updated**: 2026-11-02 — separate guest and staff frontends requested; Tableau remains deferred.
+**Last Updated**: 2026-11-03 — guest frontend retired; staff home opens separate Overview, Bookings and Helene’s bar pages.
 
 **Status**: Draft — confirmed answers incorporated; remaining business decisions are listed below.
 
@@ -561,6 +561,15 @@ invent person counts, room assignments, or annual allocations missing from K3.
 
 ---
 
+**Annual report increment — 2026-11-03**:
+
+- The annual API and Overview MUST show room revenue, bar revenue and their combined total for one selected calendar year, calculated by the backend.
+- Room revenue uses saved active room-night charges; bar revenue uses saved daily sales revenue for the same year, including walk-in sales and all drink categories. No current tariff or menu price is applied during reporting.
+- A component with no records remains null. The combined total sums recorded components; it is null only when neither component has records. A recorded zero remains numeric zero. The interface must keep missing components visible as “No data”.
+- A stay crossing New Year contributes nights to the correct year; bar sales use their sales date. Corrections replace the previous contribution, and cancelled room bookings contribute nothing. Neither source reference aggregates nor multi-room totals are counted again.
+- The report indicates whether either recorded component contains synthetic history. Current values are returned on the next request and shown when the user changes year, refreshes Overview or returns to the page.
+- Acceptance fixtures: room charges 0.10 + 0.20 and bar revenue 0.40 produce exactly 0.70; bar-only 0.40 produces room=null, bar=0.40, total=0.40; no records produce three null amounts. Source data and existing user records are not changed by reporting.
+
 ### User Story 12 - Annual occupancy (Priority: Must)
 
 **Card**: As a hotel administrator/decision-maker, I want to see annual room occupancy, so that I can assess use of available room capacity.
@@ -741,7 +750,9 @@ invent person counts, room assignments, or annual allocations missing from K3.
 
 ---
 
-### User Story 20 - Guest booking frontend (Priority: Must)
+### User Story 20 - Guest booking frontend (Retired 2026-11-03)
+
+**Status**: Superseded by the user’s explicit request to remove the customer booking page. This story is retained only for traceability; its guest interface is no longer required.
 
 **Card**: As a hotel guest, I want to choose available rooms and book my stay, so that I can arrange accommodation without using the hotel's internal workspace.
 
@@ -766,6 +777,34 @@ invent person counts, room assignments, or annual allocations missing from K3.
 
 The existing local prototype's no-login decision remains in force. Separate frontends
 are interface separation; this request does not establish authentication or new actor permissions.
+
+### User Story 22 - Staff home and separate workspaces (Priority: Must)
+
+**Card**: As a hotel staff member, I want a home page with icons opening Overview, Bookings and Helene’s bar on separate pages, so that I can find the relevant tools without scrolling through every function.
+
+**Source**: User request, 2026-11-03. This supersedes the customer frontend and the previous combined staff page.
+
+**Confirmation**:
+
+1. Opening the start page shows three clearly named, clickable icon entries for Overview, Bookings and Helene’s bar.
+2. Each entry opens a separate page for its area, with a clear way back to the start page and between workspaces.
+3. Overview retains annual room revenue, booking count and historical source figures; Bookings retains creation, search, filtering, editing and cancellation; Helene’s bar retains reporting and daily sales registration.
+4. The customer booking page and its navigation entry are removed. Staff booking capability, existing records and historical source data remain available.
+5. Navigation works with keyboard input and on mobile; each page requests only the data it needs.
+
+### User Story 23 - Recognizable room selection and hotel appearance (Priority: Must)
+
+**Card**: As a receptionist, I want to see the hotel's room-type photographs when creating a booking and use a frontend with the hotel's typography and visual style, so that I can recognize the room categories while working in a familiar interface.
+
+**Source**: User request, 2026-11-03; official Hotel Kong Arthur room overview.
+
+**Confirmation**:
+
+1. The booking form shows the official overview photograph for each of the eight supported room types, labelled with its type.
+2. Selecting a photograph selects the corresponding room-type filter; room numbers and availability retain the existing booking behavior.
+3. Photos are identified as room-type illustrations, without claiming to depict each generated room number.
+4. All staff pages share the reference site's Barlow body type, headline fallback stack, warm palette and hotel wordmark. Images and available fonts load from local assets.
+5. The image choices are keyboard accessible, mobile layouts remain usable, and existing booking, history and bar workflows continue to work.
 
 ### Deferred Scope
 
@@ -980,3 +1019,45 @@ Each item records the part still unanswered; it does not reopen the confirmed pa
 - **R10 — Display boundary cases (Q19)**: Null for no data and one decimal for amounts/
   percentages are confirmed. Does a zero denominator with records also return null,
   and which tie-rounding rule applies? No-data null must not erase a genuine numeric zero.
+
+
+## Remaining reporting implementation scope — 2026-11-03
+
+User instruction: implement the remaining reports and room-linked questionnaire entry;
+Tableau remains explicitly deferred. Existing country attribution, nightly prices,
+season map, fixed 214 × 365 occupancy denominator and no-login decision remain in force.
+
+Acceptance criteria for this increment:
+- Optional report year filters occupied nights in that calendar year; no year means
+  all saved years. A booking is counted once within each scope if it has eligible nights,
+  even if it has multiple rooms. Cross-year bookings can appear in both annual counts.
+- Country revenue excludes bar sales. Known guest counts are summed once per booking;
+  if any booking has unknown guests, the complete guestCount is null, with knownGuestCount
+  and unknownGuestBookingCount exposed separately. No historical people are inferred.
+- Type/season and room totals sum saved nightly charges exactly once and reconcile
+  with room revenue. All 24 type/season combinations and 214 numbered rooms remain visible;
+  combinations without records have null revenue. Country and room lists sort by exact
+  revenue descending; equal values remain equal, with alphabetical/room-number ordering
+  solely for stable display. No business rank-number/tie-breaking policy is introduced.
+- Summary exposes current booking/person/night counts and annual occupancy. Without a
+  year, occupancy is null: the three-year history is not treated as one year. With no
+  eligible room nights annual occupancy is null. Counts use zero for an empty scope.
+- Inventory counts unique room numbers by type, totals 214 and never changes with bookings.
+- Receptionists can select an existing active booking, one of its rooms and a 1–5 rating;
+  each successful submission records one actual questionnaire response. Reject invalid
+  numbers, unknown bookings and unrelated rooms without writing. No historical ratings
+  are generated. Means/counts update on the next request and show null without responses.
+- Satisfaction is explicitly labelled all-time and is independent of the financial year
+  selector; no annual satisfaction attribution rule is invented. Cancelled bookings are
+  excluded from reporting. Recorded feedback keeps its original room link when a booking
+  is edited. Prototype assumption: only active bookings are offered for new entries;
+  each POST represents a distinct questionnaire, not a correction or overwrite. Correction
+  and duplicate-questionnaire policies remain open; the UI must not imply otherwise.
+- Overview shows these API-calculated figures in expandable sections, with selected-year
+  labels, no-data/errors distinguished, synthetic provenance and keyboard/mobile access.
+- Bar report already supplies drink/category calculations; expose a documented drinks
+  report alias for API consumers without adding unprovided wine/beer products.
+
+Verify fixtures for multi-room/cross-year and mixed-known guest counts; edits/cancellation;
+source country/type/season reconciliation; exact and tied revenues; inventory invariance;
+ratings 2/4/5 => 3.7, invalid room/rating rejection, cancelled exclusion and persistence.

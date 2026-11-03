@@ -142,3 +142,94 @@ verified 2025 room/bar results and unknown counts; desktop/mobile screenshots re
 T036/T042 and T063–T067 are complete. Other hotel indicators, satisfaction, unresolved
 business inputs and deferred Tableau delivery remain open; the full hotel feature is
 not declared complete.
+
+
+## Staff home and separate workspaces — 2026-11-03
+
+Completed the user's navigation change: customer page/controller removed, staff home
+with three named SVG icon links at / and /staff, and independent Overview, Bookings
+and Helene’s bar pages. Header navigation exposes the current page and a route home.
+Page-specific scripts prevent booking administration from requesting bar/revenue data,
+and the home page makes no API calls. Existing booking and historical/bar behavior
+remain available without a backend business-rule or database change. US20 is retired
+and US22 records the new interface requirements.
+
+Executed: 24 isolated PostgreSQL/API tests and 4 Chrome browser flows passed. A focused
+keyboard/mobile icon-navigation check also passed. Tested booking creation/reload/edit/
+cancellation, current API report totals, report failure/recovery, historic year/search/
+pagination, bar form corrections with controlled HTTP fixtures, removed guest routes
+and separate page content/data requests. Reviewed desktop/mobile home and Overview
+screenshots. Existing user/source records were not changed; the browser's own booking
+was cancelled. T068–T071 complete; other pending feature tasks remain open.
+
+
+## Official room photos and frontend style — 2026-11-03
+
+US23 implemented: eight local room-type photos with accessible filter buttons, Barlow
+body fonts, official header logo, reference headline fallback and warm palette on all
+staff pages. Attribution, original image mapping and Barlow OFL are retained locally.
+No booking, pricing, inventory, database or API rules changed. Four browser flows passed;
+photo loading/type selection and Barlow loading are explicitly checked. Desktop/mobile
+screenshots and the eight-photo gallery were visually reviewed. T072–T074 complete.
+
+
+## Combined annual hotel revenue — 2026-11-03
+
+US11/FR-013 and T027 are now implemented: GET /api/reports/revenue returns saved annual
+roomRevenue, barRevenue and exact totalRevenue; Overview displays all three from the
+API. Independent aggregates in one database snapshot avoid join multiplication. The
+service sums decimal strings using integer minor units. Calendar dates, cancellation,
+bar corrections and source-price preservation follow the existing specification.
+Missing components remain null; total is null only with no records in either source.
+Synthetic provenance includes either component and is visible in the interface.
+OpenAPI, README, specification and plan have been synchronized. No constitution change,
+database migration or mutation of source/user records is part of the report change.
+
+Evidence: 27 isolated PostgreSQL/API tests and 5 browser flows passed. Verification
+includes year boundaries, multi-room contributions, room/bar-only scopes, zeros,
+exact arithmetic beyond safe integer cents, edits/cancellation, daily corrections,
+provenance, year selection and error recovery. Reviewed desktop/mobile screenshots.
+Browser test booking cancelled; bar fixtures do not write live sales. Docker app was
+rebuilt and passed readiness. T075–T077 complete. T041 remains open for country/type/
+season rankings, occupancy and inventory; satisfaction and user-deferred Tableau
+remain unfinished. This increment does not claim full-feature convergence.
+
+
+## Current convergence: reporting and questionnaires — 2026-11-03
+
+US5–US17/US19 reporting and operational workflows are now implemented for the confirmed
+rules and supplied catalog. Completed optional-year summary/country/type-season/room
+endpoints, fixed annual occupancy, inventory and annual drink-report alias. Overview
+uses API-calculated indicators and expandable tables; all-year scope is explicitly
+labelled and never divided by one annual denominator. Country people are deduplicated
+by booking and propagate unknown counts while retaining a known subtotal. Saved nightly
+charges reconcile by season/country/room without repricing or duplicating group bookings.
+Equal revenue rows remain equal; name/number ordering is only stable presentation.
+
+Room questionnaire entry/reporting now exists through separate data/service/HTTP layers.
+Startup adds only an empty table, with no generated scores. Transactional booking-row
+locking validates active room membership against concurrent booking edits/cancellation.
+Original room links survive edits, cancelled bookings are excluded, response-free rooms
+show null and means display one decimal. Financial year does not filter the explicitly
+all-time questionnaire view. Each POST is a distinct questionnaire; correction and
+repeated-questionnaire policy remain open rather than silently enforcing a limit.
+
+Evidence: 33 isolated PostgreSQL/API tests passed, including Excel country/season/room
+reconciliation, count separation, exact amounts, cross-year/multi-room allocations,
+unknown guest data, inventory invariance, feedback validity, means and repeat-start
+persistence. Seven Chrome browser scenarios verified, with a targeted passing rerun
+after a questionnaire accessible-label fix. Reviewed desktop/mobile reports and feedback
+screenshots; error recovery and selected-year/all-year scope verified. Docker app
+rebuilt and healthy. Browser feedback/bar calls use fixtures rather than live writes;
+its own temporary booking is cancelled. Reporting reads never mutate source evidence.
+
+Reconciled T021–T032, T034–T035, T041/T043/T045 and T078–T082
+with completed phases. The five constitution principles remain satisfied. Served OpenAPI
+is updated; corresponding reporting/feedback paths in the design contract are synced.
+
+Remaining: US18/T033/T046 Tableau dashboard/connector/refresh are user-deferred. T037/
+T044 retain missing wine/beer menu input, unresolved zero-denominator/half-way rounding
+and formal business tie numbering if later requested; current UI exposes undefined
+percentages and equal values explicitly. No missing products, guests, ratings or rank
+rules are invented. Full project acceptance and the Tableau deliverable are not claimed.
+GitHub publication and presentation preparation are not performed by this implementation.

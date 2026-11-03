@@ -3,7 +3,7 @@
   "info": {
     "title": "Hotel Operations API \u2014 Draft",
     "version": "0.1.0",
-    "description": "Independent planning contract only. No endpoints are implemented. Tableau transport is deferred. Open business items are in research.md and spec.md; no duplicate-creation handling or login is added."
+    "description": "Independent planning contract only. No endpoints are implemented. Tableau transport is deferred. Open business items are in research.md and spec.md; no duplicate-creation handling or login is added. Reporting and satisfaction endpoints synchronized with the implemented backend contract on 2026-11-03; backend/openapi.json is authoritative for runtime."
   },
   "servers": [
     {
@@ -514,6 +514,26 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Booking is cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         },
         "requestBody": {
@@ -526,55 +546,84 @@
             }
           }
         },
-        "description": "Receptionist entry, no login; validate 1\u20135 and room belongs to booking. Do not copy the response across all booked rooms. Repeat-response/correction policy is not added here."
+        "description": "Record a distinct questionnaire for one room on an active booking, without login. Validate numeric rating 1\u20135 and current booking-room membership in one transaction serialized with booking edits/cancellation. Each POST is a new actual response, not an overwrite; correction/deduplication policy remains open. No historical ratings generated. Original room linkage persists after booking edits; responses linked to cancelled bookings are excluded from reports."
       }
     },
     "/api/reports/summary": {
       "get": {
         "operationId": "reportSummary",
-        "summary": "Read current totals for the reporting scope",
+        "summary": "Read Summary",
+        "description": "Optional year selects occupied nights; bookings count once within each scope, including stays crossing New Year. No year means all years. Cancelled bookings excluded. Prices use saved charges, not today\u2019s tariff. Synthetic dates/room assignments are labelled. Guest count is null if any included booking has unknown guests; known subtotal and unknown booking count remain visible. Annual occupancy is soldRoomNights / (214 \u00d7 365) \u00d7 100, using the agreed fixed denominator even in leap years; null without nights or without a year. Empty booking/night counts are zero. Bar uses its sales dates and all categories, including walk-ins. Total sums recorded components; null only if both are absent.",
         "parameters": [
           {
             "name": "year",
             "in": "query",
             "required": false,
+            "description": "Optional calendar year (1000\u20139999). Omit for all saved years; a repeated or empty value is invalid.",
             "schema": {
-              "type": "integer"
-            }
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 9999
+            },
+            "example": 2026
           }
         ],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Current saved results; empty scopes preserve null amounts and unknown counts.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Summary"
+                  "$ref": "#/components/schemas/OperationalSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing, repeated or invalid year",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
           }
-        },
-        "description": "Current saved data on the next request. Optional year filters the calendar year; absent year means whole dataset. Source provenance remains visible. Ranking ties and R10 numeric boundaries are unresolved; this is a draft contract. Annual occupancy uses approved 214 \u00d7 365 denominator; do not present a whole-source 3-year sum as one-year occupancy."
+        }
       }
     },
     "/api/reports/countries": {
       "get": {
         "operationId": "reportCountries",
-        "summary": "Read holder-country room revenue and distinct booking/person counts",
+        "summary": "Read Countries",
+        "description": "Optional year selects occupied nights; bookings count once within each scope, including stays crossing New Year. No year means all years. Cancelled bookings excluded. Prices use saved charges, not today\u2019s tariff. Synthetic dates/room assignments are labelled. Bookings and all guests belong to the holder\u2019s country; room revenue excludes bar. guestCount is null if any included count is unknown. knownGuestCount is the known subtotal, not an estimated total. Sort exact revenue descending with country name only stabilizing equal values; no numbered rank or tie policy.",
         "parameters": [
           {
             "name": "year",
             "in": "query",
             "required": false,
+            "description": "Optional calendar year (1000\u20139999). Omit for all saved years; a repeated or empty value is invalid.",
             "schema": {
-              "type": "integer"
-            }
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 9999
+            },
+            "example": 2026
           }
         ],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Current saved results; empty scopes preserve null amounts and unknown counts.",
             "content": {
               "application/json": {
                 "schema": {
@@ -585,28 +634,52 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Missing, repeated or invalid year",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
-        },
-        "description": "Current saved data on the next request. Optional year filters the calendar year; absent year means whole dataset. Source provenance remains visible. Ranking ties and R10 numeric boundaries are unresolved; this is a draft contract. Bar revenue is excluded. Unknown historical person count is null, never relabelled booking count."
+        }
       }
     },
     "/api/reports/rooms": {
       "get": {
         "operationId": "reportRooms",
-        "summary": "Read room revenue for known assignments",
+        "summary": "Read Rooms",
+        "description": "Optional year selects occupied nights; bookings count once within each scope, including stays crossing New Year. No year means all years. Cancelled bookings excluded. Prices use saved charges, not today\u2019s tariff. Synthetic dates/room assignments are labelled. All inventory rooms remain visible with null revenue without nights. Sorted by exact revenue descending, nulls last; room number stabilizes equal values without assigning rank numbers.",
         "parameters": [
           {
             "name": "year",
             "in": "query",
             "required": false,
+            "description": "Optional calendar year (1000\u20139999). Omit for all saved years; a repeated or empty value is invalid.",
             "schema": {
-              "type": "integer"
-            }
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 9999
+            },
+            "example": 2026
           }
         ],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Current saved results; empty scopes preserve null amounts and unknown counts.",
             "content": {
               "application/json": {
                 "schema": {
@@ -617,28 +690,52 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Missing, repeated or invalid year",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
-        },
-        "description": "Current saved data on the next request. Optional year filters the calendar year; absent year means whole dataset. Source provenance remains visible. Ranking ties and R10 numeric boundaries are unresolved; this is a draft contract."
+        }
       }
     },
     "/api/reports/room-types-seasons": {
       "get": {
         "operationId": "reportRoomTypesSeasons",
-        "summary": "Read room-type revenue per season",
+        "summary": "Read RoomTypesSeasons",
+        "description": "Optional year selects occupied nights; bookings count once within each scope, including stays crossing New Year. No year means all years. Cancelled bookings excluded. Prices use saved charges, not today\u2019s tariff. Synthetic dates/room assignments are labelled. All 8 types \u00d7 3 seasons are returned. Low January\u2013March, mid April\u2013May/September\u2013December, high June\u2013August. Each occupied room-night contributes once under its saved season and room type. No records means null revenue.",
         "parameters": [
           {
             "name": "year",
             "in": "query",
             "required": false,
+            "description": "Optional calendar year (1000\u20139999). Omit for all saved years; a repeated or empty value is invalid.",
             "schema": {
-              "type": "integer"
-            }
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 9999
+            },
+            "example": 2026
           }
         ],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Current saved results; empty scopes preserve null amounts and unknown counts.",
             "content": {
               "application/json": {
                 "schema": {
@@ -649,60 +746,93 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Missing, repeated or invalid year",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
-        },
-        "description": "Current saved data on the next request. Optional year filters the calendar year; absent year means whole dataset. Source provenance remains visible. Ranking ties and R10 numeric boundaries are unresolved; this is a draft contract."
+        }
       }
     },
     "/api/reports/drinks": {
       "get": {
         "operationId": "reportDrinks",
-        "summary": "Read drink units and revenue",
+        "summary": "Read annual drink units and revenue",
+        "description": "Alias of the drinks array in /api/reports/bar. Requires one year; preserves all source menu items and null amounts without sales.",
         "parameters": [
           {
             "name": "year",
             "in": "query",
-            "required": false,
+            "required": true,
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 9999
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Annual per-drink results",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/DrinkReportRow"
+                    "$ref": "#/components/schemas/DrinkRevenue"
                   }
                 }
               }
             }
+          },
+          "400": {
+            "description": "Missing, repeated or invalid year",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
-        },
-        "description": "Current saved data on the next request. Optional year filters the calendar year; absent year means whole dataset. Source provenance remains visible. Ranking ties and R10 numeric boundaries are unresolved; this is a draft contract."
+        }
       }
     },
     "/api/reports/satisfaction": {
       "get": {
         "operationId": "reportSatisfaction",
-        "summary": "Read per-room satisfaction mean and response count",
-        "parameters": [
-          {
-            "name": "year",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
+        "summary": "Read Satisfaction",
+        "description": "All-time room questionnaire means and counts; no query parameters allowed. Financial year selection does not apply. Excludes responses linked to cancelled bookings. A recorded response retains its original room if a booking is edited. Null mean with zero responses; arithmetic mean, formatted to one decimal by the UI. No historical ratings are generated.",
+        "parameters": [],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Current saved results; empty scopes preserve null amounts and unknown counts.",
             "content": {
               "application/json": {
                 "schema": {
@@ -713,19 +843,39 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Missing, repeated or invalid year",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
-        },
-        "description": "Current saved data on the next request. Optional year filters the calendar year; absent year means whole dataset. Source provenance remains visible. Ranking ties and R10 numeric boundaries are unresolved; this is a draft contract."
+        }
       }
     },
     "/api/reports/inventory": {
       "get": {
         "operationId": "reportInventory",
-        "summary": "Count rooms by type independently of bookings",
+        "summary": "Read Inventory",
+        "description": "All-time room inventory by type, independent of bookings and reporting year. Counts sum to 214 demonstration rooms.",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Current saved results; empty scopes preserve null amounts and unknown counts.",
             "content": {
               "application/json": {
                 "schema": {
@@ -733,6 +883,191 @@
                   "items": {
                     "$ref": "#/components/schemas/InventoryRow"
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing, repeated or invalid year",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reports/revenue": {
+      "get": {
+        "operationId": "annualHotelRevenue",
+        "summary": "Read annual hotel revenue with room and bar components",
+        "description": "Current saved room and bar revenue for one calendar year. Active room-night charges use each occupied night's year (arrival included, departure excluded), including future booked nights; cancelled bookings are excluded. Bar sales use sales_date and saved exact_revenue, including all categories and walk-in customers. Components are aggregated independently without join multiplication; source reference totals are not added again. No tariff or menu-price recalculation. totalRevenue sums recorded components; a missing component remains null and totalRevenue is null only if neither has records. Recorded zero remains 0.00. Amounts are exact decimal strings, displayed to one decimal in the frontend. containsSyntheticData covers either included source; see /api/reports/history. Reads current data on each request in a single database snapshot. The existing roomRevenue field is retained.",
+        "parameters": [
+          {
+            "name": "year",
+            "in": "query",
+            "required": true,
+            "description": "One four-digit calendar year, within the existing booking API date range.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 9999
+            },
+            "example": 2026
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Annual combined hotel revenue and distinct components; missing components remain null.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnualHotelRevenue"
+                },
+                "examples": {
+                  "withData": {
+                    "value": {
+                      "year": 2026,
+                      "currency": "DKK",
+                      "roomRevenue": "2491.00",
+                      "barRevenue": "691.00",
+                      "totalRevenue": "3182.00",
+                      "containsSyntheticData": false
+                    }
+                  },
+                  "barOnly": {
+                    "value": {
+                      "year": 2026,
+                      "currency": "DKK",
+                      "roomRevenue": null,
+                      "barRevenue": "691.00",
+                      "totalRevenue": "691.00",
+                      "containsSyntheticData": false
+                    }
+                  },
+                  "withoutData": {
+                    "value": {
+                      "year": 2027,
+                      "currency": "DKK",
+                      "roomRevenue": null,
+                      "barRevenue": null,
+                      "totalRevenue": null,
+                      "containsSyntheticData": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing, repeated or invalid year",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reports/bar": {
+      "get": {
+        "operationId": "annualBarReport",
+        "summary": "Read annual bar revenue, units, category mix and revenue per drink",
+        "description": "Only dated daily sales are included. Source aggregates are allocated to labelled synthetic daily records across 2024\u20132026. Only the generated daily records contribute to revenue; raw aggregates are not counted a second time. containsSyntheticData identifies these results. Wine/beer contribute to overall totals, but not the cocktail/coffee denominator. No-data values are null. For recorded zero comparison revenue, mixStatus is undefined: no numeric percentage is invented and the outstanding zero-denominator clarification is not marked resolved. Exact DKK strings; frontend displays one decimal.",
+        "parameters": [
+          {
+            "name": "year",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 9999
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnualBarReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid date, drink, quantity or reporting year",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reports/history": {
+      "get": {
+        "operationId": "historicalImportStatus",
+        "summary": "Read original Excel control totals and demonstration-year allocation",
+        "description": "Immutable original source totals across the complete source horizon. They are reference values, not additional reportable revenue or claimed actual annual history. Operational edits/cancellations affect current reporting without changing this evidence. Dates/assignments are generated; missing person counts remain unknown.",
+        "responses": {
+          "200": {
+            "description": "Import status and immutable reference totals if imported",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryStatus"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -1241,47 +1576,77 @@
             "type": "number",
             "minimum": 1,
             "maximum": 5
+          },
+          "recordedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "required": [
           "responseId",
           "bookingId",
           "roomNumber",
-          "rating"
+          "rating",
+          "recordedAt"
         ],
         "additionalProperties": false
       },
       "CountryReportRow": {
         "type": "object",
+        "required": [
+          "country",
+          "bookingCount",
+          "guestCount",
+          "knownGuestCount",
+          "unknownGuestBookingCount",
+          "roomRevenue",
+          "containsSyntheticData"
+        ],
+        "additionalProperties": false,
         "properties": {
           "country": {
             "type": "string"
           },
           "bookingCount": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": 0
           },
           "guestCount": {
             "type": "integer",
-            "nullable": true
+            "minimum": 0,
+            "nullable": true,
+            "description": "Complete guest count; null when no bookings or any booking has an unknown guest count."
+          },
+          "knownGuestCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "unknownGuestBookingCount": {
+            "type": "integer",
+            "minimum": 0
           },
           "roomRevenue": {
             "type": "string",
+            "nullable": true,
             "pattern": "^-?[0-9]+\\.[0-9]{2}$",
-            "description": "Exact DKK amount encoded as a decimal string. Format one decimal in the user-facing view; source reconciliation retains full precision.",
-            "example": "2491.00",
-            "nullable": true
+            "description": "Exact DKK amount as a decimal string; null without eligible records."
+          },
+          "containsSyntheticData": {
+            "type": "boolean"
           }
-        },
-        "required": [
-          "country",
-          "bookingCount",
-          "guestCount",
-          "roomRevenue"
-        ],
-        "additionalProperties": false
+        }
       },
       "RoomReportRow": {
         "type": "object",
+        "required": [
+          "roomNumber",
+          "roomType",
+          "roomRevenue",
+          "soldRoomNights",
+          "synthetic",
+          "containsSyntheticData"
+        ],
+        "additionalProperties": false,
         "properties": {
           "roomNumber": {
             "type": "string"
@@ -1291,25 +1656,32 @@
           },
           "roomRevenue": {
             "type": "string",
+            "nullable": true,
             "pattern": "^-?[0-9]+\\.[0-9]{2}$",
-            "description": "Exact DKK amount encoded as a decimal string. Format one decimal in the user-facing view; source reconciliation retains full precision.",
-            "example": "2491.00",
-            "nullable": true
+            "description": "Exact DKK amount as a decimal string; null without eligible records."
+          },
+          "soldRoomNights": {
+            "type": "integer",
+            "minimum": 0
           },
           "synthetic": {
             "type": "boolean"
+          },
+          "containsSyntheticData": {
+            "type": "boolean"
           }
-        },
-        "required": [
-          "roomNumber",
-          "roomType",
-          "roomRevenue",
-          "synthetic"
-        ],
-        "additionalProperties": false
+        }
       },
       "SeasonReportRow": {
         "type": "object",
+        "required": [
+          "roomType",
+          "season",
+          "roomRevenue",
+          "soldRoomNights",
+          "containsSyntheticData"
+        ],
+        "additionalProperties": false,
         "properties": {
           "roomType": {
             "type": "string"
@@ -1324,55 +1696,67 @@
           },
           "roomRevenue": {
             "type": "string",
+            "nullable": true,
             "pattern": "^-?[0-9]+\\.[0-9]{2}$",
-            "description": "Exact DKK amount encoded as a decimal string. Format one decimal in the user-facing view; source reconciliation retains full precision.",
-            "example": "2491.00",
-            "nullable": true
+            "description": "Exact DKK amount as a decimal string; null without eligible records."
+          },
+          "soldRoomNights": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "containsSyntheticData": {
+            "type": "boolean"
           }
-        },
-        "required": [
-          "roomType",
-          "season",
-          "roomRevenue"
-        ],
-        "additionalProperties": false
+        }
       },
       "InventoryRow": {
         "type": "object",
+        "required": [
+          "roomType",
+          "roomCount",
+          "synthetic"
+        ],
+        "additionalProperties": false,
         "properties": {
           "roomType": {
             "type": "string"
           },
           "roomCount": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": 0
+          },
+          "synthetic": {
+            "type": "boolean"
           }
-        },
-        "required": [
-          "roomType",
-          "roomCount"
-        ],
-        "additionalProperties": false
+        }
       },
       "SatisfactionRow": {
         "type": "object",
+        "required": [
+          "roomNumber",
+          "roomType",
+          "responseCount",
+          "meanRating"
+        ],
+        "additionalProperties": false,
         "properties": {
           "roomNumber": {
             "type": "string"
           },
-          "meanRating": {
-            "type": "number",
-            "nullable": true
+          "roomType": {
+            "type": "string"
           },
           "responseCount": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": 0
+          },
+          "meanRating": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 5
           }
-        },
-        "required": [
-          "roomNumber",
-          "meanRating",
-          "responseCount"
-        ],
-        "additionalProperties": false
+        }
       },
       "DrinkReportRow": {
         "type": "object",
@@ -1477,6 +1861,400 @@
           "containsSyntheticData"
         ],
         "additionalProperties": false
+      },
+      "AnnualBarReport": {
+        "type": "object",
+        "required": [
+          "year",
+          "currency",
+          "revenue",
+          "units",
+          "cocktailPercent",
+          "coffeePercent",
+          "mixStatus",
+          "categories",
+          "drinks",
+          "containsSyntheticData"
+        ],
+        "properties": {
+          "year": {
+            "type": "integer"
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "DKK"
+            ]
+          },
+          "revenue": {
+            "type": "string",
+            "pattern": "^\\d+\\.[0-9]{2}$",
+            "nullable": true
+          },
+          "units": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "cocktailPercent": {
+            "type": "number",
+            "nullable": true
+          },
+          "coffeePercent": {
+            "type": "number",
+            "nullable": true
+          },
+          "mixStatus": {
+            "type": "string",
+            "enum": [
+              "available",
+              "no_data",
+              "undefined"
+            ]
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BarCategory"
+            }
+          },
+          "drinks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DrinkRevenue"
+            }
+          },
+          "containsSyntheticData": {
+            "type": "boolean",
+            "description": "Reporting includes imported history whose actual dates are unknown; assigned 2024\u20132026 dates are demonstration data."
+          }
+        },
+        "additionalProperties": false
+      },
+      "DrinkRevenue": {
+        "type": "object",
+        "required": [
+          "drinkId",
+          "name",
+          "category",
+          "units",
+          "revenue",
+          "synthetic"
+        ],
+        "properties": {
+          "drinkId": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "units": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "revenue": {
+            "type": "string",
+            "pattern": "^\\d+\\.[0-9]{2}$",
+            "nullable": true
+          },
+          "synthetic": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "HistoryStatus": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "state"
+        ],
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "not_imported",
+              "imported"
+            ]
+          },
+          "sourceFile": {
+            "type": "string"
+          },
+          "sourceChecksum": {
+            "type": "string"
+          },
+          "generatorVersion": {
+            "type": "string"
+          },
+          "years": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "sourceTotals": {
+            "$ref": "#/components/schemas/HistoricalSourceTotals"
+          },
+          "generatedDailyBarRows": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "bookingsByYear": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "year",
+                "bookings",
+                "revenue"
+              ],
+              "properties": {
+                "year": {
+                  "type": "integer"
+                },
+                "bookings": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "revenue": {
+                  "type": "string",
+                  "pattern": "^\\d+\\.[0-9]{2}$"
+                }
+              }
+            }
+          },
+          "barByYear": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "year",
+                "units",
+                "revenue"
+              ],
+              "properties": {
+                "year": {
+                  "type": "integer"
+                },
+                "units": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "revenue": {
+                  "type": "string",
+                  "pattern": "^\\d+\\.[0-9]{2}$"
+                }
+              }
+            }
+          }
+        }
+      },
+      "AnnualHotelRevenue": {
+        "type": "object",
+        "required": [
+          "year",
+          "currency",
+          "roomRevenue",
+          "containsSyntheticData",
+          "barRevenue",
+          "totalRevenue"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "year": {
+            "type": "integer",
+            "minimum": 1000,
+            "maximum": 9999
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "DKK"
+            ]
+          },
+          "roomRevenue": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+            "description": "Exact booked room revenue; null means there are no eligible room-nights.",
+            "example": "2491.00"
+          },
+          "containsSyntheticData": {
+            "type": "boolean",
+            "description": "True if either included room or bar records contain imported demonstration dates or generated room assignments."
+          },
+          "barRevenue": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+            "description": "Exact saved daily bar revenue for the selected year, including all categories and walk-in sales; null without sales records.",
+            "example": "691.00"
+          },
+          "totalRevenue": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+            "description": "Exact sum of recorded room and bar components. Null only if both components have no records. A missing component remains null in its own field. A recorded zero is preserved.",
+            "example": "3182.00"
+          }
+        }
+      },
+      "BarCategory": {
+        "type": "object",
+        "required": [
+          "category",
+          "units",
+          "revenue"
+        ],
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "units": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "revenue": {
+            "type": "string",
+            "pattern": "^\\d+\\.[0-9]{2}$",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "OperationalSummary": {
+        "type": "object",
+        "required": [
+          "year",
+          "currency",
+          "bookingCount",
+          "guestCount",
+          "knownGuestCount",
+          "unknownGuestBookingCount",
+          "soldRoomNights",
+          "roomRevenue",
+          "barRevenue",
+          "totalRevenue",
+          "barUnits",
+          "occupancyPercent",
+          "occupancyCapacity",
+          "containsSyntheticData"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "year": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 1000,
+            "maximum": 9999
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "DKK"
+            ]
+          },
+          "bookingCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "guestCount": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true,
+            "description": "Complete guest count; null when no bookings or any booking has an unknown guest count."
+          },
+          "knownGuestCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "unknownGuestBookingCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "soldRoomNights": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "roomRevenue": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+            "description": "Exact DKK amount as a decimal string; null without eligible records."
+          },
+          "barRevenue": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+            "description": "Exact DKK amount as a decimal string; null without eligible records."
+          },
+          "totalRevenue": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+            "description": "Exact DKK amount as a decimal string; null without eligible records."
+          },
+          "barUnits": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "occupancyPercent": {
+            "type": "number",
+            "nullable": true
+          },
+          "occupancyCapacity": {
+            "type": "integer",
+            "nullable": true,
+            "enum": [
+              78110,
+              null
+            ]
+          },
+          "containsSyntheticData": {
+            "type": "boolean"
+          }
+        }
+      },
+      "HistoricalSourceTotals": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "bookings",
+          "roomNights",
+          "roomRevenue",
+          "barUnits",
+          "barRevenue"
+        ],
+        "properties": {
+          "bookings": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "roomNights": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "roomRevenue": {
+            "type": "string",
+            "pattern": "^\\d+\\.[0-9]{2}$"
+          },
+          "barUnits": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "barRevenue": {
+            "type": "string",
+            "pattern": "^\\d+\\.[0-9]{2}$"
+          }
+        }
       }
     }
   },

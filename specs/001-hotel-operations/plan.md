@@ -426,3 +426,76 @@ Staff shows import reference totals, demonstration-date labels, year filtering, 
 25-row display pagination. Bookings are loaded with four bulk queries instead of per-booking
 round trips. Annual APIs expose containsSyntheticData and /api/reports/history exposes
 immutable source/reference totals. Pagination is a UI display choice, not a booking limit.
+
+
+## Staff workspace navigation amendment — 2026-11-03
+
+The user retired the customer frontend. Serve a static staff home with three SVG icon
+links at / and /staff. Serve independent pages at /staff/overview, /staff/bookings and
+/staff/bar. Header navigation and home links work across all pages. The former /guest
+route/controller is removed; /staff.html redirects to the staff home for old bookmarks.
+
+Overview owns overview.js, revenue.js and history.js. The booking page owns app.js and
+bookingForm.js; it does not request reports or bar data. The bar page owns bar.js and
+does not fetch booking lists. The home page has no data-fetching script. Keep one Express
+container and the existing JSON API, PostgreSQL data, import markers and booking rules.
+No database migration, new business rule or authentication change is part of this work.
+
+Verification updates existing HTTP/browser checks to cover icon navigation, independent
+page content/data requests, keyboard/mobile navigation and retained booking/report/bar
+behavior, including the generated historical data and year/search/pagination controls.
+
+
+## Hotel visual identity amendment — 2026-11-03
+
+Use locally stored official room overview images, associated by exact room-type name
+in frontend/roomPhotos.js. Clickable, labelled image buttons synchronize the existing
+type filter and display availability counts; selected room numbers and booking rules
+retain their current behavior. Photographs illustrate categories, not generated rooms.
+Apply the reference site's Barlow body font, Miller/Times headline fallback stack,
+warm beige/cream/brown palette and header wordmark across all staff pages. The source
+Miller font-face is disabled and its referenced file unavailable, so do not claim to
+bundle Miller. Store Barlow with its OFL license and document source URLs in
+frontend/assets/README.md. No external font/photo requests are required at runtime.
+
+
+## Combined annual hotel revenue — 2026-11-03
+
+Extend the existing GET /api/reports/revenue?year=YYYY response additively with
+barRevenue and totalRevenue, preserving roomRevenue, year, currency and provenance.
+Use one PostgreSQL statement with independent room and daily-bar aggregates to avoid
+join multiplication and read both components from the same snapshot. No schema change.
+The service sums exact decimal strings with integer minor units; it keeps null components
+visible, returns total=null only if both are null and preserves genuine zero values.
+Use the same existing year validation and JSON errors. Extend the served OpenAPI and
+show total plus room/bar breakdown on Overview through one report fetch. Keep the
+separate detailed bar report and the wider draft /reports/summary unchanged.
+Verify isolated PostgreSQL/API tests for decimal precision, missing/zero data, year
+boundaries, multi-room totals, cancellation/corrections and either-source provenance;
+then verify frontend year changes, error recovery, live values and desktop/mobile layout.
+Other reporting, satisfaction and deferred Tableau tasks remain open.
+
+
+## Remaining reports and satisfaction — 2026-11-03
+
+Add GET /api/reports/summary, /countries, /rooms, /room-types-seasons and /inventory
+using ReportRepository SQL aggregates, ReportService validation/calculations and report
+routes. Optional year is 1000–9999; missing means all years. Aggregate booking counts
+separately from nightly revenue to prevent multiplying people. Return exact monetary
+strings and unrounded percentages; UI displays one decimal. Add a drinks report alias
+using the existing bar service. Retain the current annual /revenue endpoint.
+
+Add an empty satisfaction_responses table with independent booking and original-room
+foreign keys and a 1–5 numeric constraint. Booking-room validation and insertion run under
+a booking row lock in one transaction to serialize with booking edits/cancellation.
+Use separate SatisfactionRepository/Service/routes. POST /api/satisfaction creates a
+response; GET /api/reports/satisfaction returns all-time room means/counts (no financial
+year filter). Inject the new repository at app composition; do not seed questionnaires.
+Add booking-row questionnaire actions and an accessible dropdown form on Bookings.
+
+Overview uses expandable report sections and one shared financial year selector. APIs
+return sorted complete lists; frontend does not calculate financial indicators. Preserve
+current no-data/provenance semantics, clear stale rows on failure and guard late responses.
+Verify isolated API fixtures, source reconciliation, schema repeatability and browser
+flows. Broader Tableau integration, new wine/beer menu values and questionnaire correction
+policy remain outside this increment. Update data model, OpenAPI, tasks and convergence.
