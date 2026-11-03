@@ -321,3 +321,13 @@ US20 and the guest entry point from Phase 26 are retired at the user's request.
 ## Phase 38: Distinct room-type colors — 2026-11-03
 
 - [x] T095 Give all eight chart room types distinct stable colors, update legend/copy and verify the existing chart flow visually.
+
+
+## Phase 39: Booking-holder email requirement (Q1 correction) — 2026-11-03
+
+Q1 is corrected to include the booking holder's email address as a supplied field; Q5 is
+clarified so that only prices are excluded from manual entry.
+
+- [x] T096 Correct Q1/Q5, Stories 1–2, FR-001/FR-002 and Key Entities in spec.md; update data model, plan and both OpenAPI contracts with holderEmail.
+- [x] T097 Add nullable holder_email column, require and format-validate email for new bookings, and allow imported bookings without email to remain empty on edit.
+- [x] T098 Add the email field to the browser booking form and booking list, and extend pricing/integration tests for missing, invalid and imported-without-email cases.

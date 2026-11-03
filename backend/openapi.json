@@ -1183,6 +1183,12 @@
           "holderLastName": {
             "type": "string"
           },
+          "holderEmail": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255,
+            "description": "Booking holder's email address, typed by the receptionist; required for every new booking (Q1)."
+          },
           "holderCountry": {
             "type": "string"
           },
@@ -1218,6 +1224,7 @@
         "required": [
           "holderFirstName",
           "holderLastName",
+          "holderEmail",
           "holderCountry",
           "guestCount",
           "roomNumbers",
@@ -1234,6 +1241,13 @@
           },
           "holderLastName": {
             "type": "string"
+          },
+          "holderEmail": {
+            "type": "string",
+            "nullable": true,
+            "format": "email",
+            "maxLength": 255,
+            "description": "Booking holder's email address. May be omitted or null only for an imported historical booking that has no email; bookings created in the system must keep a valid email."
           },
           "holderCountry": {
             "type": "string"
@@ -1346,6 +1360,11 @@
           "holderLastName": {
             "type": "string"
           },
+          "holderEmail": {
+            "type": "string",
+            "nullable": true,
+            "description": "Booking holder's email address; null for imported historical bookings, which have no email."
+          },
           "holderCountry": {
             "type": "string"
           },
@@ -1431,6 +1450,7 @@
           "bookingId",
           "holderFirstName",
           "holderLastName",
+          "holderEmail",
           "holderCountry",
           "guestCount",
           "roomNumbers",

@@ -95,7 +95,7 @@ for (const name of ['arrival', 'nights']) controls[name].addEventListener('chang
 $('#room-type').addEventListener('change', drawRooms);
 function resetForm() {
   editing = null; form.reset(); selected.clear(); availableRooms = [];
-  controls.nights.value = '2'; controls.guestCount.value = '1'; controls.guestCount.required=true;
+  controls.nights.value = '2'; controls.guestCount.value = '1'; controls.guestCount.required=true; controls.holderEmail.required=true;
   $('#form-title').textContent = defaultTitle; $('#save').textContent = defaultSave; $('#cancel-edit').hidden = true;
   $('#price-note').textContent = 'Each night uses its own seasonal rate.'; drawRooms();
 }
@@ -103,6 +103,7 @@ async function editBooking(id) {
   try {
     editing = await api(`/bookings/${id}`); selected.clear();
     for (const name of ['holderFirstName','holderLastName','holderCountry','arrival']) controls[name].value = editing[name];
+    controls.holderEmail.value = editing.holderEmail ?? ''; controls.holderEmail.required = editing.holderEmail !== null || !editing.sourceId;
     for (const name of ['nights','guestCount']) { const value = editing[name]; if (value === null) { if (!controls[name].querySelector('option[value=""]')) controls[name].add(option('Unknown (Excel)', '')); controls[name].value=''; controls[name].required=false; continue; } if (!controls[name].querySelector(`option[value="${value}"]`)) extendNumbers(controls[name], 30, value); controls[name].value = String(value); }
     for (const number of editing.roomNumbers) selected.add(number);
     $('#room-type').value = ''; $('#form-title').textContent = `Edit booking #${id}`; $('#save').textContent = 'Save changes'; $('#cancel-edit').hidden = false;
@@ -112,7 +113,7 @@ async function editBooking(id) {
 form.addEventListener('submit', async event => {
   event.preventDefault();
   if (!selected.size) { notice('Select at least one available room.', true); return; }
-  const payload = { holderFirstName: controls.holderFirstName.value, holderLastName: controls.holderLastName.value, holderCountry: controls.holderCountry.value, guestCount: controls.guestCount.value === '' ? null : Number(controls.guestCount.value), roomNumbers: [...selected], arrival: controls.arrival.value, nights: Number(controls.nights.value), ...(editing ? { version: editing.version, guests: editing.guests } : {}) };
+  const payload = { holderFirstName: controls.holderFirstName.value, holderLastName: controls.holderLastName.value, holderEmail: controls.holderEmail.value.trim() === '' && editing ? null : controls.holderEmail.value, holderCountry: controls.holderCountry.value, guestCount: controls.guestCount.value === '' ? null : Number(controls.guestCount.value), roomNumbers: [...selected], arrival: controls.arrival.value, nights: Number(controls.nights.value), ...(editing ? { version: editing.version, guests: editing.guests } : {}) };
   try {
     const booking = await api(editing ? `/bookings/${editing.bookingId}` : '/bookings', { method: editing ? 'PUT' : 'POST', body: JSON.stringify(payload) });
     resetForm(); await onSaved(booking);

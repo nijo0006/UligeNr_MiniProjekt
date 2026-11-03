@@ -9,7 +9,7 @@ const rates = [
   { roomType: 'Standard Double', season: 'high', nightlyPrice: '1782.00' }
 ];
 const rooms = [{ roomNumber: '001', roomType: 'Standard Single' }];
-const input = () => ({ holderFirstName: 'Frederik', holderLastName: 'Johansen', holderCountry: 'Denmark', guestCount: 1, roomNumbers: ['001'], arrival: '2026-05-31', nights: 2 });
+const input = () => ({ holderFirstName: 'Frederik', holderLastName: 'Johansen', holderEmail: 'frederik@example.com', holderCountry: 'Denmark', guestCount: 1, roomNumbers: ['001'], arrival: '2026-05-31', nights: 2 });
 
 test('prices each occupied night across May/June; departure night is excluded', () => {
   const result = calculateStay('2026-05-31', 2, rooms, rates);
@@ -53,4 +53,18 @@ test('validates editable version and typed names without inventing guests', () =
   assert.equal(validateBookingInput({ ...input(), version: 3 }, true).version, 3);
   assert.throws(() => validateBookingInput({ ...input(), holderFirstName: ' ' }), /name/i);
   assert.deepEqual(validateBookingInput(input()).guests, []);
+});
+test('requires a valid booking-holder email for new bookings (Q1)', () => {
+  const { holderEmail, ...withoutEmail } = input();
+  assert.throws(() => validateBookingInput(withoutEmail), /holderEmail/);
+  assert.throws(() => validateBookingInput({ ...input(), holderEmail: null }), /holderEmail/);
+  for (const invalid of ['', '  ', 'frederik', 'frederik@', 'frederik@example', 'fre derik@example.com', 42]) assert.throws(() => validateBookingInput({ ...input(), holderEmail: invalid }), /holderEmail/);
+  assert.equal(validateBookingInput({ ...input(), holderEmail: '  frederik@example.com ' }).holderEmail, 'frederik@example.com');
+  assert.throws(() => validateBookingInput({ ...input(), holderEmail: `${'a'.repeat(250)}@example.com` }), /255/);
+});
+test('an edit may pass a null email; the service decides whether that is allowed', () => {
+  assert.equal(validateBookingInput({ ...input(), holderEmail: null, version: 1 }, true).holderEmail, null);
+  const { holderEmail, ...withoutEmail } = input();
+  assert.equal(validateBookingInput({ ...withoutEmail, version: 1 }, true).holderEmail, null);
+  assert.throws(() => validateBookingInput({ ...input(), holderEmail: 'bad', version: 1 }, true), /holderEmail/);
 });
