@@ -1125,3 +1125,18 @@ restart must not repeat the correction or overwrite later edits. Validate totals
 rollback on errors. Fresh clones must import directly into 2026. Update UI provenance,
 report years and current documentation so workbook data is no longer described as three
 years. Unrelated genuine operational years may remain selectable when records exist.
+
+
+## Fixed Overview year — 2026-11-03
+
+User request removes the Reporting year dropdown. Overview displays static 2026 and
+all financial charts, map and summary requests always use year=2026, including refresh
+and browser return. Inventory/satisfaction retain their existing all-time meanings.
+The general API year support and separate booking/bar controls are unchanged.
+
+
+## Eight room-type colors — 2026-11-03
+
+The user replaces the seasonal chart's blue shades with eight distinct colors, one per
+room type. Each type retains its color across seasons, filters and the legend. Other
+visualizations and all financial values remain unchanged.

@@ -311,3 +311,13 @@ US20 and the guest entry point from Phase 26 are retired at the user's request.
 - [x] T091 Implement direct 2026 import and transactional one-time legacy correction preserving IDs, source evidence, existing edits and all control totals.
 - [x] T092 Update source-period metadata, year controls, provenance labels and authoritative documentation/contracts.
 - [x] T093 Verify generation/migration/rollback/restart and browser reporting, apply correction safely and reconcile the live database.
+
+
+## Phase 37: Fixed Overview year — 2026-11-03
+
+- [x] T094 Remove the year dropdown, display 2026 and verify all Overview reports continue to request 2026 on refresh.
+
+
+## Phase 38: Distinct room-type colors — 2026-11-03
+
+- [x] T095 Give all eight chart room types distinct stable colors, update legend/copy and verify the existing chart flow visually.

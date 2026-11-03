@@ -3,7 +3,7 @@
 <body class="staff-page "><header><a class="brand brand-link" href="/" aria-label="Hotel Kong Arthur staff home"><img class="brand-wordmark" src="/assets/kong-arthur-logo.svg" alt="Hotel Kong Arthur" width="122" height="44"><span class="brand-context">Staff workspace</span></a><nav class="top-nav" aria-label="Staff navigation"><a href="/">Home</a><a href="/staff/overview" aria-current="page">Overview</a><a href="/staff/bookings">Bookings</a><a href="/staff/bar">Helene’s bar</a></nav></header>
 <main><a class="back-home" href="/">← Staff home</a><div class="page-heading"><div><p class="eyebrow">HOTEL OPERATIONS</p><h1>Overview</h1><p>Hotel revenue and historical figures, with a clear view of the reporting period.</p></div></div>
 <div id="overview-error" class="notice error" role="status" hidden></div><div class="overview-grid">    <section id="overview" class="panel revenue-panel" aria-labelledby="revenue-title">
-      <div class="revenue-heading"><div><p class="eyebrow">OPERATIONS</p><h2 id="revenue-title">Annual hotel revenue</h2></div><label>Reporting year<select id="report-year" aria-label="Reporting year"></select></label></div>
+      <div class="revenue-heading"><div><p class="eyebrow">OPERATIONS</p><h2 id="revenue-title">Annual hotel revenue</h2></div><span id="report-year" class="report-period" aria-label="Reporting year 2026">2026</span></div>
       <div class="revenue-result" aria-live="polite" aria-atomic="true" aria-busy="true">
         <span class="revenue-total-label">Rooms + bar</span><strong id="annual-hotel-revenue">Loading…</strong><span id="revenue-status">Reading saved room charges and bar sales.</span>
       </div>
@@ -36,7 +36,7 @@
   </section>
   <section class="panel report-detail season-chart-report" aria-labelledby="seasonal-revenue-title"><h3 id="seasonal-revenue-title">Room revenue by type &amp; season</h3>
     <div class="season-chart-heading"><p id="season-chart-period">Selected reporting period</p><button id="season-chart-reset" class="secondary" type="button">Show all room types</button></div>
-    <p class="hint">Revenue on the vertical axis; seasons on the horizontal axis. Each blue shade represents one room type across all seasons. Low: January–March. Mid: April–May and September–December. High: June–August.</p>
+    <p class="hint">Revenue on the vertical axis; seasons on the horizontal axis. Each color represents one room type across all seasons. Low: January–March. Mid: April–May and September–December. High: June–August.</p>
     <fieldset class="chart-legend"><legend>Room types</legend><div id="season-chart-legend"></div></fieldset>
     <p id="season-chart-state" class="hint" role="status">Loading seasonal revenue…</p><p class="chart-scroll-hint hint">On smaller screens, scroll the chart sideways to compare all seasons.</p>
     <div class="season-chart-scroll" role="region" aria-label="Seasonal room revenue chart, scroll horizontally on small screens" tabindex="0"><svg id="season-chart" viewBox="0 0 960 465" role="group" aria-label="Grouped bar chart: room revenue by season and room type" aria-describedby="season-chart-state"></svg></div>

@@ -1,0 +1,242 @@
+[
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "Grand Lit",
+    "season": "low",
+    "seasonOrder": 1,
+    "roomRevenue": 217585.0,
+    "soldRoomNights": 179,
+    "containsSyntheticData": true
+  },
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "Grand Lit",
+    "season": "mid",
+    "seasonOrder": 2,
+    "roomRevenue": 338245.0,
+    "soldRoomNights": 242,
+    "containsSyntheticData": true
+  },
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "Grand Lit",
+    "season": "high",
+    "seasonOrder": 3,
+    "roomRevenue": 407486.0,
+    "soldRoomNights": 257,
+    "containsSyntheticData": true
+  },
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "Junior Suite",
+    "season": "low",
+    "seasonOrder": 1,
+    "roomRevenue": 458261.0,
+    "soldRoomNights": 230,
+    "containsSyntheticData": true
+  },
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "Junior Suite",
+    "season": "mid",
+    "seasonOrder": 2,
+    "roomRevenue": 596511.0,
+    "soldRoomNights": 274,
+    "containsSyntheticData": true
+  },
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "Junior Suite",
+    "season": "high",
+    "seasonOrder": 3,
+    "roomRevenue": 570892.0,
+    "soldRoomNights": 242,
+    "containsSyntheticData": true
+  },
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "LOFT Suite",
+    "season": "low",
+    "seasonOrder": 1,
+    "roomRevenue": 536800.0,
+    "soldRoomNights": 166,
+    "containsSyntheticData": true
+  },
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "LOFT Suite",
+    "season": "mid",
+    "seasonOrder": 2,
+    "roomRevenue": 478875.0,
+    "soldRoomNights": 139,
+    "containsSyntheticData": true
+  },
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "LOFT Suite",
+    "season": "high",
+    "seasonOrder": 3,
+    "roomRevenue": 683198.0,
+    "soldRoomNights": 183,
+    "containsSyntheticData": true
+  },
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "Spa Executive",
+    "season": "low",
+    "seasonOrder": 1,
+    "roomRevenue": 453526.0,
+    "soldRoomNights": 202,
+    "containsSyntheticData": true
+  },
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "Spa Executive",
+    "season": "mid",
+    "seasonOrder": 2,
+    "roomRevenue": 642341.0,
+    "soldRoomNights": 268,
+    "containsSyntheticData": true
+  },
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "Spa Executive",
+    "season": "high",
+    "seasonOrder": 3,
+    "roomRevenue": 645705.0,
+    "soldRoomNights": 245,
+    "containsSyntheticData": true
+  },
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "Standard Double",
+    "season": "low",
+    "seasonOrder": 1,
+    "roomRevenue": 390570.0,
+    "soldRoomNights": 273,
+    "containsSyntheticData": true
+  },
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "Standard Double",
+    "season": "mid",
+    "seasonOrder": 2,
+    "roomRevenue": 340456.0,
+    "soldRoomNights": 229,
+    "containsSyntheticData": true
+  },
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "Standard Double",
+    "season": "high",
+    "seasonOrder": 3,
+    "roomRevenue": 317174.0,
+    "soldRoomNights": 180,
+    "containsSyntheticData": true
+  },
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "Standard Single",
+    "season": "low",
+    "seasonOrder": 1,
+    "roomRevenue": 239940.0,
+    "soldRoomNights": 233,
+    "containsSyntheticData": true
+  },
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "Standard Single",
+    "season": "mid",
+    "seasonOrder": 2,
+    "roomRevenue": 233792.0,
+    "soldRoomNights": 203,
+    "containsSyntheticData": true
+  },
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "Standard Single",
+    "season": "high",
+    "seasonOrder": 3,
+    "roomRevenue": 256712.0,
+    "soldRoomNights": 192,
+    "containsSyntheticData": true
+  },
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "Suite",
+    "season": "low",
+    "seasonOrder": 1,
+    "roomRevenue": 626488.0,
+    "soldRoomNights": 228,
+    "containsSyntheticData": true
+  },
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "Suite",
+    "season": "mid",
+    "seasonOrder": 2,
+    "roomRevenue": 799961.0,
+    "soldRoomNights": 264,
+    "containsSyntheticData": true
+  },
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "Suite",
+    "season": "high",
+    "seasonOrder": 3,
+    "roomRevenue": 693222.0,
+    "soldRoomNights": 214,
+    "containsSyntheticData": true
+  },
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "Superior Double",
+    "season": "low",
+    "seasonOrder": 1,
+    "roomRevenue": 430907.0,
+    "soldRoomNights": 268,
+    "containsSyntheticData": true
+  },
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "Superior Double",
+    "season": "mid",
+    "seasonOrder": 2,
+    "roomRevenue": 409635.0,
+    "soldRoomNights": 232,
+    "containsSyntheticData": true
+  },
+  {
+    "year": 2026,
+    "currency": "DKK",
+    "roomType": "Superior Double",
+    "season": "high",
+    "seasonOrder": 3,
+    "roomRevenue": 502549.0,
+    "soldRoomNights": 254,
+    "containsSyntheticData": true
+  }
+]

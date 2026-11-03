@@ -2,7 +2,7 @@ import {currency} from './shared.js';
 const $=selector=>document.querySelector(selector),ns='http://www.w3.org/2000/svg';
 const svg=$('#season-chart'),legend=$('#season-chart-legend');
 const types=['Standard Single','Grand Lit','Standard Double','Superior Double','Junior Suite','Spa Executive','Suite','LOFT Suite'];
-const colors=['#dbeafe','#bed5ef','#a1c1e0','#83acd2','#6597c3','#4581b2','#28669d','#0f4080'];
+const colors=['#4e79a7','#f28e2b','#59a14f','#e15759','#b07aa1','#9c755f','#edc948','#76b7b2'];
 const seasons=[['low','Low season'],['mid','Mid season'],['high','High season']];
 const hidden=new Set();let rows=[];
 function node(tag,attributes={},text){const e=document.createElementNS(ns,tag);for(const[k,v]of Object.entries(attributes))e.setAttribute(k,v);if(text!==undefined)e.textContent=text;return e;}

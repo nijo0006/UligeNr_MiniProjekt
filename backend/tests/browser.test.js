@@ -153,7 +153,7 @@ test('staff browses historical bookings and reporting across the separate pages'
     await page.goto(`${origin}/staff/overview`);
     await expect(page.locator('#history-status')).toContainText('Excel bookings');
     await expect(page.locator('#history-controls')).toContainText(format('11234034.00'));
-    await page.getByLabel('Reporting year',{exact:true}).selectOption('2026');
+    await page.getByRole('button',{name:'Refresh revenue',exact:true}).click();
     const room=await(await fetch(`${origin}/api/reports/revenue?year=2026`)).json();
     await expect(page.locator('#annual-room-revenue')).toHaveText(format(room.roomRevenue));assert.equal(room.containsSyntheticData,true);
     await expect(page.locator('#annual-bar-revenue')).toHaveText(format(room.barRevenue));
@@ -200,7 +200,7 @@ test('annual hotel overview distinguishes missing components, recorded zero and 
     await expect(page.locator('#annual-bar-revenue')).toHaveText(format('50.00'));
     await expect(page.locator('#annual-hotel-revenue')).toHaveText(format('50.00'));
     values={roomRevenue:'0.00',barRevenue:null,totalRevenue:'0.00'};
-    await page.getByLabel('Reporting year',{exact:true}).selectOption('2024');
+    await page.getByRole('button',{name:'Refresh revenue',exact:true}).click();
     await expect(page.locator('#annual-room-revenue')).toHaveText(format('0.00'));
     await expect(page.locator('#annual-bar-revenue')).toHaveText('No data');
     await expect(page.locator('#annual-hotel-revenue')).toHaveText(format('0.00'));
@@ -209,7 +209,7 @@ test('annual hotel overview distinguishes missing components, recorded zero and 
     for(const id of ['annual-room-revenue','annual-bar-revenue','annual-hotel-revenue'])await expect(page.locator(`#${id}`)).toHaveText('No data');
     await expect(page.locator('#revenue-status')).toContainText('No room-nights or bar sales');
     await page.unroute('**/api/reports/revenue?year=*');
-    await page.getByLabel('Reporting year',{exact:true}).selectOption('2026');
+    await page.getByRole('button',{name:'Refresh revenue',exact:true}).click();
     const actual=await(await fetch(`${origin}/api/reports/revenue?year=2026`)).json();
     await expect(page.locator('#annual-hotel-revenue')).toHaveText(format(actual.totalRevenue));
     await page.screenshot({path:'/tmp/hotel-annual-revenue-desktop.png',fullPage:true});
@@ -219,13 +219,13 @@ test('annual hotel overview distinguishes missing components, recorded zero and 
   }finally{await browser.close();}
 });
 
-test('remaining Overview reports follow API year selection, all-year scope, failure recovery and mobile layout',async()=>{
+test('remaining Overview reports use fixed 2026, recover from failures and fit mobile',async()=>{
   const browser=await chromium.launch({channel:'chrome',headless:true});
   const page=await browser.newPage({viewport:{width:1440,height:1100}});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   try{
     await page.goto(`${origin}/staff/overview`);
-    await page.getByLabel('Reporting year',{exact:true}).selectOption('2026');
+    await page.getByRole('button',{name:'Refresh revenue',exact:true}).click();
     await expect(page.locator('#operational-reports')).toHaveAttribute('aria-busy','false');
     const summary=await(await fetch(`${origin}/api/reports/summary?year=2026`)).json();
     await expect(page.locator('#occupancy')).toHaveText(`${summary.occupancyPercent.toFixed(1)}%`);
@@ -242,9 +242,10 @@ test('remaining Overview reports follow API year selection, all-year scope, fail
     await expect(page.locator('#inventory-report tr')).toHaveCount(8);
     await expect(page.locator('#satisfaction-report tr')).toHaveCount(8);
     await expect(page.locator('[aria-labelledby=room-feedback-title] th')).toHaveText(['Room type','Rating']);
-    await page.getByLabel('Reporting year',{exact:true}).selectOption('');
-    await expect(page.locator('#occupancy')).toHaveText('Select one year');
-    await expect(page.locator('#revenue-status')).toContainText('All saved years');
+    await page.getByRole('button',{name:'Refresh revenue',exact:true}).click();
+    await expect(page.locator('#report-year')).toHaveText('2026');
+    await expect(page.locator('select#report-year')).toHaveCount(0);
+    await expect(page.locator('#revenue-status')).toContainText('Calendar year 2026');
     await expect(page.locator('#country-report')).toContainText('South Korea');
     await expect(page.locator('#season-chart')).toBeVisible();
     await expect(page.locator('#season-report')).toBeVisible();
@@ -342,7 +343,7 @@ test('country map uses scoped blue revenue colors and supports selection, keyboa
     await expect(page.locator('#map-zoom-status')).toHaveText('100%');
     await page.locator('.country-map-report').screenshot({path:'/tmp/hotel-country-map-desktop.png'});
     values=[row('United States','0.00')];
-    await page.getByLabel('Reporting year',{exact:true}).selectOption('2024');
+    await page.getByRole('button',{name:'Refresh revenue',exact:true}).click();
     await expect(country('KOR')).toHaveAttribute('data-has-data','false');
     await expect(page.locator('#map-country-revenue')).toHaveText('No data');
     await page.getByLabel('Explore a country',{exact:true}).selectOption('United States');
@@ -358,7 +359,7 @@ test('country map uses scoped blue revenue colors and supports selection, keyboa
     await expect(page.locator('#map-state')).toHaveText('Country revenue unavailable');
     await expect(page.locator('#map-country-revenue')).toHaveText('Country revenue unavailable');
     await page.unroute('**/api/reports/countries*');
-    await page.getByLabel('Reporting year',{exact:true}).selectOption('2026');
+    await page.getByRole('button',{name:'Refresh revenue',exact:true}).click();
     await expect(country('KOR')).toHaveAttribute('data-has-data','true');
     await page.setViewportSize({width:390,height:844});
     await page.getByLabel('Explore a country',{exact:true}).selectOption('South Korea');
@@ -387,7 +388,7 @@ test('country map keeps country figures usable if local geography fails to load'
   }finally{await browser.close();}
 });
 
-test('seasonal grouped bar chart preserves API values, axes, blue series, filters and null/zero/error states',async()=>{
+test('seasonal grouped bar chart preserves API values, axes, distinct room-type colors, filters and null/zero/error states',async()=>{
   const browser=await chromium.launch({channel:'chrome',headless:true});
   const page=await browser.newPage({viewport:{width:1440,height:1100}});
   const types=['Standard Single','Grand Lit','Standard Double','Superior Double','Junior Suite','Spa Executive','Suite','LOFT Suite'];
@@ -401,11 +402,12 @@ test('seasonal grouped bar chart preserves API values, axes, blue series, filter
     await page.route('**/api/reports/room-types-seasons*',route=>route.fulfill(fail?{status:503,json:{message:'Chart test outage'}}:{json:values}));
     await page.goto(`${origin}/staff/overview`);
     await expect(page.locator('#season-chart .season-bar')).toHaveCount(5);
+    assert.equal(await page.locator('#season-chart-legend .chart-swatch').evaluateAll(swatches=>new Set(swatches.map(s=>s.style.background)).size),8);
     await expect(page.locator('#season-chart')).toContainText('Revenue (DKK)');
     for(const label of ['Low season','Mid season','High season'])await expect(page.locator('#season-chart')).toContainText(label);
     assert.ok(Number(await bar('Standard Single','high').getAttribute('height'))>Number(await bar('Standard Single','mid').getAttribute('height')));
     assert.equal(await bar('Standard Single','high').getAttribute('fill'),await bar('Standard Single','low').getAttribute('fill'));
-    await expect(bar('Standard Single','low')).toHaveAttribute('fill','#dbeafe');
+    await expect(bar('Standard Single','low')).toHaveAttribute('fill','#4e79a7');
     await expect(bar('Grand Lit','mid')).toHaveCount(0);
     assert.equal(await bar('Grand Lit','low').evaluate(e=>e.tagName),'circle');
     await bar('Standard Single','mid').focus();await page.keyboard.press('Enter');
@@ -416,9 +418,9 @@ test('seasonal grouped bar chart preserves API values, axes, blue series, filter
     await page.getByRole('button',{name:'Show all room types',exact:true}).click();
     await expect(page.locator('#season-chart .season-bar')).toHaveCount(5);
     set('Standard Single','mid','700.00');
-    await page.getByLabel('Reporting year',{exact:true}).selectOption('2024');
+    await page.getByRole('button',{name:'Refresh revenue',exact:true}).click();
     await expect(bar('Standard Single','mid')).toHaveAttribute('data-revenue','700.00');
-    await expect(page.locator('#season-chart-period')).toHaveText('Calendar year 2024');
+    await expect(page.locator('#season-chart-period')).toHaveText('Calendar year 2026');
     values=fixture();
     await page.getByRole('button',{name:'Refresh revenue',exact:true}).click();
     await expect(page.locator('#season-chart-state')).toHaveText('No revenue records for this period.');
@@ -432,10 +434,10 @@ test('seasonal grouped bar chart preserves API values, axes, blue series, filter
     await expect(page.locator('#season-chart-state')).toHaveText('Seasonal revenue unavailable');
     await expect(page.locator('#season-chart .season-bar')).toHaveCount(0);
     await page.unroute('**/api/reports/room-types-seasons*');
-    await page.getByLabel('Reporting year',{exact:true}).selectOption('');
-    await expect(page.locator('#season-chart-period')).toHaveText('All saved years');
+    await page.getByRole('button',{name:'Refresh revenue',exact:true}).click();
+    await expect(page.locator('#season-chart-period')).toHaveText('Calendar year 2026');
     await expect(page.locator('#season-chart .season-bar')).toHaveCount(24);
-    const actual=await(await fetch(`${origin}/api/reports/room-types-seasons`)).json();
+    const actual=await(await fetch(`${origin}/api/reports/room-types-seasons?year=2026`)).json();
     await expect(bar('Standard Single','mid')).toHaveAttribute('data-revenue',actual.find(r=>r.roomType==='Standard Single'&&r.season==='mid').roomRevenue);
     await page.locator('.season-chart-report').screenshot({path:'/tmp/hotel-season-chart-desktop.png'});
     await page.setViewportSize({width:390,height:844});

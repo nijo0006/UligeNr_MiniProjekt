@@ -115,3 +115,5 @@ th{background:#e5d8d1}
 [aria-labelledby="room-feedback-title"] tbody tr:nth-child(odd){background:#eef3f8}
 [aria-labelledby="room-feedback-title"] tbody tr:nth-child(even){background:#f7f9fb}
 [aria-labelledby="room-feedback-title"] td:last-child{color:#0f4080;font-weight:500}
+
+.report-period{font:28px var(--font-heading);color:#123e70;padding:8px 0;white-space:nowrap}
