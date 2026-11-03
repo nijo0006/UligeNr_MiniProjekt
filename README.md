@@ -27,6 +27,7 @@ Use `docker compose up -d` to leave services running in the background.
 | Implemented OpenAPI JSON | http://localhost:3000/api/openapi.json |
 | Readiness | http://localhost:3000/api/health |
 | PostgreSQL for a host database client | 127.0.0.1:5433 |
+| Mailpit inbox (questionnaire emails, never delivered to real guests) | http://localhost:8025 |
 
 The app connects internally to `db:5432`. Compose binds exposed ports to the local
 computer. It uses local-development credentials by default; optional `.env` overrides

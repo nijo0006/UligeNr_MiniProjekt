@@ -11,6 +11,7 @@ export function bookingRoutes(service, repository) {
   });
   router.get('/bookings/:bookingId', async (req, res) => res.json(await service.get(req.params.bookingId)));
   router.put('/bookings/:bookingId', async (req, res) => res.json(await service.save(req.body, req.params.bookingId)));
+  router.post('/bookings/:bookingId/complete', async (req, res) => res.json(await service.complete(req.params.bookingId)));
   router.delete('/bookings/:bookingId', async (req, res) => res.json(await service.cancel(req.params.bookingId)));
   return router;
 }

@@ -5,11 +5,13 @@ import { BookingRepository } from './data/bookingRepository.js';
 import { ReportRepository } from './data/reportRepository.js';
 import { initialize } from './startup/initialize.js';
 import { createApp } from './presentation/app.js';
+import { createMailer } from './services/mailer.js';
 
 const pool = createPool();
 try {
   await initialize(pool);
-  const app = await createApp(new BookingRepository(pool), new ReportRepository(pool), new BarRepository(pool), new SatisfactionRepository(pool));
+  const app = await createApp(new BookingRepository(pool), new ReportRepository(pool), new BarRepository(pool), new SatisfactionRepository(pool),
+    { mailer: createMailer(), publicBaseUrl: process.env.PUBLIC_BASE_URL || `http://localhost:${process.env.APP_PORT || 3000}` });
   const server = app.listen(Number(process.env.PORT || 3000), '0.0.0.0', () => console.log('Hotel booking application ready on port 3000.'));
   async function shutdown() {
     server.close(async () => { await pool.end(); process.exit(0); });

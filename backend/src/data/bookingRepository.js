@@ -31,7 +31,7 @@ export class BookingRepository {
     if (roomType) { args.push(roomType); sql += ` AND r.room_type = $${args.length}`; }
     if (arrival && departure) {
       sql += ` AND NOT EXISTS (SELECT 1 FROM booking_rooms br JOIN bookings b ON b.id=br.booking_id
-        WHERE br.room_number=r.room_number AND b.status='active' AND b.id<>$${args.length + 1} AND b.arrival < $${args.length + 2} AND b.departure > $${args.length + 3})`;
+        WHERE br.room_number=r.room_number AND b.status<>'cancelled' AND b.id<>$${args.length + 1} AND b.arrival < $${args.length + 2} AND b.departure > $${args.length + 3})`;
       args.push(excludeBookingId, departure, arrival);
     }
     sql += ' ORDER BY r.room_number';
@@ -50,7 +50,7 @@ export class BookingRepository {
   async overlaps(numbers, arrival, departure, excludedId = 0) {
     for (const number of numbers) {
       const { rows } = await this.database.query(`SELECT b.id FROM booking_rooms br JOIN bookings b ON b.id=br.booking_id
-        WHERE br.room_number=$1 AND b.status='active' AND b.id<>$2 AND b.arrival<$3 AND b.departure>$4 LIMIT 1`, [number, excludedId, departure, arrival]);
+        WHERE br.room_number=$1 AND b.status<>'cancelled' AND b.id<>$2 AND b.arrival<$3 AND b.departure>$4 LIMIT 1`, [number, excludedId, departure, arrival]);
       if (rows.length) return number;
     }
     return null;
@@ -68,14 +68,15 @@ export class BookingRepository {
       roomNumbers:(rooms.get(row.id)??[]).map(r=>r.room_number),arrival:row.arrival,departure:row.departure,
       nights:row.nights,version:row.version,status:row.status,totalPrice:row.total_price,
       nightCharges:charges.get(row.id)??[],syntheticDates:row.synthetic_dates,
-      syntheticRoomAssignment:row.synthetic_room_assignment,sourceId:row.source_id,pricingMode:row.pricing_mode}));
+      syntheticRoomAssignment:row.synthetic_room_assignment,sourceId:row.source_id,pricingMode:row.pricing_mode,
+      completedAt:row.completed_at??null}));
   }
   async get(id,lock=false) {
     const {rows}=await this.database.query(`SELECT * FROM bookings WHERE id=$1${lock?' FOR UPDATE':''}`,[id]);
     return (await this.hydrate(rows))[0]??null;
   }
   async list() {
-    const {rows}=await this.database.query("SELECT * FROM bookings WHERE status='active' ORDER BY id DESC");
+    const {rows}=await this.database.query("SELECT * FROM bookings WHERE status<>'cancelled' ORDER BY id DESC");
     return this.hydrate(rows);
   }
   async create(data, calculation) {
@@ -99,6 +100,22 @@ export class BookingRepository {
     for (const room of calculation.roomTotals) await this.database.query('INSERT INTO booking_rooms (booking_id,room_number,room_total) VALUES ($1,$2,$3)', [id,room.roomNumber,room.total]);
     for (const night of calculation.nightCharges) await this.database.query('INSERT INTO room_nights (booking_id,room_number,night_date,season,exact_charge) VALUES ($1,$2,$3,$4,$5)', [id,night.roomNumber,night.date,night.season,night.charge]);
     for (const guest of data.guests) await this.database.query('INSERT INTO booking_guests (booking_id,first_name,last_name) VALUES ($1,$2,$3)', [id,guest.firstName,guest.lastName]);
+  }
+  async complete(id) {
+    await this.database.query("UPDATE bookings SET status='completed',completed_at=CURRENT_TIMESTAMP,version=version+1 WHERE id=$1 AND status='active'", [id]);
+    return this.get(id);
+  }
+  async createInvitation(bookingId, token, email) {
+    await this.database.query('INSERT INTO satisfaction_invitations (booking_id,token,email) VALUES ($1,$2,$3)', [bookingId, token, email]);
+  }
+  async invitation(bookingId) {
+    const { rows } = await this.database.query('SELECT token,email,sent_at AS "sentAt",send_error AS "sendError" FROM satisfaction_invitations WHERE booking_id=$1', [bookingId]);
+    return rows[0] ?? null;
+  }
+  async markInvitation(bookingId, error) {
+    await this.database.query(error
+      ? 'UPDATE satisfaction_invitations SET send_error=$2 WHERE booking_id=$1'
+      : 'UPDATE satisfaction_invitations SET sent_at=CURRENT_TIMESTAMP,send_error=NULL WHERE booking_id=$1', error ? [bookingId, error] : [bookingId]);
   }
   async cancel(id) {
     await this.database.query("UPDATE bookings SET status='cancelled',version=version+1 WHERE id=$1 AND status='active'", [id]);

@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   holder_first_name VARCHAR(255) NOT NULL, holder_last_name VARCHAR(255) NOT NULL,
   holder_country VARCHAR(255) NOT NULL, guest_count BIGINT NULL CHECK (guest_count BETWEEN 1 AND 4294967295),
   arrival DATE NOT NULL, departure DATE NOT NULL, nights BIGINT NOT NULL,
-  status VARCHAR(9) CHECK (status IN ('active','cancelled')) NOT NULL DEFAULT 'active', version BIGINT NOT NULL DEFAULT 1,
+  status VARCHAR(9) CHECK (status IN ('active','completed','cancelled')) NOT NULL DEFAULT 'active', version BIGINT NOT NULL DEFAULT 1,
   total_price DECIMAL(18,2) NOT NULL,
   synthetic_dates BOOLEAN NOT NULL DEFAULT FALSE, synthetic_room_assignment BOOLEAN NOT NULL DEFAULT FALSE,
   source_id VARCHAR(255) NULL,
@@ -88,3 +88,18 @@ CREATE TABLE IF NOT EXISTS satisfaction_responses (
   recorded_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS satisfaction_room ON satisfaction_responses(room_number, booking_id);
+
+-- Story 24: completed stays (check-out) and emailed satisfaction questionnaires.
+ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_status_check;
+ALTER TABLE bookings ADD CONSTRAINT bookings_status_check CHECK (status IN ('active','completed','cancelled'));
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ NULL;
+CREATE TABLE IF NOT EXISTS satisfaction_invitations (
+  booking_id BIGINT PRIMARY KEY REFERENCES bookings(id),
+  token VARCHAR(64) NOT NULL UNIQUE,
+  email VARCHAR(255) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  sent_at TIMESTAMPTZ NULL,
+  send_error TEXT NULL
+);
+ALTER TABLE satisfaction_responses ADD COLUMN IF NOT EXISTS source VARCHAR(13) NOT NULL DEFAULT 'reception' CHECK (source IN ('reception','questionnaire'));
+CREATE UNIQUE INDEX IF NOT EXISTS satisfaction_questionnaire_once ON satisfaction_responses (booking_id, room_number) WHERE source = 'questionnaire';
