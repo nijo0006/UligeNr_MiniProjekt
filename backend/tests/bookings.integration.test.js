@@ -396,6 +396,13 @@ test('questionnaires validate booking-room membership and persist separate room 
   assert.equal(report.find(r=>r.roomNumber==='001').meanRating,11/3);
   assert.equal(report.find(r=>r.roomNumber==='002').meanRating,2);
   assert.equal(report.find(r=>r.roomNumber==='003').meanRating,null);
+  const types=(await call('/reports/satisfaction?groupBy=roomType')).data;
+  assert.equal(types.length,8);
+  const single=types.find(r=>r.roomType==='Standard Single');
+  assert.equal(single.responseCount,4);assert.equal(single.meanRating,3.25);
+  assert.ok(types.filter(r=>r.roomType!=='Standard Single').every(r=>r.meanRating===null&&r.responseCount===0));
+  for(const query of ['?groupBy=invalid','?groupBy=','?groupBy=room&groupBy=roomType'])assert.equal((await call('/reports/satisfaction'+query)).status,400);
+
   await initialize(pool,{history:false});
   assert.deepEqual((await call('/reports/satisfaction')).data,report);
   assert.equal((await call(`/bookings/${id}`,'PUT',payload({roomNumbers:['003'],version:1}))).status,200);

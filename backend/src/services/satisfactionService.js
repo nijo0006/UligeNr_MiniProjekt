@@ -15,5 +15,8 @@ export class SatisfactionService {
     if(result.error==='unrelated_room')throw badInput('Select a room included in this booking.');
     return result;
   }
-  report(){return this.repository.report();}
+  report(groupBy='room'){
+    if(!['room','roomType'].includes(groupBy))throw badInput('Select groupBy=room or groupBy=roomType.');
+    return this.repository.report(groupBy);
+  }
 }

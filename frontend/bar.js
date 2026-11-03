@@ -56,7 +56,7 @@ $('#bar-form').addEventListener('submit',async event=>{
   }catch(e){error(e.message);}
 });
 try{
-  for(const y of new Set([2024,2025,2026,new Date().getFullYear()]))addYear(y);
+  for(const y of new Set([new Date().getFullYear()-2,new Date().getFullYear()-1,2026,new Date().getFullYear()]))addYear(y);
   year.value=String(new Date().getFullYear());
   const now=new Date();date.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   menu=await api('/drinks');

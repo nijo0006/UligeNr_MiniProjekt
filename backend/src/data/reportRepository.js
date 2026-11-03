@@ -11,7 +11,7 @@ export class ReportRepository {
   constructor(database) { this.database = database; }
 
   async history() {
-    const {rows}=await this.database.query("SELECT summary FROM historical_imports WHERE version='hotel-workbook-history-v1'");
+    const {rows}=await this.database.query("SELECT summary FROM historical_imports WHERE version IN ('hotel-workbook-history-v1','hotel-workbook-2026-correction-v2') ORDER BY CASE WHEN version='hotel-workbook-2026-correction-v2' THEN 0 ELSE 1 END LIMIT 1");
     return rows.length ? {state:'imported',...rows[0].summary} : {state:'not_imported'};
   }
 

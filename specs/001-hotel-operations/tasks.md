@@ -280,3 +280,34 @@ US20 and the guest entry point from Phase 26 are retired at the user's request.
 - [x] T080 Show remaining API-calculated indicators in expandable Overview sections and add questionnaire entry on Bookings; preserve staff navigation and styling.
 - [x] T081 Update served OpenAPI/data-model documentation and verify report/feedback API, source reconciliation, repeat startup and browser desktop/mobile flows.
 - [x] T082 Reconcile completed reporting/bar/satisfaction tasks and final convergence; retain explicit Tableau and unresolved-input boundaries.
+
+
+## Phase 32: Interactive country revenue map — 2026-11-03
+
+- [x] T083 Bundle attributed local Natural Earth geometry and map all approved country names explicitly.
+- [x] T084 Replace the country table presentation with an interactive blue revenue choropleth, legend, details, keyboard/select/zoom/pan controls and a fallback data disclosure.
+- [x] T085 Verify colors, scope changes, missing/zero data, selection, failures and desktop/mobile behavior; update convergence and documentation.
+
+
+## Phase 33: Seasonal room revenue bar chart — 2026-11-03
+
+- [x] T086 Replace type/season presentation with a grouped blue bar chart, labelled axes, room-type legend/filters, accessible values and retained fallback table.
+- [x] T087 Verify API-scoped bar values/heights, null/zero/empty/error states, filters and desktop/mobile layout; document the result.
+
+
+## Phase 34: Always-visible report cards — 2026-11-03
+
+- [x] T088 Replace report/data disclosures with permanent cards, retain chart/map behavior and verify desktop/mobile visibility using existing browser checks.
+
+
+## Phase 35: Simple satisfaction table — 2026-11-03
+
+- [x] T089 Add validated type-grouped satisfaction reporting and simplify Overview to eight type/rating rows; preserve missing data and default room reporting, document and verify.
+
+
+## Phase 36: Correct workbook period to 2026 — 2026-11-03
+
+- [x] T090 Back up existing database and inspect source/manual edits before changing the import period.
+- [x] T091 Implement direct 2026 import and transactional one-time legacy correction preserving IDs, source evidence, existing edits and all control totals.
+- [x] T092 Update source-period metadata, year controls, provenance labels and authoritative documentation/contracts.
+- [x] T093 Verify generation/migration/rollback/restart and browser reporting, apply correction safely and reconcile the live database.

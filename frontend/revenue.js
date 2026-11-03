@@ -11,9 +11,9 @@ let requestNumber = 0;
 export function updateReportingYears(bookings) {
   const currentYear = new Date().getFullYear();
   const selectedYear = yearSelect.options.length && yearSelect.value === '' ? '' : Number(yearSelect.value || currentYear);
-  // Approved demonstration years plus all years represented by active stays.
+  // Recent reporting years plus the source year and all active stay years.
   // This is a convenience list, not a restriction on the report API's year range.
-  const years = new Set([2024, 2025, 2026, currentYear, ...(selectedYear === '' ? [] : [selectedYear])]);
+  const years = new Set([currentYear-2, currentYear-1, 2026, currentYear, ...(selectedYear === '' ? [] : [selectedYear])]);
   for (const booking of bookings) {
     const lastNight = new Date(`${booking.departure}T00:00:00Z`);
     lastNight.setUTCDate(lastNight.getUTCDate() - 1);
