@@ -6,7 +6,7 @@
 
 **Created**: 2026-10-27
 
-**Last Updated**: 2026-11-03 — guest frontend retired; staff home opens separate Overview, Bookings and Helene’s bar pages.
+**Last Updated**: 2026-11-03 — guest frontend retired; staff home opens separate Overview, Bookings and Helene’s bar pages; Story 24 adds booking completion with an emailed satisfaction questionnaire, and Story 13 now uses it as its main source.
 
 **Status**: Draft — confirmed answers incorporated; remaining business decisions are listed below.
 
@@ -299,6 +299,18 @@ for this prototype; questionnaire responses are not generated.
   work. The interactive dashboard and reporting API requirements remain in scope;
   neither CSV/manual refresh nor automatic refresh has been selected. Final dashboard
   integration and end-to-end validation remain pending the user's decision.
+
+### Session 2026-11-03
+
+- Q: How should satisfaction questionnaires reach guests now that the booking holder's
+  email is required? → A: When a booking is completed, the booking holder automatically
+  receives a satisfaction questionnaire by email. Completing a booking is a new receptionist
+  action (check-out) and a new booking status, `completed`, alongside `active` and
+  `cancelled`. Completed bookings remain real stays and keep counting in all indicators;
+  only cancelled bookings are excluded. Guests answer through a questionnaire page reached
+  by a link unique to their booking, rating each booked room separately. These responses
+  become the main source for Story 13; receptionist entry remains available as a fallback.
+  Recorded as Story 24.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -597,13 +609,14 @@ invent person counts, room assignments, or annual allocations missing from K3.
 
 **Card**: As a hotel administrator/decision-maker, I want to see questionnaire-based guest satisfaction for each room, so that I can identify differences in guest experience between rooms.
 
-**Why this priority**: Existing Should priority is retained; the questionnaire source, 1–5 scale, and per-room mean are confirmed, and receptionist entry against a booking and room are confirmed. Priority remains proposed under A1.
+**Why this priority**: Existing Should priority is retained; the questionnaire source, 1–5 scale, and per-room mean are confirmed. Responses are mainly collected through the emailed questionnaire sent when a booking is completed (Story 24); receptionist entry against a booking and room remains as a fallback. Priority remains proposed under A1.
 
 **Independent Test**: Use known room-linked ratings on the 1–5 scale and independently calculate the arithmetic mean for each room.
 
 **Conversation**:
 
-- Q14 confirms questionnaires linked to rooms. Each response supplies one overall rating from 1 to 5. The room score is the sum of its ratings divided by its response count, displayed to one decimal place. Receptionists record the rating against its booking and one specific room; multi-room bookings can have separate room ratings. No historical ratings are generated.
+- Q14 confirms questionnaires linked to rooms. Each response supplies one overall rating from 1 to 5. The room score is the sum of its ratings divided by its response count, displayed to one decimal place. Each response is linked to its booking and one specific room; multi-room bookings can have separate room ratings. No historical ratings are generated.
+- 2026-11-03: Guests submit responses themselves through the questionnaire emailed when their booking is completed (Story 24). Receptionists can still record a rating against a booking and room, for example for a paper questionnaire. Both channels follow the same validation and count equally in the room mean.
 - K3 has no satisfaction records. No historical ratings are generated or inferred from booking revenue, country, or room type.
 
 **Confirmation (acceptance criteria)**:
@@ -614,6 +627,8 @@ invent person counts, room assignments, or annual allocations missing from K3.
 4. Given a submitted rating below 1 or above 5, when it is validated, then it is rejected and does not change the room’s satisfaction score.
 5. Given a booking for rooms 001 and 002, when the receptionist records rating 4 for room 001 and rating 2 for room 002 against that booking, then each response is linked to its selected room; neither response is copied to the other room.
 6. Given a booking that does not include room 003, when a rating linked to that booking and room 003 is submitted, then it is rejected without changing room 003’s score.
+7. Given a completed booking for room 001 whose guest submits rating 5 through the emailed questionnaire, when room 001’s satisfaction is displayed, then that response is included in the mean exactly like a receptionist-recorded response.
+8. Given a cancelled booking, when its satisfaction responses are reported, then they do not contribute to any room’s score.
 
 ---
 
@@ -807,6 +822,36 @@ are interface separation; this request does not establish authentication or new 
 4. All staff pages share the reference site's Barlow body type, headline fallback stack, warm palette and hotel wordmark. Images and available fonts load from local assets.
 5. The image choices are keyboard accessible, mobile layouts remain usable, and existing booking, history and bar workflows continue to work.
 
+### User Story 24 - Complete a booking and send a satisfaction questionnaire (Priority: Should)
+
+**Card**: As a receptionist, I want to complete a booking when the guest checks out, so that the booking holder automatically receives a satisfaction questionnaire by email and the hotel collects room-level satisfaction (Story 13).
+
+**Source**: User request, 2026-11-03, following the required booking-holder email (FR-001).
+
+**Why this priority**: It supplies the questionnaire responses Story 13 reports on, and Story 13 has Should priority. Priority remains proposed under A1.
+
+**Independent Test**: Complete a known active booking with an email address and one or two rooms; check that one email with a unique questionnaire link is produced, then submit ratings through the link and check them against Story 13’s room means.
+
+**Conversation**:
+
+- Completing a booking is a receptionist action on the Bookings page and through the API. It changes the booking status from `active` to `completed`. A completed booking is a finished stay, not a cancellation: its revenue, room-nights, guests and country still count in every indicator.
+- The questionnaire email is sent automatically when completion is saved, to the booking holder’s email. It contains a link unique to that booking. The questionnaire page asks for one overall rating from 1 to 5 for each room on the booking.
+- The questionnaire page is the only guest-facing page. It shows nothing except that booking’s rooms and the rating form, so the retired guest frontend (Story 20) is not reintroduced.
+- For the local prototype, sent emails may be delivered to a local test mailbox instead of real recipients.
+
+**Confirmation (acceptance criteria)**:
+
+1. Given an active booking with an email address, when the receptionist completes it, then its status becomes `completed` and exactly one questionnaire email with a link unique to that booking is sent to the booking holder.
+2. Given an already completed booking, when it is completed again, then it stays completed and no further email is sent.
+3. Given a cancelled booking or an unknown BookingID, when completion is attempted, then it is rejected (“Booking not found” for an unknown ID) and no email is sent.
+4. Given a completed booking, when an edit or cancellation is attempted, then it is rejected without changing the booking.
+5. Given a completed booking, when revenue, occupancy, country and room reports are calculated, then the booking still contributes exactly as it did while active.
+6. Given a booking with rooms 001 and 002, when the guest opens the questionnaire link, then they can give a separate rating from 1 to 5 for each room, and each submitted rating is linked to its booking and room (Story 13).
+7. Given a room on that booking that has already been rated through the questionnaire, when another rating for the same room is submitted through the link, then it is rejected and the room’s score is unchanged.
+8. Given an invalid or unknown questionnaire link, when it is opened or submitted, then no booking information is shown and no rating is recorded.
+9. Given an imported historical booking without an email address, when it is completed, then it becomes `completed`, no email is sent, and the receptionist is told that no questionnaire could be sent.
+10. Given that sending the email fails, when the booking is completed, then the completion is still saved and the receptionist is told that the questionnaire was not sent.
+
 ### Deferred Scope
 
 - Final dashboard interactions are deliberately deferred for exploration (Q18).
@@ -826,7 +871,11 @@ are interface separation; this request does not establish authentication or new 
   Guest names are the approved free-text exception (K6). Valid night options remain
   R3. Preserve historical prices; do not silently reprice them using the new tariff.
 - Deleted/cancelled bookings are excluded from indicators (Q4), while independent bar
-  sales remain valid without a booking (Q20).
+  sales remain valid without a booking (Q20). Completed bookings are not cancellations
+  and remain included in every indicator (Story 24).
+- Completing a booking sends at most one questionnaire email, even when completion is
+  repeated; completed bookings can no longer be edited or cancelled. A booking without an
+  email address can be completed without an email. A failed email does not undo completion.
 - Cross-season pricing uses each night’s seasonal tariff, summed across rooms.
   Room revenue is allocated by each occupied night's calendar year, not wholly to the
   arrival year. Historical bar dates are authorized synthetic allocations; walk-in
@@ -870,7 +919,7 @@ room type, nights, and price, when demonstration records are generated, then:
 | FR-012 | The system MUST rank countries by room-booking revenue only, excluding bar revenue. | Story 10; R4 |
 | FR-013 | Annual hotel revenue MUST include all-inclusive room revenue allocated by each occupied night’s calendar year and bar revenue for the same year, with distinct component totals. | Story 11; R2 |
 | FR-014 | Annual occupancy MUST use sold room-nights / (214 × 365), expressed as a percentage. Cancelled/deleted bookings do not contribute. | Story 12; R2 |
-| FR-015 | The system SHOULD show each room’s arithmetic mean of overall questionnaire ratings from 1 to 5, displayed to one decimal place, or null when it has no responses. Receptionists MUST be able to record a rating against its booking and one room on that booking; multi-room bookings support separate room ratings. | Story 13 |
+| FR-015 | The system SHOULD show each room’s arithmetic mean of overall questionnaire ratings from 1 to 5, displayed to one decimal place, or null when it has no responses. Ratings MUST be linked to a booking and one room on that booking; multi-room bookings support separate room ratings. Ratings come mainly from the guest questionnaire (FR-028); receptionists MUST still be able to record a rating against a booking and room. Responses for cancelled bookings MUST NOT contribute. | Stories 13, 24 |
 | FR-016 | The selected additional indicator MUST show room types and the number of rooms of each type. | Story 14; R5 |
 | FR-017 | Annual bar sales MUST show both revenue and units sold and be visible to Helene Christine and the administrator. | Story 15; R2 |
 | FR-018 | The system MUST show revenue per drink with separate Cocktails, Coffee, Wine, and Beer categories. Overall bar revenue and units MUST include all four categories. | Story 16; R8 |
@@ -882,6 +931,8 @@ room type, nights, and price, when demonstration records are generated, then:
 | FR-024 | A booking MUST support multiple guests and multiple selected available room numbers and be held in one guest's name. Overlapping active stays for the same room MUST be rejected; arrival on another stay's departure date MUST be allowed, through both browser and API. Guest-capacity validation is out of scope for this prototype. | Stories 1, 6–9, 12; R4/R5 |
 | FR-025 | The closing shift MUST select a sales date and record daily total quantities per drink. Each date/drink pair MUST have one effective quantity; corrections MUST replace rather than add, enabling daily comparisons without double-counting. | Story 19; R8 |
 | FR-026 | Bar sales MUST NOT require a booking and MUST include sales to non-resident customers in applicable bar and combined totals. | Stories 11, 15, 19 |
+| FR-027 | Receptionists MUST be able to complete an active booking through the browser and API, changing its status to `completed`. Repeated completion MUST change nothing; cancelled or unknown bookings MUST NOT be completed. Completed bookings MUST NOT be edited or cancelled and MUST remain included in all indicators, as active bookings are. | Story 24 |
+| FR-028 | When a booking is completed, the system MUST send one satisfaction questionnaire email to the booking holder’s email address, with a link unique to that booking, and MUST NOT send it again for the same booking. Through the link, the guest MUST be able to give one 1–5 rating per room on the booking; invalid links MUST NOT reveal booking data or record ratings. Bookings without an email address are completed without an email, and a failed email MUST NOT undo completion; in both cases the receptionist is informed. | Stories 13, 24 |
 
 ### Key Entities *(include if feature involves data)*
 
@@ -892,8 +943,9 @@ These are conceptual requirements, not a technical data model.
   (required for new bookings; empty for imported historical bookings, which have none), selected country, multiple guests and rooms,
   room type, nights, date-picker arrival, departure calculated from nights, date-derived
   season, and all-inclusive generated
-  price. Operational fields and source fields are distinguished; missing historical
-  dates/guests/rooms are not assumed present.
+  price, and status: `active`, `completed` (stay finished, still counted in indicators)
+  or `cancelled` (excluded from indicators). Operational fields and source fields are
+  distinguished; missing historical dates/guests/rooms are not assumed present.
 - **Guest / Booking Holder**: People associated with a booking; one holds the booking.
   For country reporting, the booking and all its guests use the booking holder's
   country. Bar revenue is excluded from country reports; missing historical guest
@@ -924,8 +976,12 @@ These are conceptual requirements, not a technical data model.
   A hotel booking is optional for bar customers.
 - **Questionnaire Response**: One overall rating from 1 to 5 linked to a room number.
   Room satisfaction is the arithmetic mean of its responses, displayed to one decimal;
-  no responses gives null. Receptionists link each response to its booking and a
-  specific room on that booking; multi-room bookings can have separate room ratings.
+  no responses gives null. Each response is linked to its booking and a specific room
+  on that booking; multi-room bookings can have separate room ratings. A response comes
+  either from the guest questionnaire or from receptionist entry.
+- **Satisfaction Questionnaire Invitation**: Created when a booking is completed. Linked to
+  one booking, with a unique link, the email address it was sent to, and whether sending
+  succeeded. At most one per booking; each room on the booking can be rated once through it.
 
 ## Success Criteria *(mandatory)*
 
@@ -949,6 +1005,9 @@ Proposed acceptance measures (A8), not invented service-level targets.
   daily, drink, unit, and revenue totals, including sales without booking links.
 - **SC-007**: Approved inventory counts total 214 rooms; a booking does not change stock.
   A room with no satisfaction responses reports null rather than an invented score.
+- **SC-008**: Completing a booking fixture with an email address produces exactly one
+  questionnaire email; ratings submitted through its link appear in the room means, and
+  the booking’s revenue and occupancy totals are unchanged by completion.
 
 ## Assumptions
 
