@@ -111,3 +111,23 @@ is silently added. A POST represents one distinct questionnaire response.
 Served backend/openapi.json is the implemented contract. Detailed reports are now
 implemented; Tableau, missing wine/beer inputs, questionnaire correction/deduplication
 and unconfirmed rounding boundaries remain the documented dependencies.
+
+
+## Satisfaction by type — 2026-11-03
+
+Optional groupBy=roomType groups actual active-booking questionnaire responses by
+rooms.room_type. AVG is taken over responses directly, preserving their equal weight;
+all eight types appear, with null mean/zero count without responses. The default room
+projection and stored questionnaire rows remain unchanged. No schema or seed change.
+
+
+## Correct source period: 2026 — 2026-11-03
+
+All workbook records belong to 2026. Generated exact dates/room assignments remain
+synthetic. The v1 source identity and immutable raw evidence are retained; a legacy
+installation appends hotel-workbook-2026-correction-v2 after transactionally moving
+source-preserved generated allocations and saved source bar aggregates into 2026.
+Booking IDs, status, prices, night counts and unrelated operational records remain.
+Versions increment on redated bookings so stale browser edits are rejected. Legacy
+import evidence remains immutable; /reports/history chooses the correction metadata.
+Fresh imports directly generate 2026 records. Later startup skips completed correction.

@@ -1,14 +1,14 @@
 import { seasonFor, toMinor, money } from '../services/pricing.js';
 const DAY=86_400_000;
-const YEARS=[2024,2025,2026];
+const YEARS=[2026];
 const iso=date=>date.toISOString().slice(0,10);
 export const IMPORT_VERSION='hotel-workbook-history-v1';
-export const GENERATOR_VERSION='seasonal-room-and-daily-bar-v1';
+export const GENERATOR_VERSION='seasonal-room-and-daily-bar-2026-v2';
 export const sourceBookingId = id=>`${IMPORT_VERSION}:booking:${id}`;
 export const sourceBarId = row=>`${IMPORT_VERSION}:bar:${row}`;
 export function historicalDays(){
   const days=[];
-  for(let date=new Date('2024-01-01T00:00:00Z');iso(date)<'2027-01-01';date=new Date(date.getTime()+DAY))days.push(iso(date));
+  for(let date=new Date('2026-01-01T00:00:00Z');iso(date)<'2027-01-01';date=new Date(date.getTime()+DAY))days.push(iso(date));
   return days;
 }
 
@@ -62,6 +62,7 @@ export function distributeHistoricalBar(records,menu,existing=[]){
     if(!drink||drink.category!==record.category)throw new Error(`Source drink menu mismatch at Excel row ${record.sourceRow}.`);
     const available=days.filter(date=>!occupied.has(`${date}:${drink.drinkId}`));
     if(!available.length)throw new Error(`No free demonstration sales dates for source row ${record.sourceRow}.`);
+    if(record.units===0){output.push({salesDate:available[0],drinkId:drink.drinkId,quantity:0,unitPrice:record.unitPrice,revenue:'0.00',sourceId:sourceBarId(record.sourceRow)});return;}
     const base=Math.floor(record.units/available.length),remainder=record.units%available.length;
     for(let i=0;i<available.length;i++){
       const quantity=base+(i<remainder?1:0);

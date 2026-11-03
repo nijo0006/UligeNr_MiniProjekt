@@ -499,3 +499,81 @@ current no-data/provenance semantics, clear stale rows on failure and guard late
 Verify isolated API fixtures, source reconciliation, schema repeatability and browser
 flows. Broader Tableau integration, new wine/beer menu values and questionnaire correction
 policy remain outside this increment. Update data model, OpenAPI, tasks and convergence.
+
+
+## Country revenue map — 2026-11-03
+
+Render a local SVG choropleth from bundled Natural Earth 1:110m country polygons, with
+explicit ISO3 mapping for all approved country names. Bundle simplified geometry/source
+attribution so runtime needs no map service, token or CDN. Use native SVG/JS controls;
+existing /api/reports/countries supplies exact revenue and counts. Convert values only
+for the visual linear color scale, preserving existing money formatting/detail values.
+Provide hover/focus preview, click/tap/keyboard selection, select control, zoom/reset,
+drag panning and touch-friendly layout. Keep accessible country table under a closed
+View data disclosure as fallback. Isolate geometry failure with visible fallback data;
+use update tokens to prevent stale asynchronous colors/details. Test scoped API values,
+relative/equal colors, neutral missing data, zero, selection and reset, year changes,
+report/asset errors, keyboard/mobile layout. No backend or database change.
+
+
+## Seasonal bar-chart presentation — 2026-11-03
+
+Use native local SVG grouped bars from /api/reports/room-types-seasons: low/mid/high
+x-groups, zero-based revenue y-axis with labelled DKK ticks and a rounded upper bound.
+Use eight stable light-to-dark blue room-type colors matching the map palette endpoints.
+Legend checkboxes and a show-all control change visible series only; preserve the full
+scope's y-scale for comparison. Native SVG titles, focus/click details and a scrollable
+minimum-width plot support access without external chart libraries/CDNs. Existing
+report request tokens prevent stale responses. Preserve nullable revenue and exact
+source values for detail text; only geometry uses numeric conversion. No backend changes.
+
+
+## Always-visible reports — 2026-11-03
+
+Replace Overview details/summary elements with semantic section/heading markup, retaining
+panel borders, content IDs and responsive flow. Country/season data tables are always
+visible beneath their visualizations. Remove obsolete map fallback disclosure mutation;
+retain fallback figures and error handling. Update existing browser visibility/navigation
+checks; no backend or database changes or new business rules.
+
+
+## Satisfaction table simplification — 2026-11-03
+
+Add optional groupBy=roomType to the existing all-time satisfaction report, preserving
+the default per-room contract. Aggregate actual responses directly in SQL grouped by
+room type, excluding cancelled bookings as before; return all eight types with null
+mean/zero responses if empty. Service validates grouping. Overview requests type grouping
+and renders only type/rating, with no generated placeholders. Update OpenAPI and existing
+API/browser checks for correct weighting and the two-column layout.
+
+Satisfaction visual follow-up: scope blue table styles to the room-feedback section;
+retain its two columns, real data and No data values. No API or behavior changes.
+
+
+## Workbook year correction — 2026-11-03
+
+Back up PostgreSQL before migration. Keep source identity/version keys unchanged; change
+the generator to 2026 only with a new generator version. Existing legacy imports get a
+new append-only correction marker inside startup's transaction/advisory lock. Lock
+bookings/rooms and daily sales, plan collision-free 2026 assignments, update only still-
+generated source-preserved bookings in place (increment versions), and redistribute
+current source-linked bar aggregates over available 2026 keys. Preserve unrelated rows,
+source JSON and previous import evidence. Reject unexpected edited old-year source
+bookings rather than silently resetting their business changes. Validate unchanged
+counts/money/nights, per-drink quantities/revenue and no overlaps before committing.
+Latest history metadata reports 2026 and both legacy/correction evidence remain immutable.
+Fresh import uses 2026 directly. Test legacy migration, rollback, persistence/idempotence,
+source controls and UI year/report labels before applying to the user's database.
+
+
+## Fixed Overview reporting period — 2026-11-03
+
+Replace the year select with plain 2026 text. Remove obsolete option-generation code
+and its booking-data dependency; refreshRevenue supplies the fixed 2026 period to all
+Overview financial report consumers. Preserve API range support and current data.
+Update existing browser checks from year changes to explicit refresh of 2026.
+
+
+Room-type color amendment: use eight stable categorical colors (blue, orange, green,
+red, purple, brown, yellow, teal) in seasonChart.js. Retain chart behavior and validate
+unique legend colors and matching series through the existing chart browser flow.

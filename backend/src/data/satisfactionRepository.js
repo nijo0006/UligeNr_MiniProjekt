@@ -18,13 +18,17 @@ export class SatisfactionRepository {
     finally{connection.release();}
   }
 
-  async report() {
-    const {rows}=await this.database.query(`SELECT r.room_number AS "roomNumber",r.room_type AS "roomType",
+  async report(groupBy='room') {
+    const byType=groupBy==='roomType';
+    const columns=byType?'r.room_type AS "roomType"':'r.room_number AS "roomNumber",r.room_type AS "roomType"';
+    const group=byType?'r.room_type':'r.room_number,r.room_type';
+    const order=byType?'r.room_type':'r.room_number';
+    const {rows}=await this.database.query(`SELECT ${columns},
       COUNT(s.id)::integer AS "responseCount",AVG(s.rating)::double precision AS "meanRating"
       FROM rooms r LEFT JOIN (
         SELECT s.* FROM satisfaction_responses s JOIN bookings b ON b.id=s.booking_id WHERE b.status='active'
       ) s ON s.room_number=r.room_number
-      GROUP BY r.room_number,r.room_type ORDER BY r.room_number`);
+      GROUP BY ${group} ORDER BY ${order}`);
     return rows;
   }
 }

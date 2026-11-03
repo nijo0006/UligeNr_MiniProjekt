@@ -282,11 +282,52 @@ US20 and the guest entry point from Phase 26 are retired at the user's request.
 - [x] T082 Reconcile completed reporting/bar/satisfaction tasks and final convergence; retain explicit Tableau and unresolved-input boundaries.
 
 
-## Phase 32: Booking-holder email requirement (Q1 correction) — 2026-11-03
+## Phase 32: Interactive country revenue map — 2026-11-03
+
+- [x] T083 Bundle attributed local Natural Earth geometry and map all approved country names explicitly.
+- [x] T084 Replace the country table presentation with an interactive blue revenue choropleth, legend, details, keyboard/select/zoom/pan controls and a fallback data disclosure.
+- [x] T085 Verify colors, scope changes, missing/zero data, selection, failures and desktop/mobile behavior; update convergence and documentation.
+
+
+## Phase 33: Seasonal room revenue bar chart — 2026-11-03
+
+- [x] T086 Replace type/season presentation with a grouped blue bar chart, labelled axes, room-type legend/filters, accessible values and retained fallback table.
+- [x] T087 Verify API-scoped bar values/heights, null/zero/empty/error states, filters and desktop/mobile layout; document the result.
+
+
+## Phase 34: Always-visible report cards — 2026-11-03
+
+- [x] T088 Replace report/data disclosures with permanent cards, retain chart/map behavior and verify desktop/mobile visibility using existing browser checks.
+
+
+## Phase 35: Simple satisfaction table — 2026-11-03
+
+- [x] T089 Add validated type-grouped satisfaction reporting and simplify Overview to eight type/rating rows; preserve missing data and default room reporting, document and verify.
+
+
+## Phase 36: Correct workbook period to 2026 — 2026-11-03
+
+- [x] T090 Back up existing database and inspect source/manual edits before changing the import period.
+- [x] T091 Implement direct 2026 import and transactional one-time legacy correction preserving IDs, source evidence, existing edits and all control totals.
+- [x] T092 Update source-period metadata, year controls, provenance labels and authoritative documentation/contracts.
+- [x] T093 Verify generation/migration/rollback/restart and browser reporting, apply correction safely and reconcile the live database.
+
+
+## Phase 37: Fixed Overview year — 2026-11-03
+
+- [x] T094 Remove the year dropdown, display 2026 and verify all Overview reports continue to request 2026 on refresh.
+
+
+## Phase 38: Distinct room-type colors — 2026-11-03
+
+- [x] T095 Give all eight chart room types distinct stable colors, update legend/copy and verify the existing chart flow visually.
+
+
+## Phase 39: Booking-holder email requirement (Q1 correction) — 2026-11-03
 
 Q1 is corrected to include the booking holder's email address as a supplied field; Q5 is
 clarified so that only prices are excluded from manual entry.
 
-- [x] T083 Correct Q1/Q5, Stories 1–2, FR-001/FR-002 and Key Entities in spec.md; update data model, plan and both OpenAPI contracts with holderEmail.
-- [x] T084 Add nullable holder_email column, require and format-validate email for new bookings, and allow imported bookings without email to remain empty on edit.
-- [x] T085 Add the email field to the browser booking form and booking list, and extend pricing/integration tests for missing, invalid and imported-without-email cases.
+- [x] T096 Correct Q1/Q5, Stories 1–2, FR-001/FR-002 and Key Entities in spec.md; update data model, plan and both OpenAPI contracts with holderEmail.
+- [x] T097 Add nullable holder_email column, require and format-validate email for new bookings, and allow imported bookings without email to remain empty on edit.
+- [x] T098 Add the email field to the browser booking form and booking list, and extend pricing/integration tests for missing, invalid and imported-without-email cases.

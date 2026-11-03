@@ -32,14 +32,18 @@ test('imports complete historical workbook, preserves existing records and recon
   assert.deepEqual((await call(`/bookings/${existing.bookingId}`)).data,existing);
   assert.deepEqual((await call('/bar-sales?date=2024-01-01')).data.sales.find(s=>s.drinkId===1),((({salesDate,...row})=>row)(existingBar)));
   const history=(await call('/reports/history')).data;
+  assert.deepEqual(history.years,[2026]);
   assert.equal(history.state,'imported');assert.equal(history.sourceTotals.bookings,1000);assert.equal(history.sourceTotals.roomNights,5379);
   assert.equal(history.sourceTotals.roomRevenue,'11234034.00');assert.equal(history.sourceTotals.barUnits,179958);assert.equal(history.sourceTotals.barRevenue,'13448640.34');
   const list=(await call('/bookings')).data;assert.equal(list.length,1001);
   const imported=list.filter(b=>b.sourceId);assert.equal(imported.length,1000);assert.ok(imported.every(b=>b.guestCount===null&&b.syntheticDates&&b.syntheticRoomAssignment&&b.pricingMode==='source-preserved'));
+  assert.ok(imported.every(b=>b.arrival>='2026-01-01'&&b.departure<='2027-01-01'));
+  const annual=(await call('/reports/revenue?year=2026')).data;
+  assert.equal(annual.roomRevenue,'11234034.00');assert.equal(annual.barRevenue,'13448640.34');assert.equal(annual.totalRevenue,'24682674.34');
   let roomRevenue=0,barRevenue=0,barUnits=0;
   for(const year of [2024,2025,2026]){
     roomRevenue+=Math.round(Number((await call(`/reports/revenue?year=${year}`)).data.roomRevenue)*100);
-    const bar=(await call(`/reports/bar?year=${year}`)).data;assert.ok(bar.containsSyntheticData);barRevenue+=Math.round(Number(bar.revenue)*100);barUnits+=bar.units;
+    const bar=(await call(`/reports/bar?year=${year}`)).data;assert.equal(bar.containsSyntheticData,year===2026);barRevenue+=Math.round(Number(bar.revenue)*100);barUnits+=bar.units;
   }
   assert.equal(roomRevenue,1123403400+Math.round(Number(existing.totalPrice)*100));
   assert.equal(barRevenue,1344864034+Math.round(Number(existingBar.revenue)*100));assert.equal(barUnits,179958+7);
@@ -105,5 +109,81 @@ test('a late database failure rolls back imported bookings, sales and evidence t
     assert.equal((await fault.pool.query('SELECT COUNT(*)::integer AS n FROM historical_imports')).rows[0].n,0);
     const {rows:sales}=await fault.pool.query('SELECT quantity,exact_revenue FROM daily_bar_sales');
     assert.deepEqual(sales,[{quantity:5,exact_revenue:'362.35'}]);
+  }finally{await fault.pool.end();await admin.query(`DROP SCHEMA ${fault.name} CASCADE`);}
+});
+
+// Test-only fixture: reconstruct a committed v1 installation without touching live data.
+async function legacyFixture(){
+  const fixture=await schemaPool();await initialize(fixture.pool);
+  await fixture.pool.query(`UPDATE room_nights n SET night_date=(n.night_date-make_interval(years=>(b.id%3)::integer))::date
+    FROM bookings b WHERE b.id=n.booking_id AND b.source_id IS NOT NULL`);
+  await fixture.pool.query(`UPDATE bookings SET arrival=(arrival-make_interval(years=>(id%3)::integer))::date,
+    departure=(departure-make_interval(years=>(id%3)::integer))::date WHERE source_id IS NOT NULL`);
+  await fixture.pool.query(`UPDATE daily_bar_sales SET sales_date=(sales_date-make_interval(years=>(EXTRACT(DOY FROM sales_date)::integer%3)))::date WHERE source_id IS NOT NULL`);
+  await fixture.pool.query('ALTER TABLE historical_imports DISABLE TRIGGER preserve_history_evidence');
+  await fixture.pool.query(`UPDATE historical_imports SET generator_version='seasonal-room-and-daily-bar-v1',
+    summary=jsonb_set(jsonb_set(summary,'{years}','[2024,2025,2026]'::jsonb),'{generatorVersion}','"seasonal-room-and-daily-bar-v1"'::jsonb)`);
+  await fixture.pool.query('ALTER TABLE historical_imports ENABLE TRIGGER preserve_history_evidence');
+  return fixture;
+}
+async function storedState(db){
+  const state={};
+  for(const table of ['bookings','booking_rooms','room_nights','booking_guests','daily_bar_sales','source_records','historical_imports','satisfaction_responses']){
+    const {rows:[row]}=await db.query(`SELECT MD5(COALESCE(string_agg(to_jsonb(t)::text,'' ORDER BY to_jsonb(t)::text),'')) AS hash FROM ${table} t`);state[table]=row.hash;
+  }
+  return state;
+}
+
+test('legacy correction keeps source IDs/statuses/totals, manual rows and immutable evidence; restart preserves later edits',async()=>{
+  const fault=await legacyFixture();
+  try{
+    const {rows:idsBefore}=await fault.pool.query('SELECT id,source_id,total_price FROM bookings ORDER BY id');
+    const {rows:[oldEvidence]}=await fault.pool.query('SELECT to_jsonb(h) AS value FROM historical_imports h');
+    const sourceHash=(await storedState(fault.pool)).source_records;
+    await fault.pool.query("UPDATE bookings SET status='cancelled',version=version+1 WHERE id=(SELECT MIN(id) FROM bookings)");
+    const {rows:[manual]}=await fault.pool.query(`INSERT INTO bookings(holder_first_name,holder_last_name,holder_country,guest_count,arrival,departure,nights,total_price)
+      VALUES('Manual','Preserved','Denmark',1,'2026-01-01','2027-01-01',365,1) RETURNING id`);
+    await fault.pool.query("INSERT INTO booking_rooms VALUES($1,'001',1)",[manual.id]);
+    await fault.pool.query("INSERT INTO room_nights VALUES($1,'001','2026-01-01','low',1)",[manual.id]);
+    await fault.pool.query("INSERT INTO daily_bar_sales(sales_date,drink_id,quantity,unit_price_snapshot,exact_revenue) VALUES('2026-01-01',1,5,72.47,362.35)");
+    await fault.pool.query("UPDATE daily_bar_sales SET quantity=quantity+1,exact_revenue=exact_revenue+unit_price_snapshot WHERE source_id IS NOT NULL AND sales_date=(SELECT MIN(sales_date) FROM daily_bar_sales WHERE source_id IS NOT NULL) AND drink_id=1");
+    const {rows:barBefore}=await fault.pool.query('SELECT source_id,SUM(quantity)::bigint AS units,SUM(exact_revenue)::text AS amount FROM daily_bar_sales WHERE source_id IS NOT NULL GROUP BY source_id ORDER BY source_id');
+    await initialize(fault.pool);
+    const {rows:idsAfter}=await fault.pool.query('SELECT id,source_id,total_price FROM bookings WHERE source_id IS NOT NULL ORDER BY id');
+    assert.deepEqual(idsAfter,idsBefore);
+    assert.equal((await fault.pool.query('SELECT status FROM bookings WHERE id=$1',[idsBefore[0].id])).rows[0].status,'cancelled');
+    assert.ok((await fault.pool.query("SELECT arrival FROM bookings WHERE source_id IS NOT NULL")).rows.every(r=>r.arrival.startsWith('2026')));
+    assert.equal((await fault.pool.query("SELECT COUNT(*)::integer AS n FROM booking_rooms WHERE booking_id<>$1 AND room_number='001'",[manual.id])).rows[0].n,0);
+    assert.equal((await fault.pool.query("SELECT source_id,quantity,exact_revenue FROM daily_bar_sales WHERE sales_date='2026-01-01' AND drink_id=1")).rows[0].exact_revenue,'362.35');
+    const {rows:barAfter}=await fault.pool.query('SELECT source_id,SUM(quantity)::bigint AS units,SUM(exact_revenue)::text AS amount FROM daily_bar_sales WHERE source_id IS NOT NULL GROUP BY source_id ORDER BY source_id');
+    assert.deepEqual(barAfter,barBefore);
+    assert.equal((await storedState(fault.pool)).source_records,sourceHash);
+    assert.deepEqual((await fault.pool.query('SELECT to_jsonb(h) AS value FROM historical_imports h WHERE version=$1',[IMPORT_VERSION])).rows[0],oldEvidence);
+    const correction=(await fault.pool.query("SELECT summary FROM historical_imports WHERE version='hotel-workbook-2026-correction-v2'")).rows[0].summary;
+    assert.deepEqual(correction.years,[2026]);assert.equal(correction.bookingsByYear.length,1);assert.equal(correction.barByYear.length,1);
+    await fault.pool.query("UPDATE bookings SET holder_first_name='Later edit',version=version+1 WHERE id=$1",[idsBefore[1].id]);
+    const after=await storedState(fault.pool);await initialize(fault.pool);assert.deepEqual(await storedState(fault.pool),after);
+  }finally{await fault.pool.end();await admin.query(`DROP SCHEMA ${fault.name} CASCADE`);}
+});
+
+test('legacy correction rolls back if completion fails and retries safely',async()=>{
+  const fault=await legacyFixture();
+  try{
+    await fault.pool.query("CREATE FUNCTION reject_correction() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.version='hotel-workbook-2026-correction-v2' THEN RAISE EXCEPTION 'Correction failure'; END IF; RETURN NEW; END; $$");
+    await fault.pool.query('CREATE TRIGGER fail_correction BEFORE INSERT ON historical_imports FOR EACH ROW EXECUTE FUNCTION reject_correction()');
+    const before=await storedState(fault.pool);
+    await assert.rejects(initialize(fault.pool),/Correction failure/);assert.deepEqual(await storedState(fault.pool),before);
+    await fault.pool.query('DROP TRIGGER fail_correction ON historical_imports');await initialize(fault.pool);
+    assert.equal((await fault.pool.query("SELECT COUNT(*)::integer AS n FROM historical_imports WHERE version='hotel-workbook-2026-correction-v2'")).rows[0].n,1);
+  }finally{await fault.pool.end();await admin.query(`DROP SCHEMA ${fault.name} CASCADE`);}
+});
+
+test('legacy correction refuses to reset edited source bookings outside 2026',async()=>{
+  const fault=await legacyFixture();
+  try{
+    await fault.pool.query("UPDATE bookings SET pricing_mode='nightly-calculated' WHERE arrival<'2026-01-01'");
+    const before=await storedState(fault.pool);
+    await assert.rejects(initialize(fault.pool),/needs an explicit date review/);
+    assert.deepEqual(await storedState(fault.pool),before);
   }finally{await fault.pool.end();await admin.query(`DROP SCHEMA ${fault.name} CASCADE`);}
 });
