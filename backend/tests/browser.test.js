@@ -239,7 +239,16 @@ test('remaining Overview reports use fixed 2026, recover from failures and fit m
     await expect(page.locator('#operational-reports details, #operational-reports summary')).toHaveCount(0);
     await expect(page.locator('#inventory-report')).toBeVisible();
     await expect(page.locator('#satisfaction-report')).toBeVisible();
-    await expect(page.locator('#room-report tr')).toHaveCount(214);
+    await expect(page.locator('#room-report .room-bar-row')).toHaveCount(10);
+    const rooms=await(await fetch(`${origin}/api/reports/rooms?year=2026`)).json();
+    assert.deepEqual(await page.locator('#room-report .room-bar-row').evaluateAll(items=>items.map(e=>e.dataset.roomNumber)),rooms.filter(r=>r.roomRevenue!==null).slice(0,10).map(r=>r.roomNumber));
+    await expect(page.locator('#room-report .room-bar-row').first()).toContainText(new Intl.NumberFormat('en-DK',{style:'currency',currency:'DKK',minimumFractionDigits:1,maximumFractionDigits:1}).format(Number(rooms[0].roomRevenue)));
+    await page.getByRole('button',{name:'Show all rooms (214)',exact:true}).click();
+    await expect(page.locator('#room-report .room-bar-row')).toHaveCount(214);
+    await expect(page.locator('#room-chart-toggle')).toHaveAttribute('aria-pressed','true');
+    await page.getByRole('button',{name:'Show top 10',exact:true}).click();
+    await expect(page.locator('#room-report .room-bar-row')).toHaveCount(10);
+    await page.locator('.room-chart-report').screenshot({path:'/tmp/hotel-top-rooms-desktop.png'});
     await expect(page.locator('#inventory-report tr')).toHaveCount(8);
     await expect(page.locator('#satisfaction-report tr')).toHaveCount(8);
     await expect(page.locator('[aria-labelledby=room-feedback-title] th')).toHaveText(['Room type','Rating']);
@@ -265,6 +274,7 @@ test('remaining Overview reports use fixed 2026, recover from failures and fit m
     await page.setViewportSize({width:390,height:844});
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
     await page.screenshot({path:'/tmp/hotel-complete-reports-mobile.png',fullPage:true});
+    await page.locator('.room-chart-report').screenshot({path:'/tmp/hotel-top-rooms-mobile.png'});
     assert.deepEqual(errors,[]);
   }finally{await browser.close();}
 });
@@ -408,12 +418,21 @@ test('seasonal grouped bar chart preserves API values, axes, distinct room-type 
     for(const label of ['Low season','Mid season','High season'])await expect(page.locator('#season-chart')).toContainText(label);
     assert.ok(Number(await bar('Standard Single','high').getAttribute('height'))>Number(await bar('Standard Single','mid').getAttribute('height')));
     assert.equal(await bar('Standard Single','high').getAttribute('fill'),await bar('Standard Single','low').getAttribute('fill'));
-    await expect(bar('Standard Single','low')).toHaveAttribute('fill','#4e79a7');
+    await expect(bar('Standard Single','low')).toHaveAttribute('fill','#6f8e85');
+    assert.equal(await page.locator('#season-report tr[data-room-type="Standard Single"]').first().evaluate(row=>row.style.getPropertyValue('--room-type-color')),await bar('Standard Single','low').getAttribute('fill'));
     await expect(bar('Grand Lit','mid')).toHaveCount(0);
     assert.equal(await bar('Grand Lit','low').evaluate(e=>e.tagName),'circle');
+    await bar('Standard Single','mid').hover();
+    await expect(page.locator('#season-bar-tooltip')).toBeVisible();
     await bar('Standard Single','mid').focus();await page.keyboard.press('Enter');
     await expect(page.locator('#season-chart-value')).toContainText('Standard Single · Mid season');
     await expect(page.locator('#season-chart-value')).toContainText('200,0');
+    await expect(page.locator('#season-bar-tooltip')).toBeVisible();
+    await expect(page.locator('#season-tooltip-type')).toHaveText('Standard Single');
+    await expect(page.locator('#season-tooltip-revenue')).toContainText('200,0');
+    assert.ok(await page.locator('#season-tooltip-revenue').evaluate(e=>parseFloat(getComputedStyle(e).fontSize)>=25));
+    await page.locator('#season-bar-tooltip').screenshot({path:'/tmp/hotel-revenue-large-tooltip.png'});
+    await page.keyboard.press('Escape');await expect(page.locator('#season-bar-tooltip')).toBeHidden();
     await page.getByLabel('Show Standard Single in chart',{exact:true}).uncheck();
     await expect(page.locator('#season-chart .season-bar')).toHaveCount(2);
     await page.getByRole('button',{name:'Show all room types',exact:true}).click();
@@ -441,6 +460,7 @@ test('seasonal grouped bar chart preserves API values, axes, distinct room-type 
     const actual=await(await fetch(`${origin}/api/reports/room-types-seasons?year=2026`)).json();
     await expect(bar('Standard Single','mid')).toHaveAttribute('data-revenue',actual.find(r=>r.roomType==='Standard Single'&&r.season==='mid').roomRevenue);
     await page.locator('.season-chart-report').screenshot({path:'/tmp/hotel-season-chart-desktop.png'});
+    await page.locator('#season-data').screenshot({path:'/tmp/hotel-season-table-desktop.png'});
     await page.setViewportSize({width:390,height:844});
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
     assert.ok(await page.locator('.season-chart-scroll').evaluate(e=>e.scrollWidth>e.clientWidth));

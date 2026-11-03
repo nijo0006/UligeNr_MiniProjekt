@@ -1,12 +1,14 @@
 import {api,currency} from './shared.js';
+import {roomTypeColors} from './roomTypePalette.js';
+import {clearRoomChart,renderRoomChart} from './roomChart.js';
 import {clearCountryMap,renderCountryMap} from './countryMap.js';
 import {clearSeasonChart,renderSeasonChart} from './seasonChart.js';
 const $=selector=>document.querySelector(selector);
 let requestNumber=0;
 const count=value=>value===null?'No data':new Intl.NumberFormat('en-DK').format(value);
-function table(id,rows,values){
+function table(id,rows,values,decorate){
   const body=$(id);body.replaceChildren();
-  for(const row of rows){const tr=document.createElement('tr');for(const value of values(row)){const td=document.createElement('td');td.textContent=String(value);tr.append(td);}body.append(tr);}
+  for(const row of rows){const tr=document.createElement('tr');for(const value of values(row)){const td=document.createElement('td');td.textContent=String(value);tr.append(td);}decorate?.(tr,row);body.append(tr);}
   if(!rows.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=body.closest('table').querySelectorAll('th').length;td.textContent='No data for this period.';tr.append(td);body.append(tr);}
 }
 export async function refreshReports(year){
@@ -15,6 +17,7 @@ export async function refreshReports(year){
   $('#reports-error').hidden=true;
   clearCountryMap();
   clearSeasonChart();
+  clearRoomChart();
   $('#report-scope').textContent=year?`Calendar year ${year}`:'All saved years · occupancy requires one year';
   for(const id of ['#occupancy','#sold-nights','#known-guests'])$(id).textContent='Loading…';
   for(const id of ['#country-report','#season-report','#room-report','#inventory-report','#satisfaction-report'])$(id).replaceChildren();
@@ -33,14 +36,17 @@ export async function refreshReports(year){
     renderCountryMap(countries,year);
     renderSeasonChart(seasons,year);
     table('#country-report',countries,r=>[r.country,count(r.bookingCount),count(r.guestCount),count(r.knownGuestCount),count(r.unknownGuestBookingCount),currency(r.roomRevenue)]);
-    table('#season-report',seasons,r=>[r.roomType,{low:'Low',mid:'Mid',high:'High'}[r.season],count(r.soldRoomNights),currency(r.roomRevenue)]);
-    table('#room-report',rooms,r=>[r.roomNumber,r.roomType,count(r.soldRoomNights),currency(r.roomRevenue)]);
+    table('#season-report',seasons,r=>[r.roomType,{low:'Low',mid:'Mid',high:'High'}[r.season],count(r.soldRoomNights),currency(r.roomRevenue)],(tr,row)=>{
+      tr.dataset.roomType=row.roomType;tr.style.setProperty('--room-type-color',roomTypeColors[row.roomType]??'#d0c2b2');
+    });
+    renderRoomChart(rooms,year);
     table('#inventory-report',inventory,r=>[r.roomType,count(r.roomCount),r.synthetic?'Demonstration inventory':'Hotel inventory']);
     table('#satisfaction-report',satisfaction,r=>[r.roomType,r.meanRating===null?'No data':`${r.meanRating.toFixed(1)} / 5`]);
   }catch(error){
     if(request!==requestNumber)return;
     clearCountryMap('Country revenue unavailable');
     clearSeasonChart('Seasonal revenue unavailable');
+    clearRoomChart('Room revenue unavailable');
     $('#reports-error').textContent=`Reports unavailable: ${error.message}`;$('#reports-error').hidden=false;
     for(const id of ['#occupancy','#sold-nights','#known-guests'])$(id).textContent='Unavailable';
     for(const id of ['#occupancy-note','#guest-note','#report-provenance'])$(id).textContent='';

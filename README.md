@@ -150,7 +150,7 @@ Once the app is healthy and room 001 is available:
 ```bash
 curl -i http://localhost:3000/api/bookings \
   -H 'Content-Type: application/json' \
-  -d '{"holderFirstName":"Frederik","holderLastName":"Johansen","holderCountry":"Denmark","guestCount":1,"roomNumbers":["001"],"arrival":"2026-05-31","nights":2}'
+  -d '{"holderFirstName":"Frederik","holderLastName":"Johansen","holderEmail":"frederik@example.com","holderCountry":"Denmark","guestCount":1,"roomNumbers":["001"],"arrival":"2026-05-31","nights":2}'
 ```
 
 Expected: HTTP 201, departure `2026-06-02`, total price `2491.00` (1152 + 1339).
@@ -399,3 +399,10 @@ Overview displays plain **2026** instead of a Reporting year dropdown. Revenue, 
 country map, seasonal chart and room reports always request year=2026, including refresh.
 Inventory and satisfaction retain their all-time scope. API year filtering remains
 available independently; the separate booking/bar page controls are unchanged.
+
+Seasonal data uses the same shared room-type colors as the chart, with tinted numeric
+rows, larger text/amounts and spacing. All rows stay visible while scrolling the page.
+
+Highest-earning rooms displays horizontal revenue bars for the top ten recorded rooms
+in 2026. Show all rooms displays the full 214-room list; Show top 10 switches back.
+Bars use the same room-type colors, with room number/type, amount and room-nights visible.
