@@ -150,7 +150,7 @@ Once the app is healthy and room 001 is available:
 ```bash
 curl -i http://localhost:3000/api/bookings \
   -H 'Content-Type: application/json' \
-  -d '{"holderFirstName":"Frederik","holderLastName":"Johansen","holderCountry":"Denmark","guestCount":1,"roomNumbers":["001"],"arrival":"2026-05-31","nights":2}'
+  -d '{"holderFirstName":"Frederik","holderLastName":"Johansen","holderEmail":"frederik@example.com","holderCountry":"Denmark","guestCount":1,"roomNumbers":["001"],"arrival":"2026-05-31","nights":2}'
 ```
 
 Expected: HTTP 201, departure `2026-06-02`, total price `2491.00` (1152 + 1339).

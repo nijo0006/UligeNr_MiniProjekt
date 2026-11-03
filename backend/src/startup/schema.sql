@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS historical_imports (
   summary JSONB NOT NULL,
   imported_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS holder_email VARCHAR(255) NULL;
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS pricing_mode VARCHAR(20) NOT NULL DEFAULT 'nightly-calculated' CHECK (pricing_mode IN ('nightly-calculated','source-preserved'));
 CREATE UNIQUE INDEX IF NOT EXISTS booking_source_identity ON bookings (source_id) WHERE source_id IS NOT NULL;
 ALTER TABLE daily_bar_sales ADD COLUMN IF NOT EXISTS synthetic BOOLEAN NOT NULL DEFAULT FALSE;

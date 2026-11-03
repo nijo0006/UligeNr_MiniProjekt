@@ -30,6 +30,7 @@ test('staff booking page creates, reloads, edits and cancels while reports stay 
     const baseline = (await readReport(2026)).roomRevenue;
     await page.getByLabel('First name', { exact:true }).fill('Browser verification');
     await page.getByLabel('Last name', { exact:true }).fill('Demonstration');
+    await page.getByLabel('Email', { exact:true }).fill('browser@example.com');
     await page.getByLabel('Booking holder’s country').selectOption('Denmark');
     await page.getByLabel('Arrival', { exact:true }).fill('2026-05-31');
     await page.getByLabel('Nights', { exact:true }).selectOption('2');

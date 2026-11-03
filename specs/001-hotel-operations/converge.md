@@ -378,3 +378,21 @@ region; Show top 10 restores the default. Missing revenue is labelled No data an
 uses a baseline marker. Refresh/error clears stale bars. Existing Overview browser flow
 passed, including API-ordered IDs/amounts, 10→214→10 toggling and responsive layout.
 Desktop/mobile screenshots reviewed. No API/database changes. T098 complete.
+
+
+## Main/feature integration — 2026-11-03
+
+Integrated main's booking-holder email requirement with the feature branch's latest
+room charts, shared palette, large hover details and numeric-table styling. Preserved
+both task sets; email tasks now use T099–T101/Phase 42 to avoid collisions with existing
+T096–T098. Updated the README booking request to include the newly required email.
+The only textual merge conflict was in tasks.md; frontend/backend changes were reviewed
+and retained together. No feature was replaced wholesale with one branch's version.
+
+Validation: 12 pure tests, 37 isolated PostgreSQL/API tests and all 10 Chrome browser
+scenarios passed on the merged tree. Checks include email validation/storage/editing,
+imported bookings without email, retained 2026 history/migration behavior, booking
+create/edit/cancel, shared chart/table colors, room top-ten/all toggle, large tooltips,
+country map and bar/questionnaire flows. Docker app rebuilt and healthy. Source records
+are not given fabricated emails. Browser verification booking cancelled; sales and
+questionnaire UI fixtures do not write live values.

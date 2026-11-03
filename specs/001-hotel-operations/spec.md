@@ -71,7 +71,7 @@ The team supplied all 20 answers together; no new questions were asked in this s
 Numbering matches the questions in the previous specification.
 
 - Q: Q1 — Which booking fields are supplied and generated? → A: First name, last name,
-  country, room type, and nights are supplied; the system creates BookingID, price based
+  email address, country, room type, and nights are supplied; the system creates BookingID, price based
   on season and room type, and arrival/departure dates. The date-generation basis remains R2.
 - Q: Q2 — Do bookings require arrival and departure dates? → A: Yes, all bookings do.
 - Q: Q3 — How is season determined? → A: From the date: high = June, July, August;
@@ -79,10 +79,11 @@ Numbering matches the questions in the previous specification.
 - Q: Q4 — What happens to deleted/cancelled bookings? → A: They can be deleted/cancelled
   and need not appear in indicators. This specification excludes them from indicator inputs;
   physical deletion versus retained cancellation is not prescribed.
-- Q: Q5 — How are input, price, and duplicates handled? → A: No manual typing; choose only
-  valid options through controls such as dropdowns. Prices cannot be entered manually and
-  are calculated from room type and nights, with season from Q1/Q3. BookingID is the unique
-  primary identifier. Repeated submissions with different IDs remain unresolved (R7).
+- Q: Q5 — How are input, price, and duplicates handled? → A: Prices cannot be entered
+  manually; they are calculated from room type and nights, with season from Q1/Q3. Fields
+  with a fixed set of valid values (e.g. country, room type) are chosen through controls
+  such as dropdowns. Guest names and email are typed by the receptionist and validated.
+  BookingID is the unique primary identifier. Repeated submissions with different IDs remain unresolved (R7).
 - Q: Q6 — Are different permissions needed? → A: No different rights are required.
 - Q: Q7 — What does live mean? → A: Dynamic data; the booking page refreshes after every
   new booking. No maximum indicator/dashboard refresh delay was specified (R9).
@@ -136,7 +137,8 @@ chosen-arrival wording. They do not authorize invented historical facts.
   has been supplied.
 - Q: May guest names be entered manually while fixed options remain selectable? → A: Yes.
   First and last names may be typed; country and room type remain selections, and
-  price is never manually entered.
+  price is never manually entered. The booking holder's email address is also typed
+  and format-validated (Q1/Q5, corrected 2026-11-03).
 
 - Q: How should a stay crossing seasons be priced? → A: Use each night's own seasonal
   rate, then sum the nightly charges across the booked rooms. This resolves new-booking
@@ -248,8 +250,8 @@ for this prototype; questionnaire responses are not generated.
   accounts are out of scope for this version. All actors retain the same access;
   browser and API operations still validate booking data and room availability.
 
-- Q: Which booking fields can be edited? → A: Guest names, booking holder's country,
-  guest count, selected rooms, arrival date, and nights. BookingID remains fixed.
+- Q: Which booking fields can be edited? → A: Guest names, booking holder's email,
+  booking holder's country, guest count, selected rooms, arrival date, and nights. BookingID remains fixed.
   Recalculate departure, per-night seasonal rates, and total price automatically;
   revalidate room availability before saving. No manual price override is allowed.
 
@@ -317,19 +319,20 @@ invent person counts, room assignments, or annual allocations missing from K3.
 
 **Conversation**:
 
-- K6: enter first/last name manually; select country, room type, nights, and arrival (date picker). The system generates BookingID, departure, season, and price. No manual price entry is available.
+- K6: enter first/last name manually; Q1 (corrected 2026-11-03): enter the booking holder's email address manually; select country, room type, nights, and arrival (date picker). The system generates BookingID, departure, season, and price. No manual price entry is available.
 - Q9: support multiple guests and rooms and identify one guest as the booking holder. Guest names may be typed; select specific available room numbers for the stay. Historical assignments use an available room of the recorded type under the confirmed demonstration rule; guest-capacity validation is out of scope for this prototype.
 - K6 confirms all 24 seasonal tariff cells, including Standard Single low season at DKK 1,031. Departure equals selected arrival plus nights. Each night uses the season of its own date; sum nightly charges for each room, then sum rooms for the booking total.
 
 **Confirmation (acceptance criteria)**:
 
-1. Given valid booking details including typed names, a date-picker arrival, nights, and a confirmed tariff cell, when a booking is created, then it is retrievable with a generated unique BookingID, the selected arrival, departure equal to arrival plus nights, derived season, and calculated total price.
+1. Given valid booking details including typed names, a typed booking-holder email, a date-picker arrival, nights, and a confirmed tariff cell, when a booking is created, then it is retrievable with a generated unique BookingID, the selected arrival, departure equal to arrival plus nights, derived season, and calculated total price.
 2. Given a newly saved booking, when the save succeeds, then the booking page refreshes and includes that booking without a separate manual refresh (Q7).
-3. Given the booking form, when details are entered, then first/last names allow typing, arrival uses a date picker, fixed options use valid selections, and price has no manual entry or override.
+3. Given the booking form, when details are entered, then first/last names and the booking-holder email allow typing, arrival uses a date picker, fixed options use valid selections, and price has no manual entry or override.
 4. Given arrival 10 July 2026, three nights, and one Standard Double room, when departure and price are calculated, then departure is 13 July 2026 and total price is DKK 5,346.0 (3 × 1,782).
 5. Given arrival 10 January 2026, two nights, and one Standard Single room, when departure and price are calculated, then departure is 12 January 2026 and total price is DKK 2,062.0 (2 × 1,031).
 6. Given one Standard Single room arriving 31 May 2026 for two nights, when price and departure are calculated, then departure is 2 June, the 31 May night costs DKK 1,152, the 1 June night costs DKK 1,339, and total price is DKK 2,491.0; departure day is not charged.
 7. Given two Standard Single rooms for that same stay, when the booking total is calculated, then each room costs DKK 2,491.0 and the booking total is DKK 4,982.0.
+8. Given a new booking with a missing or invalidly formatted booking-holder email, when it is submitted through the browser or API, then it is rejected with an explanation and no booking is created.
 8. Given room 001 is booked from 10 July to 13 July, when a new active stay for room 001 from 12 July to 14 July is submitted, then it is rejected without saving an overlapping booking.
 9. Given room 001 is booked from 10 July to 13 July, when available rooms for a stay arriving 13 July are requested, then that earlier booking does not exclude room 001.
 10. Given the selected stay dates, when room choices are offered, then only room numbers available throughout that stay can be selected.
@@ -348,18 +351,19 @@ invent person counts, room assignments, or annual allocations missing from K3.
 
 **Conversation**:
 
-- The same name-entry, date-picker, valid-selection, and automatic-price requirements apply to editing. BookingID is the generated identity, not a user-entered replacement. Changing arrival or nights recalculates departure as arrival plus nights.
-- Editable fields are guest names, booking holder’s country, guest count, selected rooms, arrival date, and nights. BookingID stays fixed; departure, nightly rates, and total price are recalculated and availability is rechecked. Accept the first valid save; reject an outdated save with a reload message and preserve the newer booking state, through both browser and API.
+- The same name-entry, email-entry, date-picker, valid-selection, and automatic-price requirements apply to editing. BookingID is the generated identity, not a user-entered replacement. Changing arrival or nights recalculates departure as arrival plus nights.
+- Editable fields are guest names, booking holder’s email, booking holder’s country, guest count, selected rooms, arrival date, and nights. BookingID stays fixed; departure, nightly rates, and total price are recalculated and availability is rechecked. Accept the first valid save; reject an outdated save with a reload message and preserve the newer booking state, through both browser and API.
 
 **Confirmation (acceptance criteria)**:
 
-1. Given an existing booking, when a valid change to guest names, booking holder’s country, guest count, selected rooms, arrival, or nights is saved, then the same BookingID retrieves the changed value.
+1. Given an existing booking, when a valid change to guest names, booking holder’s email, booking holder’s country, guest count, selected rooms, arrival, or nights is saved, then the same BookingID retrieves the changed value.
 2. Given a change to a price-driving field under the agreed tariff, when it is saved, then price and dependent values are recalculated and cannot be manually overridden.
 3. Given an invalid requested value, when an update is submitted, then it is rejected without changing the booking, with an explanation.
 4. Given an existing booking, when a date or room edit would overlap another active booking for the same room, then the edit is rejected and the original booking remains unchanged; the booking being edited does not conflict with itself.
 5. Given an existing booking, when an update attempts to replace BookingID or manually override a calculated price, then the operation is rejected without changing the booking.
 6. Given clients A and B have opened the same saved booking, when A saves a valid change and B then saves using the outdated state, then B’s save is rejected with a message to reload and A’s saved values remain unchanged.
 7. Given an outdated save was rejected, when the client reloads the current booking and submits a valid edit against that state, then it can succeed after normal validation and availability checks.
+8. Given an imported historical booking without an email address, when it is edited without supplying an email, then the save may succeed with the email still empty; a booking created in the system MUST keep a valid email on every save.
 
 ---
 
@@ -852,8 +856,8 @@ room type, nights, and price, when demonstration records are generated, then:
 
 | ID | Requirement | Acceptance coverage |
 | --- | --- | --- |
-| FR-001 | Receptionists MUST be able to create bookings through a browser frontend using typed names, a date-picker arrival, and valid fixed-option selections. | Story 1 |
-| FR-002 | Receptionists MUST be able to edit guest names, booking holder’s country, guest count, rooms, arrival, and nights. BookingID MUST remain fixed; departure, nightly rates, and total price MUST recalculate, and room availability MUST be rechecked before saving. Calculated prices MUST NOT be manually overridden. The first valid edit MUST save; edits based on outdated booking state MUST be rejected with a reload message without overwriting the saved change, through browser and API. | Story 2; R7 |
+| FR-001 | Receptionists MUST be able to create bookings through a browser frontend using typed names, a typed and format-validated booking-holder email address (required for every new booking), a date-picker arrival, and valid fixed-option selections. | Story 1 |
+| FR-002 | Receptionists MUST be able to edit guest names, booking holder’s email, booking holder’s country, guest count, rooms, arrival, and nights. BookingID MUST remain fixed; departure, nightly rates, and total price MUST recalculate, and room availability MUST be rechecked before saving. Calculated prices MUST NOT be manually overridden. The first valid edit MUST save; edits based on outdated booking state MUST be rejected with a reload message without overwriting the saved change, through browser and API. | Story 2; R7 |
 | FR-003 | Receptionists MUST be able to delete/cancel bookings after browser confirmation; declining MUST change nothing. Cancelled bookings MUST be excluded from active bookings and indicators. Repeated cancellation MUST leave them cancelled without affecting totals again; unknown BookingID MUST report “Booking not found” without mutation through either channel. | Story 3 |
 | FR-004 | The existing booking system MUST be able to create, edit, and delete/cancel bookings through the API. | Story 4 |
 | FR-005 | Booking behavior across the browser and API follows the same rules (proposed A5); no actor-specific access rights are required (Q6). The local prototype MUST NOT require login or user accounts; booking validation and availability checks still apply. | Stories 1–4 |
@@ -884,7 +888,8 @@ room type, nights, and price, when demonstration records are generated, then:
 These are conceptual requirements, not a technical data model.
 
 - **Booking**: Unique system-generated BookingID (primary identifier), named booking
-  holder, manually entered first/last name, selected country, multiple guests and rooms,
+  holder, manually entered first/last name, manually entered booking-holder email
+  (required for new bookings; empty for imported historical bookings, which have none), selected country, multiple guests and rooms,
   room type, nights, date-picker arrival, departure calculated from nights, date-derived
   season, and all-inclusive generated
   price. Operational fields and source fields are distinguished; missing historical

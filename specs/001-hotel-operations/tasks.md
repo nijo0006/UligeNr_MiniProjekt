@@ -336,3 +336,13 @@ US20 and the guest entry point from Phase 26 are retired at the user's request.
 ## Phase 41: Top-ten horizontal room chart — 2026-11-03
 
 - [x] T098 Replace room ranking table with top-ten horizontal bars, a show-all toggle and shared type colors; verify current values, scopes and responsive behavior.
+
+
+## Phase 42: Booking-holder email requirement (Q1 correction) — 2026-11-03
+
+Q1 is corrected to include the booking holder's email address as a supplied field; Q5 is
+clarified so that only prices are excluded from manual entry.
+
+- [x] T099 Correct Q1/Q5, Stories 1–2, FR-001/FR-002 and Key Entities in spec.md; update data model, plan and both OpenAPI contracts with holderEmail.
+- [x] T100 Add nullable holder_email column, require and format-validate email for new bookings, and allow imported bookings without email to remain empty on edit.
+- [x] T101 Add the email field to the browser booking form and booking list, and extend pricing/integration tests for missing, invalid and imported-without-email cases.

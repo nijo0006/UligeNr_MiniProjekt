@@ -12,7 +12,7 @@ import { createApp } from '../src/presentation/app.js';
 
 if (!process.env.POSTGRES_DB?.endsWith('_test')) throw new Error('Integration tests require a dedicated database ending in _test; refusing to change application data.');
 let pool, server, base;
-const payload = (overrides = {}) => ({ holderFirstName: 'Frederik', holderLastName: 'Johansen', holderCountry: 'Denmark', guestCount: 1, roomNumbers: ['001'], arrival: '2026-05-31', nights: 2, ...overrides });
+const payload = (overrides = {}) => ({ holderFirstName: 'Frederik', holderLastName: 'Johansen', holderEmail: 'frederik@example.com', holderCountry: 'Denmark', guestCount: 1, roomNumbers: ['001'], arrival: '2026-05-31', nights: 2, ...overrides });
 async function call(path, method = 'GET', body) {
   const response = await fetch(base + path, { method, headers: { 'Content-Type': 'application/json' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
   return { status: response.status, data: await response.json(), headers: response.headers };
@@ -58,6 +58,21 @@ test('availability excludes overlaps but allows departure-day arrival', async ()
   assert.ok(!unavailable.data.some(r => r.roomNumber==='001'));
   const adjacent = await call('/bookings','POST',payload({arrival:'2026-07-13',nights:2}));
   assert.equal(adjacent.status,201);
+});
+test('booking-holder email is required, validated, stored and editable (Q1)', async () => {
+  const { holderEmail, ...withoutEmail } = payload();
+  const missing = await call('/bookings', 'POST', withoutEmail);
+  assert.equal(missing.status, 400); assert.match(missing.data.message, /holderEmail/);
+  const invalid = await call('/bookings', 'POST', payload({ holderEmail: 'not-an-email' }));
+  assert.equal(invalid.status, 400); assert.match(invalid.data.message, /holderEmail/);
+  assert.equal((await call('/bookings')).data.length, 0);
+  const created = await call('/bookings', 'POST', payload({ holderEmail: ' frederik@example.com ' }));
+  assert.equal(created.status, 201); assert.equal(created.data.holderEmail, 'frederik@example.com');
+  const id = created.data.bookingId;
+  const cleared = await call(`/bookings/${id}`, 'PUT', payload({ holderEmail: null, version: 1 }));
+  assert.equal(cleared.status, 400); assert.match(cleared.data.message, /holderEmail/);
+  const changed = await call(`/bookings/${id}`, 'PUT', payload({ holderEmail: 'new@example.com', version: 1 }));
+  assert.equal(changed.status, 200); assert.equal(changed.data.holderEmail, 'new@example.com');
 });
 test('stale edit preserves first save; reload permits another valid save', async () => {
   const created = await call('/bookings','POST',payload()); const id=created.data.bookingId;
