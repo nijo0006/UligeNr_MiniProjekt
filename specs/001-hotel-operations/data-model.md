@@ -87,3 +87,27 @@ Source Bookings IDs do not replace operational IDs already in use.
 source_records stores immutable source file/sheet/row/payload/checksum. historical_imports
 stores generator version, workbook checksum and reconciled totals. Bar daily rows have
 synthetic/source_id provenance; their raw aggregates are never summed a second time.
+
+
+## Implemented operational reporting and questionnaires — 2026-11-03
+
+Reporting scopes use active saved room_nights joined to bookings. Per-booking person
+counts are deduplicated before aggregation. Optional year is a night-date filter; no
+filter means all years. Unknown person counts propagate to complete guestCount, with
+knownGuestCount/unknownGuestBookingCount explicit. Country/room/type-season revenues
+retain exact decimal strings. All 24 type/season combinations and 214 inventory rooms
+remain visible with null revenue without nights. Sort exact revenue descending and
+stabilize equal rows by name/number without introducing business rank numbers.
+
+satisfaction_responses: id (generated BIGINT PK), booking_id (FK bookings), room_number
+(FK rooms), rating (NUMERIC CHECK 1–5), recorded_at (TIMESTAMPTZ default current time).
+Original room linkage survives removal from booking_rooms during booking edits; the
+booking and room must match at creation. Lock the booking row within the insert
+transaction to serialize membership/status validation with edits/cancellation. Do not
+seed responses. All-time AVG(rating) and response count per room exclude cancelled
+bookings; response-free rooms show null/0. No annual attribution or correction policy
+is silently added. A POST represents one distinct questionnaire response.
+
+Served backend/openapi.json is the implemented contract. Detailed reports are now
+implemented; Tableau, missing wine/beer inputs, questionnaire correction/deduplication
+and unconfirmed rounding boundaries remain the documented dependencies.

@@ -1,4 +1,6 @@
 import express from 'express';
+import { SatisfactionService } from '../services/satisfactionService.js';
+import { satisfactionRoutes } from './satisfactionRoutes.js';
 import swaggerUi from 'swagger-ui-express';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -9,7 +11,7 @@ import { reportRoutes } from './reportRoutes.js';
 import { BarService } from '../services/barService.js';
 import { barRoutes } from './barRoutes.js';
 
-export async function createApp(repository, reportRepository, barRepository) {
+export async function createApp(repository, reportRepository, barRepository, satisfactionRepository) {
   const app = express();
   app.disable('x-powered-by');
   app.use(express.json({ limit: '64kb' }));
@@ -20,9 +22,13 @@ export async function createApp(repository, reportRepository, barRepository) {
   app.use('/api', bookingRoutes(new BookingService(repository), repository));
   app.use('/api', reportRoutes(new ReportService(reportRepository)));
   app.use('/api', barRoutes(new BarService(barRepository)));
+  app.use('/api', satisfactionRoutes(new SatisfactionService(satisfactionRepository)));
   app.use('/api', (_req, res) => res.status(404).json({ code: 'ENDPOINT_NOT_FOUND', message: 'API endpoint not found' }));
-  app.get(['/staff','/staff/'], (_req,res) => res.sendFile(fileURLToPath(new URL('../../../frontend/staff.html', import.meta.url))));
-  app.get(['/guest','/guest/'], (_req,res) => res.redirect('/'));
+  const frontend = new URL('../../../frontend/', import.meta.url);
+  for (const [route,file] of [['/staff','index.html'],['/staff/overview','overview.html'],['/staff/bookings','bookings.html'],['/staff/bar','bar.html']]) {
+    app.get([route,`${route}/`], (_req,res) => res.sendFile(fileURLToPath(new URL(file,frontend))));
+  }
+  app.get('/staff.html', (_req,res) => res.redirect('/staff'));
   app.use(express.static(fileURLToPath(new URL('../../../frontend/', import.meta.url))));
   app.use((_req, res) => res.status(404).send('Page not found'));
   app.use((error, _req, res, next) => {

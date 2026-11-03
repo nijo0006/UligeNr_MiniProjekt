@@ -1,3 +1,4 @@
+import { SatisfactionRepository } from '../src/data/satisfactionRepository.js';
 import test,{before,after} from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
@@ -16,13 +17,15 @@ async function call(path,method='GET',body){const res=await fetch(base+path,{met
 before(async()=>{
   admin=createPool();const created=await schemaPool();schema=created.name;pool=created.pool;
   await initialize(pool,{history:false});
-  server=(await createApp(new BookingRepository(pool),new ReportRepository(pool),new BarRepository(pool))).listen(0,'0.0.0.0');
+  server=(await createApp(new BookingRepository(pool),new ReportRepository(pool),new BarRepository(pool), new SatisfactionRepository(pool))).listen(0,'0.0.0.0');
   await new Promise(resolve=>server.once('listening',resolve));base=`http://127.0.0.1:${server.address().port}/api`;
   const room=(await call('/rooms')).data.find(r=>r.roomType==='Spa Executive');
   existing=(await call('/bookings','POST',{holderFirstName:'Existing',holderLastName:'Preserved',holderCountry:'Denmark',guestCount:2,roomNumbers:[room.roomNumber],arrival:'2024-04-01',nights:1})).data;
   existingBar=(await call('/bar-sales/2024-01-01/1','PUT',{quantity:7})).data;
 });
 after(async()=>{if(server)await new Promise(resolve=>server.close(resolve));await pool?.end();if(schema)await admin.query(`DROP SCHEMA ${schema} CASCADE`);await admin?.end();});
+
+function sourceAmountForSeason(season){return {low:335407700,mid:380938700+Math.round(Number(existing.totalPrice)*100),high:407057000}[season];}
 
 test('imports complete historical workbook, preserves existing records and reconciles annual reports',async()=>{
   await initialize(pool);
@@ -40,6 +43,23 @@ test('imports complete historical workbook, preserves existing records and recon
   }
   assert.equal(roomRevenue,1123403400+Math.round(Number(existing.totalPrice)*100));
   assert.equal(barRevenue,1344864034+Math.round(Number(existingBar.revenue)*100));assert.equal(barUnits,179958+7);
+  const countries=(await call('/reports/countries')).data;
+  assert.equal(countries.reduce((sum,r)=>sum+r.bookingCount,0),1001);
+  assert.equal(countries.find(r=>r.country==='South Korea').bookingCount,63);
+  assert.equal(countries.find(r=>r.country==='South Korea').roomRevenue,'767699.00');
+  assert.equal(countries.find(r=>r.country==='South Korea').guestCount,null);
+  assert.equal(countries[0].country,'South Korea');
+  const seasons=(await call('/reports/room-types-seasons')).data;
+  for(const season of ['low','mid','high']){
+    const expected=sourceAmountForSeason(season);
+    assert.equal(seasons.filter(r=>r.season===season).reduce((sum,r)=>sum+Math.round(Number(r.roomRevenue??0)*100),0),expected);
+  }
+  const summary=(await call('/reports/summary')).data;
+  assert.equal(summary.soldRoomNights,5380);assert.equal(summary.unknownGuestBookingCount,1000);
+  assert.equal(summary.guestCount,null);assert.equal(summary.knownGuestCount,2);
+  assert.equal(summary.occupancyPercent,null);assert.equal(summary.containsSyntheticData,true);
+  const roomTotals=(await call('/reports/rooms')).data;
+  assert.equal(roomTotals.reduce((sum,r)=>sum+Math.round(Number(r.roomRevenue??0)*100),0),roomRevenue);
   const {rows:[raw]}=await pool.query('SELECT COUNT(*)::integer AS count FROM source_records');assert.equal(raw.count,1030);
 });
 

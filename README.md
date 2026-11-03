@@ -11,8 +11,7 @@ From a clone of this repository, with Docker and Docker Compose installed:
 docker compose up
 ```
 
-Open **http://localhost:3000** for the guest booking frontend,
-**http://localhost:3000/staff** for the staff frontend, and
+Open **http://localhost:3000** (or **http://localhost:3000/staff**) for the staff home and
 **http://localhost:3000/api/docs** for Swagger UI. The first build downloads dependencies;
 the app waits for PostgreSQL, creates its tables, and seeds the room/country/tariff catalog
 automatically. No host Node/PostgreSQL installation or manual migration command is needed.
@@ -20,8 +19,10 @@ Use `docker compose up -d` to leave services running in the background.
 
 | Service | Local address |
 | --- | --- |
-| Guest booking frontend | http://localhost:3000 |
-| Staff operations frontend | http://localhost:3000/staff |
+| Staff home with icon navigation | http://localhost:3000 |
+| Overview and historical figures | http://localhost:3000/staff/overview |
+| Booking administration | http://localhost:3000/staff/bookings |
+| Helene’s bar | http://localhost:3000/staff/bar |
 | Swagger UI | http://localhost:3000/api/docs |
 | Implemented OpenAPI JSON | http://localhost:3000/api/openapi.json |
 | Readiness | http://localhost:3000/api/health |
@@ -52,7 +53,7 @@ Git. `backend/scripts/migrate-mysql-snapshot.js <private-snapshot.json>` can imp
 format into an empty, initialized target; it refuses a target containing bookings and
 verifies records before commit. This script is not required on a fresh clone.
 
-The first week-2 report is implemented: annual booked room revenue through the API and frontend. Other indicators remain pending.
+Annual hotel revenue is implemented through the API and frontend, with separate room and bar components and their combined total. The remaining operational reports and room questionnaires are also implemented; Tableau remains deferred.
 
 ## Implemented booking slice
 
@@ -73,14 +74,14 @@ extend to show more values; their initial option count is not a maximum-stay pol
 Normal startup now imports the **1,000 source bookings** and **179,958 bar units** once.
 Generated dates/room assignments across 2024–2026 are labelled demonstration data.
 Source prices and immutable Excel evidence are retained. Operational edits/cancellations
-affect current reporting without rewriting source reference totals. Other hotel indicators,
-satisfaction and Tableau remain pending. The served OpenAPI lists implemented endpoints.
+affect current reporting without rewriting source reference totals. Country/type/season and room reports, occupancy, inventory and questionnaire means are implemented.
+Tableau remains deferred. The served OpenAPI lists implemented endpoints.
 Clearly named browser test bookings remain cancelled, not active stays.
 
 ## Historical Excel data
 
-Open `/staff`: the Excel history panel shows source control totals, while the annual
-room/bar cards use the selected year's saved operational records. Use **Booking year**,
+Open `/staff/overview` for the Excel history panel and annual room revenue. Bar figures
+are on `/staff/bar`. Open `/staff/bookings` and use **Booking year**,
 **Search bookings**, and previous/next controls to browse the history. A `#123` search
 selects an exact operational BookingID; ordinary text searches names, country, rooms and
 source IDs. The 25-row display page size does not limit stored bookings.
@@ -157,16 +158,22 @@ Do not supply ID, departure or prices. If the selected room is occupied, use the
 availability endpoint or frontend to choose another room. See Swagger UI for edit and
 cancellation requests and the saved `version` required by edits.
 
-## Guest and staff frontends
+## Staff home and workspaces
 
-The guest entry at `/` (alias `/guest`) provides stay dates, available rooms, automatic
-prices and a confirmation of the guest's own booking. It never requests the internal
-booking list or report endpoints. The staff entry at `/staff` provides booking CRUD,
-annual room revenue, active booking count and Helene Christine's bar workspace. They
-share booking-form behavior and one backend; no extra runtime services are required.
+The customer-facing booking page has been removed at the user's request. The start page
+at `/` (alias `/staff`) provides three accessible icon links:
 
-This remains the explicitly selected **local prototype without login**. Different pages
-do not implement authentication, permissions or protected API endpoints.
+- **Overview** (`/staff/overview`): annual hotel revenue with room/bar breakdown, booking count and original Excel reference figures.
+- **Bookings** (`/staff/bookings`): create, view, search, filter, edit and cancel bookings.
+- **Helene’s bar** (`/staff/bar`): annual bar/drink reporting and daily closing quantities.
+
+Each area has its own HTML/JavaScript entry point and a shared header menu/home link.
+The home page does not load hotel data, and each workspace requests its own data. The
+old `/guest` page/controller is no longer served; `/staff.html` redirects to staff home.
+All functionality still starts through one `docker compose up` command.
+
+This remains the explicitly selected **local prototype without login**. Navigation changes
+do not add authentication, permissions or protected API endpoints.
 
 ### Helene Christine's bar workspace
 
@@ -191,29 +198,85 @@ Implemented staff bar endpoints (see Swagger):
 - `PUT /api/bar-sales/2026-11-02/1` with `{ "quantity": 12 }`
 - `GET /api/reports/bar?year=2026`
 
-## Annual room revenue
+## Annual hotel revenue
 
-The staff frontend's **Annual room revenue** card fetches the selected year from
-`GET /api/reports/revenue?year=2026`. It refreshes after booking creation, edits and
-cancellation, on year changes, or with **Refresh revenue**. **View JSON** opens the
-same API result. The year selector includes 2024–2026, the current year, and all years
-represented by active stays. The API accepts a single year from 1000 to 9999.
+The Overview page shows annual **combined hotel revenue**, **room revenue** and **bar
+revenue** from one `GET /api/reports/revenue?year=2026` request. Select a reporting year
+or use **Refresh revenue**; returning from booking administration reloads current values.
+**View JSON** opens the same result. The year selector includes demonstration years
+2024–2026, the current year and years represented by active stays. The API accepts one
+calendar year from 1000 to 9999.
+
+Example response (illustrative values):
 
 ```json
-{ "year": 2026, "currency": "DKK", "roomRevenue": "2491.00", "containsSyntheticData": false }
+{
+  "year": 2026,
+  "currency": "DKK",
+  "roomRevenue": "2491.00",
+  "barRevenue": "691.00",
+  "totalRevenue": "3182.00",
+  "containsSyntheticData": false
+}
 ```
 
-PostgreSQL sums each active booking's exact room-night charges for dates in the selected
-year. It includes future booked nights in that year and excludes cancellation and the
-departure night. Multi-room bookings contribute each room-night once. A stay spanning
-31 December and 1 January contributes to both years according to each night's date.
-Prices are not recalculated from today's tariff when reporting saved charges.
+Room revenue sums saved charges for each active occupied room-night in the selected
+year, including future booked nights and excluding cancellation and departure. A stay
+crossing New Year contributes to the proper year for each night. Bar revenue sums saved
+daily sales amounts by sales date, including all drink categories and walk-in customers.
+Corrections replace the previous daily contribution. Independent database aggregates in
+one statement prevent multiplied totals and read the components from the same snapshot.
+The service adds exact integer minor units, without floating-point money arithmetic.
+Reporting never reapplies current tariffs/menu prices or adds source reference totals.
 
-Without eligible nights, roomRevenue is null and the card shows **No data**. An actual
-zero is returned as "0.00"; database errors show **Unavailable**. JSON preserves two
-decimal places; the frontend displays one. This report contains room revenue only, including imported source nightly charges;
-bar revenue has a separate report. Generated history is identified by containsSyntheticData. It does not yet complete
-the combined hotel revenue story. Swagger UI documents success and input/error responses.
+A component without records is `null` and displays **No data**. The total sums the
+recorded components; it is null only when neither has records. An actual zero stays
+`"0.00"`. JSON keeps exact two-decimal strings; the frontend displays one decimal.
+Request failures show **Unavailable**, separately from missing data.
+`containsSyntheticData` is true if either included component contains imported history
+with demonstration dates/room assignments; Overview explicitly labels those results.
+The existing `roomRevenue` field remains available to API consumers. Swagger documents
+the extended response, input validation and errors. Other operational reports and questionnaire entry are described below; Tableau remains deferred.
+
+## Operational reports and questionnaires
+
+Overview includes expandable API-backed reports with the same financial year selector.
+Choose **All years** to reconcile the complete saved dataset; annual occupancy then
+requires a single year rather than dividing three years by one year's capacity.
+
+| API | Result |
+| --- | --- |
+| `GET /api/reports/summary?year=2026` | Booking/guest/night counts, revenue, bar units and annual occupancy |
+| `GET /api/reports/countries?year=2026` | Holder-country bookings, guests and room revenue, highest revenue first |
+| `GET /api/reports/room-types-seasons?year=2026` | All 24 type/season revenue combinations |
+| `GET /api/reports/rooms?year=2026` | All numbered rooms, highest room revenue first |
+| `GET /api/reports/inventory` | All-time room stock by type, totaling 214 |
+| `GET /api/reports/satisfaction` | All-time room questionnaire means and response counts |
+| `GET /api/reports/drinks?year=2026` | Per-drink rows from the existing annual bar report |
+| `POST /api/satisfaction` | Record one actual room-linked questionnaire |
+
+Omit `year` on summary/country/type-season/room reports for all saved years. A booking
+counts once per scope if it has occupied nights in it; it may appear in both years when
+crossing New Year. Room-night revenue always contributes only to its own date. Countries
+use the booking holder's country for all guests and room revenue, without bar revenue.
+If any included guest count is unknown, `guestCount` is null; `knownGuestCount` and
+`unknownGuestBookingCount` expose the known subtotal and missing-booking count. These
+are not estimated complete guest totals. Empty booking/night counts are zero; missing
+revenue/ratings are null. Occupancy uses the agreed fixed 214 × 365 denominator, including
+leap years, and is null without occupied nights. Equal revenues remain equal; name/room
+number stabilizes display without inventing business rank numbers. Synthetic date/room
+provenance accompanies reports; the room inventory itself is demonstration data.
+
+On **Bookings**, select **Record satisfaction** on a booking, or use the questionnaire
+form below the list. Select one of that booking's rooms and a rating from 1 to 5.
+Example JSON: `{"bookingId":123,"roomNumber":"001","rating":4}`. The API also accepts
+numeric ratings within the range. It validates active booking and current room membership
+inside a transaction serialized with booking edits/cancellation. Each POST records a
+distinct actual response; correction and duplicate-questionnaire policies remain open.
+Feedback keeps its original room link after booking edits; cancelled bookings are
+excluded from reporting. Questionnaire means are all-time, independent of the financial
+year, and display one decimal. No historical responses are seeded. Normal startup creates
+the empty questionnaire table idempotently; saved responses persist in PostgreSQL.
 
 ## Verification
 
@@ -245,7 +308,7 @@ npm ci
 npm run test:browser
 ```
 
-This verifies guest-to-staff booking, staff edits/cancellation, annual room revenue and
+This verifies staff home navigation, staff edits/cancellation, historical/annual reporting and
 bar-form rendering/corrections. Clearly named test bookings are cancelled afterward.
 Real bar SQL behavior is tested only in the isolated test database; the browser bar
 form test uses controlled HTTP fixtures and does not change live bar sales.
@@ -262,3 +325,13 @@ and outstanding feature work.
 - [Full future API draft](specs/001-hotel-operations/contracts/openapi.json)
 
 Tableau Public Edition's connection and refresh approach is deferred to the user.
+
+
+## Room photographs and hotel appearance
+
+The booking form includes eight clickable room-type photos from the official
+[Hotel Kong Arthur room overview](https://arthurhotels.dk/hotel-kong-arthur/vaerelser/).
+Selecting a photo filters room types; actual room numbers still come from availability.
+Photos illustrate types, not each generated room. Staff pages use the hotel's warm
+palette, header logo, local Barlow fonts and original headline fallback stack.
+Assets and attribution: [frontend/assets/README.md](frontend/assets/README.md).

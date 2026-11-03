@@ -150,3 +150,80 @@ Tests cover existing-row/date-key preservation, raw evidence immutability, edits
 cancellation surviving repeat startup, impossible-placement rollback/retry and a late
 database failure rolling back bookings/sales/evidence together. Browser history checks
 cover year selection, search, pagination, provenance labels and actual 2025 report totals.
+
+
+## Staff navigation update — 2026-11-03
+
+The customer booking page is retired. Open / (or /staff) for three icon links:
+/staff/overview, /staff/bookings and /staff/bar. Each page has shared header navigation
+and a home link; no extra container or startup step is required. /guest and /guest.js
+return 404. Staff booking creation and the existing JSON API remain available.
+
+Validation: 24 isolated PostgreSQL/API tests and 4 Chrome browser flows passed. Checks
+cover separate route content, removed guest URLs, home icon navigation, keyboard Enter,
+mobile layout, retained create/edit/cancel with current report totals, report failure
+recovery, historic year/search/pagination and daily bar correction UI. Desktop/mobile
+home screenshots were reviewed; Overview and bar screenshots were captured/reviewed.
+No database schema or source-data import changes were made. The booking browser flow
+uses a clearly named test booking and cancels it afterward; bar UI fixtures avoid writes
+to live sales.
+
+
+## Room photos and hotel styling — 2026-11-03
+
+Open /staff/bookings to browse eight room-type photo cards. Choose a card or the room-type
+dropdown, then choose available room numbers as before. Photos, Barlow and the hotel
+wordmark are local assets included in the normal Docker build. All staff pages use the
+reference site's warm palette and headline fallback stack. Source mapping and font
+license information are in frontend/assets/README.md and frontend/roomPhotos.js.
+
+Validation: 4 Chrome browser flows passed, including all eight image URLs/loading,
+photo-to-filter selection, loaded Barlow, retained booking create/edit/cancel and
+report/history/bar flows. Desktop and mobile layouts and the photo gallery were reviewed.
+
+
+## Combined annual hotel revenue — 2026-11-03
+
+Open /staff/overview for annual hotel total plus separately labelled room and bar
+revenue. Change Reporting year or press Refresh revenue. View JSON opens
+/api/reports/revenue?year=YYYY; Swagger at /api/docs documents the extended response.
+The response preserves roomRevenue and adds barRevenue and totalRevenue. Missing
+components remain null; total is null only when neither source has records. Recorded
+zero remains 0.00. Either source can set containsSyntheticData, shown on Overview.
+
+Executed: 27 isolated PostgreSQL/API tests and 5 Chrome browser flows passed. Tests
+cover independent aggregation, multiple rooms, New Year and departure boundaries,
+bar-only/room-only/no-data/zero results, saved price corrections, booking edits and
+cancellation, exact fractional sums and values beyond safe integer cents, and either-
+source provenance. Swagger validation passed. Browser checks cover API-backed values,
+year selection, missing/zero results, request-failure recovery and retained booking,
+history and bar workflows. Desktop/mobile annual-report screenshots were reviewed.
+No schema or data migration was needed; reports do not write data. The browser's own
+temporary booking was cancelled; bar UI checks use fixtures rather than live sales.
+
+
+## Remaining operational reports and questionnaires — 2026-11-03
+
+Run docker compose up as usual. Overview now contains Performance reports: annual
+occupancy, sold room-nights, guest completeness and expandable country revenue/counts,
+type/season revenue, highest-earning rooms, inventory and all-time satisfaction. Use
+the shared Reporting year or All years; occupancy requires a single year. Highest
+revenue lists retain equal amounts without inventing numbered ranks. Unknown complete
+guest totals display No data with the known subtotal/missing-booking count alongside.
+
+Bookings includes Record satisfaction on each active booking plus a dropdown form at
+/staff/bookings#questionnaire. Select a booked room and a 1–5 rating. Each submission
+records a distinct actual response; means are all-time, independent of financial year.
+No questionnaire seed data exists. Startup creates the empty response table and normal
+Docker volume persistence retains future responses. No additional setup command.
+
+Executed: 33 isolated PostgreSQL/API tests passed, including historical source controls,
+all report scopes, exact allocation and unknown people, cancellation/edit freshness,
+fixed-denominator occupancy and inventory invariance. Questionnaire tests cover room
+membership, 2/4/5 arithmetic mean, invalid values, repeat-start persistence, original
+room retention after edits and cancellation concurrency/exclusion. Served Swagger
+contract validated. Seven Chrome browser scenarios verified; a targeted rerun passed
+after correcting questionnaire controls' accessible names. Desktop/mobile report and
+questionnaire screenshots reviewed. Report failure/recovery clears stale data; year
+and All years selections work. Questionnaire/bar browser POSTs use controlled fixtures
+and do not write live responses/sales; browser's temporary booking is cancelled.

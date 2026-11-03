@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hotel Kong Arthur · Bookings</title><link rel="preload" href="/assets/fonts/barlow-regular.ttf" as="font" type="font/ttf" crossorigin><link rel="stylesheet" href="/styles.css"></head>
+<body class="staff-page "><header><a class="brand brand-link" href="/" aria-label="Hotel Kong Arthur staff home"><img class="brand-wordmark" src="/assets/kong-arthur-logo.svg" alt="Hotel Kong Arthur" width="122" height="44"><span class="brand-context">Staff workspace</span></a><nav class="top-nav" aria-label="Staff navigation"><a href="/">Home</a><a href="/staff/overview">Overview</a><a href="/staff/bookings" aria-current="page">Bookings</a><a href="/staff/bar">Helene’s bar</a></nav></header>
+<main><a class="back-home" href="/">← Staff home</a><div class="page-heading"><div><p class="eyebrow">HOTEL OPERATIONS</p><h1>Bookings</h1><p>Create and manage reservations, or find a booking in the hotel’s history.</p></div></div>
+<div id="notice" class="notice" role="status" aria-live="polite" hidden></div><div id="reservations" class="layout">
+      <section class="panel booking-panel" aria-labelledby="form-title">
+        <div class="section-heading"><span class="step">01</span><div><h2 id="form-title">New booking</h2><p id="form-description">Prices are calculated for each night of your stay.</p></div></div>
+        <form id="booking-form">
+          <div class="fields"><label>First name<input name="holderFirstName" autocomplete="given-name" required maxlength="255"></label><label>Last name<input name="holderLastName" autocomplete="family-name" required maxlength="255"></label></div>
+          <div class="fields"><label>Booking holder’s country<select name="holderCountry" required><option value="">Select a country</option></select></label><label>Guests<select name="guestCount" required aria-label="Guests"></select></label></div>
+          <div class="fields"><label>Arrival<input type="date" name="arrival" required min="1000-01-01" max="9999-12-31"></label><label>Nights<select name="nights" required aria-label="Nights"></select></label></div>
+          <div class="stay-detail"><span>Departure</span><strong id="departure">Select your stay dates</strong></div>
+          <label>Room type<select id="room-type" aria-label="Room type"><option value="">All room types</option></select></label>
+          <fieldset class="type-photos"><legend>Browse room types</legend><p class="hint">Photos illustrate room types; individual rooms vary. Select available room numbers below.</p><div id="room-type-gallery" class="room-type-gallery"></div><p class="photo-credit">Room photos: <a href="https://arthurhotels.dk/hotel-kong-arthur/vaerelser/" target="_blank" rel="noopener noreferrer">Hotel Kong Arthur</a></p></fieldset>
+          <fieldset><legend>Available rooms <span id="room-count"></span></legend><p class="hint">Select one or more rooms. Room numbers are demonstration inventory.</p><div id="rooms" class="rooms"><p class="empty-inline">Choose arrival and nights to see available rooms.</p></div></fieldset>
+          <div class="quote"><span>Calculated total</span><strong id="price">—</strong><small id="price-note">Each night uses its own seasonal rate.</small></div>
+          <div class="form-actions"><button type="submit" id="save">Create booking</button><button type="button" id="cancel-edit" class="secondary" hidden>Cancel editing</button></div>
+        </form>
+      </section>
+      <section class="panel list-panel" aria-labelledby="list-title">
+        <div class="section-heading"><span class="step">02</span><div><h2 id="list-title">Bookings &amp; history</h2><p id="reservation-count">Loading bookings…</p></div><button id="refresh" class="text-button" type="button">Refresh</button></div>
+        <div class="booking-filters"><label>Booking year<select id="booking-year" aria-label="Booking year"><option value="">All years</option></select></label><label>Search bookings<input id="booking-search" type="search" placeholder="Name, country, room or booking ID"></label></div><p id="booking-page-status" class="hint" aria-live="polite"></p><div id="bookings"></div><div class="pagination"><button id="previous-bookings" class="secondary" type="button">Previous bookings</button><button id="next-bookings" class="secondary" type="button">Next bookings</button></div>
+      </section>
+    </div>
+
+
+<section id="questionnaire" class="panel questionnaire-panel" aria-labelledby="questionnaire-title">
+  <p class="eyebrow">GUEST EXPERIENCE</p><h2 id="questionnaire-title">Record a room questionnaire</h2>
+  <p class="hint">Select an active booking and one of its rooms. Each submission records a distinct questionnaire response, not a correction. No historical responses are generated.</p>
+  <form id="questionnaire-form"><label>Questionnaire booking<select id="questionnaire-booking" aria-label="Questionnaire booking" required><option value="">Select a booking</option></select></label>
+    <div class="fields"><label>Questionnaire room<select id="questionnaire-room" aria-label="Questionnaire room" required><option value="">Select a booked room</option></select></label>
+    <label>Overall satisfaction<select name="rating" aria-label="Overall satisfaction" required><option value="">Select a rating</option><option value="1">1 / 5</option><option value="2">2 / 5</option><option value="3">3 / 5</option><option value="4">4 / 5</option><option value="5">5 / 5</option></select></label></div>
+    <button type="submit" disabled>Record questionnaire</button>
+  </form><p id="questionnaire-status" class="notice" role="status" hidden></p><p><a href="/staff/overview">View room satisfaction on Overview ↗</a></p>
+</section>
+<footer>Hotel Kong Arthur · Staff workspace · <a href="/api/docs">API documentation</a></footer></main><script type="module" src="/app.js"></script></body></html>

@@ -5,5 +5,6 @@ export function barRoutes(service) {
   router.get('/bar-sales',async (req,res)=>res.json(await service.daily(req.query.date)));
   router.put('/bar-sales/:salesDate/:drinkId',async (req,res)=>res.json(await service.save(req.params.salesDate,req.params.drinkId,req.body)));
   router.get('/reports/bar',async (req,res)=>res.json(await service.annual(req.query.year)));
+  router.get('/reports/drinks',async (req,res)=>res.json((await service.annual(req.query.year)).drinks));
   return router;
 }
