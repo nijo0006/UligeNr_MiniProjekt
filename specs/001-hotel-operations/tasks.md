@@ -1,7 +1,8 @@
 # Tasks: Hotel Operations and Performance Insights
 
 **Current status — 2026-11-03**: Booking, history import, operational/reporting APIs,
-bar workflows, staff frontend and room questionnaires are implemented and verified.
+bar workflows, staff frontend, booking completion and the emailed guest questionnaire
+(Story 24) are implemented and verified.
 Tableau remains user-deferred (T033/T046). T037/T044 retain unresolved business/input
 boundaries; neither complete project acceptance nor a Tableau dashboard is claimed.
 Phase 31 reconciles older unchecked bar/report tasks with the implemented code.
@@ -346,3 +347,16 @@ clarified so that only prices are excluded from manual entry.
 - [x] T099 Correct Q1/Q5, Stories 1–2, FR-001/FR-002 and Key Entities in spec.md; update data model, plan and both OpenAPI contracts with holderEmail.
 - [x] T100 Add nullable holder_email column, require and format-validate email for new bookings, and allow imported bookings without email to remain empty on edit.
 - [x] T101 Add the email field to the browser booking form and booking list, and extend pricing/integration tests for missing, invalid and imported-without-email cases.
+
+
+## Phase 43: Booking completion and guest questionnaire (Story 24) — 2026-11-03
+
+- [x] T102 Add Story 24, FR-027/FR-028 and the 2026-11-03 clarification; revise Story 13 so the guest questionnaire is the only rating source.
+- [x] T103 Add `completed` status, completed_at, satisfaction_invitations and questionnaire source/uniqueness to the schema; treat only cancelled bookings as excluded in reports, availability and imports.
+- [x] T104 Implement POST /api/bookings/{id}/complete with arrival-date, cancelled/unknown and repeat rules; send one email after commit via nodemailer and record sent/failed/no_email.
+- [x] T105 Implement GET/POST /api/questionnaires/{token} for per-room ratings, an overall stay rating and a yes/no recommendation, each answered once; add GET /api/reports/stay-feedback.
+- [x] T106 Allow editing completed stays without status change or new email; reject their cancellation.
+- [x] T107 Remove receptionist rating entry (POST /api/satisfaction, Bookings form, satisfaction.js) and its browser test.
+- [x] T108 Add Complete stay, status badge and status filter on Bookings; add survey.html; show overall rating and recommendation share on Overview.
+- [x] T109 Add Mailpit to Docker Compose; update OpenAPI (0.5.0), README and quickstart.
+- [x] T110 Verify with integration tests (capturing mailer, fixed hotel date), browser tests and a manual check-out → email → questionnaire → Overview flow against the test database.

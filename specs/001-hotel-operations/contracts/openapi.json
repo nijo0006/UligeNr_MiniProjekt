@@ -3,7 +3,7 @@
   "info": {
     "title": "Hotel Operations API \u2014 Draft",
     "version": "0.1.0",
-    "description": "Independent planning contract only. No endpoints are implemented. Tableau transport is deferred. Open business items are in research.md and spec.md; no duplicate-creation handling or login is added. Reporting and satisfaction endpoints synchronized with the implemented backend contract on 2026-11-03; backend/openapi.json is authoritative for runtime."
+    "description": "Independent planning contract only. No endpoints are implemented. Tableau transport is deferred. Open business items are in research.md and spec.md; no duplicate-creation handling or login is added. Reporting and satisfaction endpoints synchronized with the implemented backend contract on 2026-11-03; backend/openapi.json is authoritative for runtime. Story 24 (booking completion and guest questionnaire) synchronized on 2026-11-03."
   },
   "servers": [
     {
@@ -477,76 +477,6 @@
           }
         },
         "description": "Replace effective quantity rather than incrementing it. Price comes from stored catalog/snapshot, never from request input. No hotel booking is required. Future menu price-change policy remains open."
-      }
-    },
-    "/api/satisfaction": {
-      "post": {
-        "operationId": "recordSatisfaction",
-        "summary": "Record a rating linked to a booking and one of its rooms",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SatisfactionResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input or attempted override of read-only calculations",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Booking not found; no mutation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Booking is cancelled",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Database temporarily unavailable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SatisfactionInput"
-              }
-            }
-          }
-        },
-        "description": "Record a distinct questionnaire for one room on an active booking, without login. Validate numeric rating 1\u20135 and current booking-room membership in one transaction serialized with booking edits/cancellation. Each POST is a new actual response, not an overwrite; correction/deduplication policy remains open. No historical ratings generated. Original room linkage persists after booking edits; responses linked to cancelled bookings are excluded from reports."
       }
     },
     "/api/reports/summary": {
@@ -1095,6 +1025,235 @@
           }
         }
       }
+    },
+    "/api/bookings/{bookingId}/complete": {
+      "post": {
+        "operationId": "completeBooking",
+        "summary": "Complete a stay (check-out) and email the satisfaction questionnaire",
+        "description": "Story 24. Allowed for an active booking on or after its arrival date (hotel date, Europe/Copenhagen). Status becomes completed; the stay keeps counting in all indicators and stays editable but can no longer be cancelled. One questionnaire email with a unique link is sent to the booking holder after the change is saved; repeated completion sends nothing. A booking without email is completed without email, and a failed email does not undo completion.",
+        "parameters": [
+          {
+            "name": "bookingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Completed; questionnaire delivery reported",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingCompletion"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid BookingID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Booking not found; no mutation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Booking cancelled (BOOKING_CANCELLED) or stay not started (STAY_NOT_STARTED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/questionnaires/{token}": {
+      "get": {
+        "operationId": "getQuestionnaire",
+        "summary": "Rooms a guest can rate through their questionnaire link",
+        "description": "Guest-facing. Returns only the rooms of the completed booking and whether each is already rated. Unknown links reveal nothing.",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{32}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Questionnaire"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Questionnaire link not valid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/questionnaires/{token}/responses": {
+      "post": {
+        "operationId": "submitQuestionnaire",
+        "summary": "Submit an overall stay rating, 1\u20135 ratings per room and/or whether the guest would recommend the hotel",
+        "description": "Each room can be rated once through the questionnaire; all ratings in one request are saved together or not at all. Responses count in the room satisfaction report; this guest questionnaire is the only way ratings are recorded.",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{32}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestionnaireInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestionnaireResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid ratings or room not on the stay",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Questionnaire link not valid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Already answered (ALREADY_ANSWERED): room, overall rating or recommendation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reports/stay-feedback": {
+      "get": {
+        "operationId": "getStayFeedbackReport",
+        "summary": "Whole-stay guest feedback: mean overall rating and share who would recommend the hotel",
+        "description": "All-time, from the guest questionnaire after check-out; one overall rating and one recommendation answer per stay. meanRating and recommendPercent are null without answers.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StayFeedbackReport"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1372,6 +1531,7 @@
             "type": "string",
             "enum": [
               "active",
+              "completed",
               "cancelled"
             ]
           },
@@ -1396,6 +1556,12 @@
           "sourceId": {
             "type": "string",
             "nullable": true
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Set when the stay was completed (check-out)."
           }
         },
         "required": [
@@ -1573,62 +1739,6 @@
           "unitPrice",
           "revenue",
           "synthetic"
-        ],
-        "additionalProperties": false
-      },
-      "SatisfactionInput": {
-        "type": "object",
-        "properties": {
-          "bookingId": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "roomNumber": {
-            "type": "string"
-          },
-          "rating": {
-            "type": "number",
-            "minimum": 1,
-            "maximum": 5
-          }
-        },
-        "required": [
-          "bookingId",
-          "roomNumber",
-          "rating"
-        ],
-        "additionalProperties": false
-      },
-      "SatisfactionResponse": {
-        "type": "object",
-        "properties": {
-          "responseId": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "bookingId": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "roomNumber": {
-            "type": "string"
-          },
-          "rating": {
-            "type": "number",
-            "minimum": 1,
-            "maximum": 5
-          },
-          "recordedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "required": [
-          "responseId",
-          "bookingId",
-          "roomNumber",
-          "rating",
-          "recordedAt"
         ],
         "additionalProperties": false
       },
@@ -2318,6 +2428,213 @@
             "nullable": true,
             "minimum": 1,
             "maximum": 5
+          }
+        }
+      },
+      "QuestionnaireDelivery": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "message"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "sent",
+              "failed",
+              "no_email"
+            ]
+          },
+          "sentTo": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "BookingCompletion": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "booking",
+          "questionnaire"
+        ],
+        "properties": {
+          "booking": {
+            "$ref": "#/components/schemas/Booking"
+          },
+          "questionnaire": {
+            "$ref": "#/components/schemas/QuestionnaireDelivery"
+          }
+        }
+      },
+      "Questionnaire": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "rooms",
+          "recommendationAnswered",
+          "overallAnswered"
+        ],
+        "properties": {
+          "rooms": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "roomNumber",
+                "roomType",
+                "answered"
+              ],
+              "properties": {
+                "roomNumber": {
+                  "type": "string"
+                },
+                "roomType": {
+                  "type": "string"
+                },
+                "answered": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "recommendationAnswered": {
+            "type": "boolean"
+          },
+          "overallAnswered": {
+            "type": "boolean"
+          }
+        }
+      },
+      "QuestionnaireInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "ratings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "roomNumber",
+                "rating"
+              ],
+              "properties": {
+                "roomNumber": {
+                  "type": "string",
+                  "maxLength": 10
+                },
+                "rating": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 5
+                }
+              }
+            }
+          },
+          "wouldRecommend": {
+            "type": "boolean",
+            "description": "Would the guest recommend the hotel to others? Answered once per stay."
+          },
+          "overallRating": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "Overall rating of the whole stay. Answered once per stay."
+          }
+        },
+        "description": "Supply at least one of overallRating, ratings and wouldRecommend.",
+        "minProperties": 1
+      },
+      "QuestionnaireResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "responses"
+        ],
+        "properties": {
+          "responses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "roomNumber",
+                "rating",
+                "recordedAt"
+              ],
+              "properties": {
+                "roomNumber": {
+                  "type": "string"
+                },
+                "rating": {
+                  "type": "number"
+                },
+                "recordedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          },
+          "wouldRecommend": {
+            "type": "boolean"
+          },
+          "overallRating": {
+            "type": "integer"
+          }
+        }
+      },
+      "StayFeedbackReport": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "overall",
+          "recommendation"
+        ],
+        "properties": {
+          "overall": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "responseCount",
+              "meanRating"
+            ],
+            "properties": {
+              "responseCount": {
+                "type": "integer"
+              },
+              "meanRating": {
+                "type": "number",
+                "nullable": true
+              }
+            }
+          },
+          "recommendation": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "responseCount",
+              "recommendCount",
+              "recommendPercent"
+            ],
+            "properties": {
+              "responseCount": {
+                "type": "integer"
+              },
+              "recommendCount": {
+                "type": "integer"
+              },
+              "recommendPercent": {
+                "type": "number",
+                "nullable": true
+              }
+            }
           }
         }
       }

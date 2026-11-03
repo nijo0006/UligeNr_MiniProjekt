@@ -211,7 +211,7 @@ the shared Reporting year or All years; occupancy requires a single year. Highes
 revenue lists retain equal amounts without inventing numbered ranks. Unknown complete
 guest totals display No data with the known subtotal/missing-booking count alongside.
 
-Bookings includes Record satisfaction on each active booking plus a dropdown form at
+(Superseded by Story 24 below: receptionist entry is removed.) Bookings includes Record satisfaction on each active booking plus a dropdown form at
 /staff/bookings#questionnaire. Select a booked room and a 1–5 rating. Each submission
 records a distinct actual response; means are all-time, independent of financial year.
 No questionnaire seed data exists. Startup creates the empty response table and normal
@@ -328,3 +328,21 @@ Inventory/satisfaction remain all-time; API year support and separate booking/ba
 are unchanged. Five relevant browser scenarios passed, including static 2026/no select,
 API-backed report values, null/zero/error recovery and map/chart interactions on desktop/
 mobile. Screenshot reviewed. No database change. T094 complete.
+
+
+## Booking completion and guest questionnaire (Story 24) — 2026-11-03
+
+`docker compose up -d --build` also starts Mailpit; its inbox is http://localhost:8025.
+
+1. On /staff/bookings, create a booking with an email and arrival today or earlier
+   (future stays show a disabled "Check-out from …" button).
+2. Select Complete stay and confirm. The booking shows COMPLETED STAY; the notice names
+   the address the questionnaire was sent to. Edit still works; Cancel is gone.
+3. Open the email in Mailpit and follow its link to /survey.html?token=….
+4. Rate the stay overall, each room, and answer Would you recommend us?. Answers can be
+   given in several visits; each question accepts one answer. A thank-you page follows.
+5. On /staff/overview, room-type means, Overall stay rating and Would recommend the hotel
+   reflect the answers. An invalid link shows an error without booking data.
+
+Automated: `docker compose --profile test run --build --rm test` covers completion rules,
+single email, mail failure, no-email bookings, questionnaire validation and reports.

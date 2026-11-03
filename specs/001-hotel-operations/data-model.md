@@ -131,3 +131,25 @@ Booking IDs, status, prices, night counts and unrelated operational records rema
 Versions increment on redated bookings so stale browser edits are rejected. Legacy
 import evidence remains immutable; /reports/history chooses the correction metadata.
 Fresh imports directly generate 2026 records. Later startup skips completed correction.
+
+
+## Booking completion and guest questionnaire — 2026-11-03
+
+bookings.status: CHECK ('active','completed','cancelled'); completed_at TIMESTAMPTZ NULL.
+Only cancelled bookings are excluded from reports, availability and satisfaction;
+completed stays count exactly like active ones and keep occupying rooms until departure.
+
+satisfaction_invitations: booking_id (PK, FK bookings, so at most one per booking),
+token (VARCHAR(64) UNIQUE, random 32-character URL-safe), email, created_at, sent_at,
+send_error, overall_rating (SMALLINT NULL CHECK 1–5), overall_rated_at,
+would_recommend (BOOLEAN NULL), recommended_at. Created when a booking with an email
+is completed; a NULL answer column means not yet answered.
+
+satisfaction_responses.source: 'reception' | 'questionnaire' (default 'reception' for
+older rows). A partial unique index on (booking_id, room_number) WHERE source =
+'questionnaire' allows one questionnaire rating per booked room. Receptionist entry is
+removed, so new rows are always 'questionnaire'. The overall stay rating lives on the
+invitation and is never mixed into room means.
+
+Stay feedback: AVG(overall_rating) and COUNT of would_recommend / COUNT FILTER (true)
+over invitations of non-cancelled bookings; null mean/percentage without answers.

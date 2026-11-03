@@ -599,3 +599,28 @@ report. Default to the first ten non-null rows; Show all rooms/Show top 10 toggl
 only. Keep the full period's maximum for bar widths and the shared type palette. Provide
 readable visible values and a bounded scroll region for all 214 rooms on desktop/mobile.
 No backend/API changes. Verify ranking, toggling, values and errors in browser checks.
+
+
+## Booking completion and guest questionnaire (Story 24) — 2026-11-03
+
+Add `completed` beside `active`/`cancelled`. POST /api/bookings/{id}/complete locks the
+booking, rejects unknown (404), cancelled and not-yet-arrived stays (409; hotel date in
+Europe/Copenhagen), sets status/completed_at, and creates one invitation with a random
+32-character URL-safe token when an email exists. The email is sent after commit through
+nodemailer, so an SMTP failure never undoes completion; the outcome (sent, failed,
+no_email) is stored and returned. Repeated completion sends nothing. Completed stays stay
+editable under the normal booking rules and keep their status, but cannot be cancelled.
+
+Reports, availability and import overlap checks change from `status='active'` to
+`status<>'cancelled'`, so completed stays keep counting and occupy rooms until departure.
+
+Guest page survey.html reads GET /api/questionnaires/{token} (rooms, answered flags) and
+posts an overall stay rating, per-room ratings and a yes/no recommendation, each once, in
+one transaction. Unknown links return 404 without booking data. Receptionist entry
+(POST /api/satisfaction and the Bookings form) is removed; the guest questionnaire is the
+only source. GET /api/reports/stay-feedback returns the mean overall rating and the share
+who would recommend; Overview shows both under the room-type satisfaction table.
+
+Docker Compose adds Mailpit (SMTP 1025, inbox http://localhost:8025) so no real guest is
+emailed locally; SMTP_HOST/SMTP_PORT/PUBLIC_BASE_URL configure delivery and links.
+Integration tests inject a capturing mailer and a fixed hotel date.
