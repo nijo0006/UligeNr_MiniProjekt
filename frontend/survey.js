@@ -1,5 +1,5 @@
 // Guest questionnaire reached from the email sent when a stay is completed (Story 24).
-// The link token is the only key; the page shows nothing but the stay's rooms.
+// The link token is the only key; the page shows nothing but the stay's questions and rooms.
 import { api } from './shared.js';
 
 const $ = selector => document.querySelector(selector);
@@ -16,22 +16,28 @@ function roomFieldset(room) {
   const meta = document.createElement('p'); meta.className = 'room-meta'; meta.textContent = room.answered ? `${room.roomType} · already rated, thank you` : room.roomType;
   fieldset.append(legend, meta);
   if (room.answered) { fieldset.classList.add('answered'); return fieldset; }
+  fieldset.append(ratingScale(`room-${room.roomNumber}`, `Room ${room.roomNumber}`));
+  return fieldset;
+}
+
+function ratingScale(name, subject) {
   const scale = document.createElement('div'); scale.className = 'rating-scale';
   labels.forEach((text, index) => {
     const label = document.createElement('label');
-    const input = document.createElement('input'); input.type = 'radio'; input.name = `room-${room.roomNumber}`; input.value = String(index + 1);
-    input.setAttribute('aria-label', `Room ${room.roomNumber}: ${index + 1} of 5, ${text}`);
+    const input = document.createElement('input'); input.type = 'radio'; input.name = name; input.value = String(index + 1);
+    input.setAttribute('aria-label', `${subject}: ${index + 1} of 5, ${text}`);
     const face = document.createElement('span'); face.append(String(index + 1));
     const small = document.createElement('small'); small.textContent = text; face.append(small);
     label.append(input, face); scale.append(label);
   });
-  fieldset.append(scale);
-  return fieldset;
+  return scale;
 }
 
 // Shows the unanswered questions; returns true when everything has been answered.
-function render({ rooms, recommendationAnswered }) {
-  if (rooms.every(room => room.answered) && recommendationAnswered) { showThanks(); return true; }
+function render({ rooms, overallAnswered, recommendationAnswered }) {
+  if (rooms.every(room => room.answered) && overallAnswered && recommendationAnswered) { showThanks(); return true; }
+  const overall = $('#survey-overall'); overall.hidden = overallAnswered;
+  overall.querySelector('.rating-scale')?.remove(); if (!overallAnswered) overall.append(ratingScale('overall', 'Your stay overall'));
   $('#survey-rooms').replaceChildren(...rooms.map(roomFieldset));
   const recommend = $('#survey-recommend'); recommend.hidden = recommendationAnswered;
   for (const input of recommend.querySelectorAll('input')) input.checked = false;
@@ -56,8 +62,9 @@ $('#survey-form').addEventListener('submit', async event => {
     .map(fieldset => ({ roomNumber: fieldset.dataset.roomNumber, checked: fieldset.querySelector('input:checked') }))
     .filter(room => room.checked).map(room => ({ roomNumber: room.roomNumber, rating: Number(room.checked.value) }));
   const recommend = $('#survey-recommend').hidden ? null : document.querySelector('input[name=wouldRecommend]:checked');
-  const body = { ratings, ...(recommend ? { wouldRecommend: recommend.value === 'true' } : {}) };
-  if (!ratings.length && !recommend) return notice('Please rate at least one room or tell us whether you would recommend us.', true);
+  const overall = $('#survey-overall').hidden ? null : document.querySelector('input[name=overall]:checked');
+  const body = { ratings, ...(overall ? { overallRating: Number(overall.value) } : {}), ...(recommend ? { wouldRecommend: recommend.value === 'true' } : {}) };
+  if (!ratings.length && !recommend && !overall) return notice('Please answer at least one question.', true);
   const button = $('#survey-submit'); button.disabled = true; notice('');
   try {
     await api(`/questionnaires/${encodeURIComponent(token)}/responses`, { method: 'POST', body: JSON.stringify(body) });

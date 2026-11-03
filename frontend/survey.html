@@ -4,9 +4,13 @@
 <main>
   <p class="eyebrow">GUEST EXPERIENCE</p>
   <h1>How was your stay?</h1>
-  <p id="survey-intro">Thank you for staying with us. Please rate each of your rooms from 1 (poor) to 5 (excellent), and tell us whether you would recommend us.</p>
+  <p id="survey-intro">Thank you for staying with us. Please rate your stay overall and each of your rooms from 1 (poor) to 5 (excellent), and tell us whether you would recommend us.</p>
   <div id="survey-notice" class="notice" role="status" aria-live="polite" hidden></div>
   <form id="survey-form" hidden novalidate>
+    <fieldset id="survey-overall" class="survey-room" hidden>
+      <legend>Your stay overall</legend>
+      <p class="room-meta">How would you rate your stay at Hotel Kong Arthur overall?</p>
+    </fieldset>
     <div id="survey-rooms"></div>
     <fieldset id="survey-recommend" class="survey-room" hidden>
       <legend>Would you recommend us?</legend>

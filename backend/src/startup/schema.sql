@@ -106,3 +106,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS satisfaction_questionnaire_once ON satisfactio
 -- Story 24: one "would you recommend us?" answer per completed stay.
 ALTER TABLE satisfaction_invitations ADD COLUMN IF NOT EXISTS would_recommend BOOLEAN NULL;
 ALTER TABLE satisfaction_invitations ADD COLUMN IF NOT EXISTS recommended_at TIMESTAMPTZ NULL;
+-- Story 24: one overall 1-5 rating of the whole stay.
+ALTER TABLE satisfaction_invitations ADD COLUMN IF NOT EXISTS overall_rating SMALLINT NULL CHECK (overall_rating BETWEEN 1 AND 5);
+ALTER TABLE satisfaction_invitations ADD COLUMN IF NOT EXISTS overall_rated_at TIMESTAMPTZ NULL;

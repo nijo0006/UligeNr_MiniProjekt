@@ -1198,7 +1198,7 @@
     "/api/questionnaires/{token}/responses": {
       "post": {
         "operationId": "submitQuestionnaire",
-        "summary": "Submit 1\u20135 ratings per room and/or whether the guest would recommend the hotel",
+        "summary": "Submit an overall stay rating, 1\u20135 ratings per room and/or whether the guest would recommend the hotel",
         "description": "Each room can be rated once through the questionnaire; all ratings in one request are saved together or not at all. Responses count in the room satisfaction report; this guest questionnaire is the only way ratings are recorded.",
         "parameters": [
           {
@@ -1253,7 +1253,7 @@
             }
           },
           "409": {
-            "description": "Room already rated or recommendation already given (ALREADY_ANSWERED)",
+            "description": "Already answered (ALREADY_ANSWERED): room, overall rating or recommendation",
             "content": {
               "application/json": {
                 "schema": {
@@ -1275,18 +1275,18 @@
         }
       }
     },
-    "/api/reports/recommendation": {
+    "/api/reports/stay-feedback": {
       "get": {
-        "operationId": "getRecommendationReport",
-        "summary": "Share of guests who would recommend the hotel",
-        "description": "All-time. Counts one answer per completed stay from the guest questionnaire; recommendPercent is null without answers.",
+        "operationId": "getStayFeedbackReport",
+        "summary": "Whole-stay guest feedback: mean overall rating and share who would recommend the hotel",
+        "description": "All-time, from the guest questionnaire after check-out; one overall rating and one recommendation answer per stay. meanRating and recommendPercent are null without answers.",
         "responses": {
           "200": {
             "description": "Success",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RecommendationReport"
+                  "$ref": "#/components/schemas/StayFeedbackReport"
                 }
               }
             }
@@ -2473,7 +2473,8 @@
         "additionalProperties": false,
         "required": [
           "rooms",
-          "recommendationAnswered"
+          "recommendationAnswered",
+          "overallAnswered"
         ],
         "properties": {
           "rooms": {
@@ -2500,6 +2501,9 @@
             }
           },
           "recommendationAnswered": {
+            "type": "boolean"
+          },
+          "overallAnswered": {
             "type": "boolean"
           }
         }
@@ -2533,9 +2537,15 @@
           "wouldRecommend": {
             "type": "boolean",
             "description": "Would the guest recommend the hotel to others? Answered once per stay."
+          },
+          "overallRating": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "Overall rating of the whole stay. Answered once per stay."
           }
         },
-        "description": "Supply ratings and/or wouldRecommend; at least one of them.",
+        "description": "Supply at least one of overallRating, ratings and wouldRecommend.",
         "minProperties": 1
       },
       "QuestionnaireResult": {
@@ -2571,27 +2581,57 @@
           },
           "wouldRecommend": {
             "type": "boolean"
+          },
+          "overallRating": {
+            "type": "integer"
           }
         }
       },
-      "RecommendationReport": {
+      "StayFeedbackReport": {
         "type": "object",
         "additionalProperties": false,
         "required": [
-          "responseCount",
-          "recommendCount",
-          "recommendPercent"
+          "overall",
+          "recommendation"
         ],
         "properties": {
-          "responseCount": {
-            "type": "integer"
+          "overall": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "responseCount",
+              "meanRating"
+            ],
+            "properties": {
+              "responseCount": {
+                "type": "integer"
+              },
+              "meanRating": {
+                "type": "number",
+                "nullable": true
+              }
+            }
           },
-          "recommendCount": {
-            "type": "integer"
-          },
-          "recommendPercent": {
-            "type": "number",
-            "nullable": true
+          "recommendation": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "responseCount",
+              "recommendCount",
+              "recommendPercent"
+            ],
+            "properties": {
+              "responseCount": {
+                "type": "integer"
+              },
+              "recommendCount": {
+                "type": "integer"
+              },
+              "recommendPercent": {
+                "type": "number",
+                "nullable": true
+              }
+            }
           }
         }
       }

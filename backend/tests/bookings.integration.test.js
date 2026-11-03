@@ -495,7 +495,7 @@ test('guests rate each room once through the questionnaire link and responses jo
   const token = tokenOf(sentEmails[0]);
   const form = await call(`/questionnaires/${token}`);
   assert.equal(form.status,200);
-  assert.deepEqual(form.data,{ rooms:[{ roomNumber:'001', roomType:'Standard Single', answered:false },{ roomNumber:'002', roomType:'Standard Single', answered:false }], recommendationAnswered:false });
+  assert.deepEqual(form.data,{ rooms:[{ roomNumber:'001', roomType:'Standard Single', answered:false },{ roomNumber:'002', roomType:'Standard Single', answered:false }], overallAnswered:false, recommendationAnswered:false });
   for (const ratings of [[{roomNumber:'001',rating:0}],[{roomNumber:'001',rating:4.5}],[],[{roomNumber:'001',rating:4},{roomNumber:'001',rating:5}]])
     assert.equal((await call(`/questionnaires/${token}/responses`,'POST',{ ratings })).status,400,JSON.stringify(ratings));
   const unrelated = await call(`/questionnaires/${token}/responses`,'POST',{ ratings:[{roomNumber:'001',rating:5},{roomNumber:'003',rating:5}] });
@@ -517,7 +517,7 @@ test('guests rate each room once through the questionnaire link and responses jo
 });
 
 test('guests answer once whether they would recommend the hotel, alone or with room ratings (Story 24)', async () => {
-  assert.deepEqual((await call('/reports/recommendation')).data,{ responseCount:0, recommendCount:0, recommendPercent:null });
+  assert.deepEqual((await call('/reports/stay-feedback')).data,{ overall:{ responseCount:0, meanRating:null }, recommendation:{ responseCount:0, recommendCount:0, recommendPercent:null } });
   const tokens=[];
   for (const room of ['001','002','003']) {
     const created = await call('/bookings','POST',payload({ roomNumbers:[room] }));
@@ -536,7 +536,29 @@ test('guests answer once whether they would recommend the hotel, alone or with r
   assert.equal((await call(`/questionnaires/${tokens[0]}/responses`,'POST',{ ratings:[{roomNumber:'001',rating:4}] })).status,201);
   assert.equal((await call(`/questionnaires/${tokens[1]}/responses`,'POST',{ ratings:[{roomNumber:'002',rating:2}], wouldRecommend:false })).status,201);
   assert.equal((await call(`/questionnaires/${tokens[2]}/responses`,'POST',{ wouldRecommend:true })).status,201);
-  const report=(await call('/reports/recommendation')).data;
+  const report=(await call('/reports/stay-feedback')).data.recommendation;
   assert.equal(report.responseCount,3); assert.equal(report.recommendCount,2); assert.equal(report.recommendPercent,2/3*100);
+});
+
+test('guests rate the whole stay once from 1 to 5, separately from room ratings (Story 24)', async () => {
+  const tokens=[];
+  for (const room of ['001','002']) {
+    const created = await call('/bookings','POST',payload({ roomNumbers:[room] }));
+    await call(`/bookings/${created.data.bookingId}/complete`,'POST');
+    tokens.push(/token=([A-Za-z0-9_-]{32})/.exec(sentEmails.at(-1).text)[1]);
+  }
+  for (const overallRating of [0,6,4.5,'5',null])
+    assert.equal((await call(`/questionnaires/${tokens[0]}/responses`,'POST',{ overallRating })).status,400,String(overallRating));
+  const saved = await call(`/questionnaires/${tokens[0]}/responses`,'POST',{ overallRating:5, ratings:[{roomNumber:'001',rating:3}] });
+  assert.equal(saved.status,201); assert.equal(saved.data.overallRating,5);
+  const form=(await call(`/questionnaires/${tokens[0]}`)).data;
+  assert.equal(form.overallAnswered,true); assert.equal(form.recommendationAnswered,false);
+  const twice = await call(`/questionnaires/${tokens[0]}/responses`,'POST',{ overallRating:1, wouldRecommend:true });
+  assert.equal(twice.status,409); assert.equal(twice.data.code,'ALREADY_ANSWERED');
+  assert.equal((await call(`/questionnaires/${tokens[0]}`)).data.recommendationAnswered,false,'a rejected request saves nothing');
+  assert.equal((await call(`/questionnaires/${tokens[1]}/responses`,'POST',{ overallRating:2 })).status,201);
+  const feedback=(await call('/reports/stay-feedback')).data;
+  assert.deepEqual(feedback.overall,{ responseCount:2, meanRating:3.5 });
+  assert.equal((await call('/reports/satisfaction')).data.find(r=>r.roomNumber==='001').meanRating,3,'the overall stay rating is not mixed into room means');
 });
 

@@ -255,8 +255,8 @@ requires a single year rather than treating a multi-year operational scope as on
 | `GET /api/reports/drinks?year=2026` | Per-drink rows from the existing annual bar report |
 | `POST /api/bookings/{id}/complete` | Complete a stay (check-out) and email the guest questionnaire |
 | `GET /api/questionnaires/{token}` | Rooms the guest can rate through the emailed link |
-| `POST /api/questionnaires/{token}/responses` | Save the guest's 1–5 rating per room and yes/no recommendation (each once) |
-| `GET /api/reports/recommendation` | Share of guests who would recommend the hotel (all-time) |
+| `POST /api/questionnaires/{token}/responses` | Save the guest's overall stay rating, 1–5 rating per room and yes/no recommendation (each once) |
+| `GET /api/reports/stay-feedback` | Mean overall stay rating and share of guests who would recommend the hotel (all-time) |
 
 Omit `year` on summary/country/type-season/room reports for all saved years. A booking
 counts once per scope if it has occupied nights in it; it may appear in both years when
@@ -272,8 +272,9 @@ provenance accompanies reports; the room inventory itself is demonstration data.
 
 On **Bookings**, select **Complete stay** when the guest checks out (possible from the
 arrival date). The booking holder then receives one email with a personal questionnaire
-link (`/survey.html?token=…`), where each room on the stay is rated once from 1 to 5 and
-the guest answers once whether they would recommend the hotel; Overview shows the yes share.
+link (`/survey.html?token=…`). There the guest rates the stay overall and each room once
+from 1 to 5, and answers once whether they would recommend the hotel. Overview shows the
+room-type means, the mean overall stay rating and the share who would recommend us.
 Locally, the emails land in the Mailpit inbox at http://localhost:8025. Completed stays
 keep counting in every report, stay editable and can no longer be cancelled. Staff no
 longer enter ratings themselves; the guest questionnaire is the only source.
