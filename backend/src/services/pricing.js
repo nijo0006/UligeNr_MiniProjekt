@@ -38,7 +38,7 @@ export function validateBookingInput(body, editing = false) {
     // Storage-size validation, not a restriction on which guest names are allowed.
     if ([...body[field].trim()].length > 255) throw badInput(`${field} exceeds the storage length of 255 characters.`);
   }
-  if (!Number.isSafeInteger(body.guestCount) || body.guestCount < 1) throw badInput('guestCount must be a positive whole number.');
+  if (!(editing && body.guestCount === null) && (!Number.isSafeInteger(body.guestCount) || body.guestCount < 1)) throw badInput('guestCount must be a positive whole number.');
   if (!Array.isArray(body.roomNumbers) || !body.roomNumbers.length || body.roomNumbers.some(n => typeof n !== 'string') || new Set(body.roomNumbers).size !== body.roomNumbers.length) throw badInput('Select one or more unique room numbers.');
   if (editing && (!Number.isSafeInteger(body.version) || body.version < 1)) throw badInput('A saved booking version is required for editing.');
   const guests = body.guests ?? [];

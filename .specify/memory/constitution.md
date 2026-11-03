@@ -1,14 +1,10 @@
 <!--
-Sync Impact Report
-- Version: unversioned scaffold -> 1.0.0 (initial adoption of five fixed principles).
-- Modified principles: five template placeholders replaced with principles I-V below.
-- Added sections: Core Principles and Governance populated.
-- Removed sections: System Requirements and unused optional template sections.
-  Purpose, KPI, and Tableau requirements are outside the requested five principles.
-  Programming language selection is deferred to Plan.
-- Deferred items: The assignment "E26 Tværfaglig Opgave Hotel Kong Arthur" was not
-  found in the project folder; the principles use the user's explicit instructions.
-- No unresolved template placeholders remain.
+Sync Impact Report — 2026-11-02
+- Version: 1.0.0 -> 2.0.0.
+- Principle IV: MySQL replaced by PostgreSQL, authorized by the user following
+  Tillægsopgave_uge_2.pdf. Other four principles unchanged; no principles added.
+- Synchronized plan, research, data model, README, environment example and Compose.
+- Previous implementation preserved at Git tag uge-1-mysql-demo-2026-11-02.
 -->
 
 # Hotel Kong Arthur Constitution
@@ -29,9 +25,9 @@ The system MUST expose a REST API using JSON as its data exchange format.
 The API contract MUST be delivered as an OpenAPI specification and MUST be
 viewable in Swagger UI.
 
-### IV. MySQL Database
+### IV. PostgreSQL Database
 
-The system MUST use MySQL as its database.
+The system MUST use PostgreSQL as its database.
 
 ### V. Docker and Single-Command Startup
 
@@ -46,4 +42,4 @@ updated version and amendment date. Versioning follows semantic versioning:
 major for incompatible principle changes or removals, minor for additions,
 and patch for clarifications.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-26 | **Last Amended**: 2026-10-26
+**Version**: 2.0.0 | **Ratified**: 2026-10-26 | **Last Amended**: 2026-11-02

@@ -8,7 +8,7 @@ connector while that work is user-deferred.
 
 Use `docker compose up` for the normal local runtime. Host Node/npm is needed only if
 you choose to develop or run pure tests outside containers; application runtime is
-Node 24 in a pinned image. MySQL and Node image digests and dependency lockfile are
+Node 24 in a pinned image. PostgreSQL and Node image digests and dependency lockfile are
 committed for repeatability. Keep `.env`, `node_modules`, test outputs and credentials
 out of commits. Never delete the application volume to make a test pass.
 

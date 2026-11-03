@@ -2,7 +2,7 @@
 
 Status: design draft for confirmed application behavior. See research.md for unresolved
 gates and spec.md for authoritative rules. No SQL migrations are created by this document.
-Use InnoDB foreign keys, DATE for stay/sales days, UTC timestamps for audit/versioning,
+Use PostgreSQL foreign keys, DATE for stay/sales days, UTC timestamps for audit/versioning,
 and DECIMAL or exact minor units for money. Synthetic provenance is separate from facts.
 
 ## Tables and responsibilities
@@ -73,3 +73,17 @@ and half-way rounding behavior. Do not resolve that policy merely by choosing SQ
 Detailed report payloads, tie presentation, upper-bound UI selectors, missing menu entries,
 and the Tableau consumer remain open as documented in research.md and spec.md. The API
 contract draft avoids arbitrary maximum-stay, guest-capacity, login, or request-dedup rules.
+
+
+## Implemented historical import detail — 2026-11-02
+
+Source inspection established recorded per-night prices for every booking. Historical
+room_nights.exact_charge therefore stores these verified source prices and remains NOT NULL;
+no fictional per-night allocation is needed. This replaces the draft's nullable-charge
+fallback for this workbook. Bookings.pricing_mode distinguishes source-preserved from
+nightly-calculated values; raw original records are retained regardless of later edits.
+Source Bookings IDs do not replace operational IDs already in use.
+
+source_records stores immutable source file/sheet/row/payload/checksum. historical_imports
+stores generator version, workbook checksum and reconciled totals. Bar daily rows have
+synthetic/source_id provenance; their raw aggregates are never summed a second time.

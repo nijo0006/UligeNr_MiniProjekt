@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Hotel Kong Arthur Booking API",
-    "version": "0.1.0",
-    "description": "Implemented booking MVP: catalog, availability, booking creation/read/edit/cancellation. Reporting, historical import, bar, satisfaction and Tableau are not implemented in this version. No login or request-deduplication feature."
+    "title": "Hotel Kong Arthur Operations API",
+    "version": "0.4.0",
+    "description": "Guest booking and staff hotel/bar operations, including reconciled Excel history with labelled generated dates/room assignments across 2024–2026. Original source values are preserved independently of operational edits. Other hotel reports, satisfaction and Tableau remain pending. Local prototype without login."
   },
   "servers": [
     {
@@ -357,6 +357,317 @@
         },
         "description": "Known cancelled ID remains cancelled without changing reports again. Browser asks for confirmation before sending. Unknown ID reports Booking not found. Storage retains enough lifecycle information to distinguish the two."
       }
+    },
+    "/api/reports/revenue": {
+      "get": {
+        "operationId": "annualRoomRevenue",
+        "summary": "Read booked room revenue for a calendar year",
+        "description": "Sum each active booking room-night charge by the calendar year of that night. Arrival included, departure excluded. Includes future stays in the selected year. Cancelled bookings are excluded. Returns null without eligible nights; preserves an actual zero as 0.00. DKK amounts are exact decimal strings, displayed to one decimal in the frontend. Imported history uses its original recorded nightly prices, not the current tariff. Generated dates are labelled with containsSyntheticData; see /api/reports/history. Bar revenue is not included. Reads current saved data on every request.",
+        "parameters": [
+          {
+            "name": "year",
+            "in": "query",
+            "required": true,
+            "description": "One four-digit calendar year, within the existing booking API date range.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 9999
+            },
+            "example": 2026
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Annual room revenue; no-data amount is null.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnualRoomRevenue"
+                },
+                "examples": {
+                  "withData": {
+                    "value": {
+                      "year": 2026,
+                      "currency": "DKK",
+                      "roomRevenue": "2491.00",
+                      "containsSyntheticData": false
+                    }
+                  },
+                  "withoutData": {
+                    "value": {
+                      "year": 2024,
+                      "currency": "DKK",
+                      "roomRevenue": null,
+                      "containsSyntheticData": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing, repeated or invalid year",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/drinks": {
+      "get": {
+        "operationId": "drinkCatalog",
+        "summary": "Read the source drink menu with fixed prices",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Drink"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bar-sales": {
+      "get": {
+        "operationId": "dailyBarSales",
+        "summary": "Read effective quantities for one sales date",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyBarSales"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid date, drink, quantity or reporting year",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bar-sales/{salesDate}/{drinkId}": {
+      "put": {
+        "operationId": "replaceDailyBarQuantity",
+        "summary": "Save or correct one daily drink quantity",
+        "description": "No booking is required. One effective quantity per sales date and drink. Corrections replace, never add. Preserve the first recorded unit-price snapshot; manual prices are rejected. Non-negative whole quantities use extendable selection controls; the maximum is a storage boundary, not a business limit.",
+        "parameters": [
+          {
+            "name": "salesDate",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "drinkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "quantity"
+                ],
+                "properties": {
+                  "quantity": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4294967295
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedBarSale"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid date, drink, quantity or reporting year",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reports/bar": {
+      "get": {
+        "operationId": "annualBarReport",
+        "summary": "Read annual bar revenue, units, category mix and revenue per drink",
+        "description": "Only dated daily sales are included. Source aggregates are allocated to labelled synthetic daily records across 2024–2026. Only the generated daily records contribute to revenue; raw aggregates are not counted a second time. containsSyntheticData identifies these results. Wine/beer contribute to overall totals, but not the cocktail/coffee denominator. No-data values are null. For recorded zero comparison revenue, mixStatus is undefined: no numeric percentage is invented and the outstanding zero-denominator clarification is not marked resolved. Exact DKK strings; frontend displays one decimal.",
+        "parameters": [
+          {
+            "name": "year",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 9999
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnualBarReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid date, drink, quantity or reporting year",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reports/history": {
+      "get": {
+        "operationId": "historicalImportStatus",
+        "summary": "Read original Excel control totals and demonstration-year allocation",
+        "description": "Immutable original source totals across the complete source horizon. They are reference values, not additional reportable revenue or claimed actual annual history. Operational edits/cancellations affect current reporting without changing this evidence. Dates/assignments are generated; missing person counts remain unknown.",
+        "responses": {
+          "200": {
+            "description": "Import status and immutable reference totals if imported",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryStatus"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -464,7 +775,8 @@
           "guestCount": {
             "type": "integer",
             "minimum": 1,
-            "description": "Recorded person count including holder; no per-room capacity policy."
+            "description": "Null may be retained only for an imported booking whose person count is unknown; no missing guests are invented.",
+            "nullable": true
           },
           "guests": {
             "type": "array",
@@ -639,6 +951,14 @@
           "sourceId": {
             "type": "string",
             "nullable": true
+          },
+          "pricingMode": {
+            "type": "string",
+            "enum": [
+              "nightly-calculated",
+              "source-preserved"
+            ],
+            "description": "Imported bookings retain original source nightly prices; saving an edit applies the current tariff while preserving immutable source evidence."
           }
         },
         "required": [
@@ -655,7 +975,8 @@
           "status",
           "totalPrice",
           "syntheticDates",
-          "syntheticRoomAssignment"
+          "syntheticRoomAssignment",
+          "pricingMode"
         ],
         "additionalProperties": false
       },
@@ -728,6 +1049,420 @@
           "drinkCategories"
         ],
         "additionalProperties": false
+      },
+      "AnnualRoomRevenue": {
+        "type": "object",
+        "required": [
+          "year",
+          "currency",
+          "roomRevenue",
+          "containsSyntheticData"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "year": {
+            "type": "integer",
+            "minimum": 1000,
+            "maximum": 9999
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "DKK"
+            ]
+          },
+          "roomRevenue": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+            "description": "Exact booked room revenue; null means there are no eligible room-nights.",
+            "example": "2491.00"
+          },
+          "containsSyntheticData": {
+            "type": "boolean",
+            "description": "Reporting includes imported history whose actual dates are unknown; assigned 2024–2026 dates are demonstration data."
+          }
+        }
+      },
+      "Drink": {
+        "type": "object",
+        "required": [
+          "drinkId",
+          "name",
+          "category",
+          "unitPrice"
+        ],
+        "properties": {
+          "drinkId": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "Cocktails",
+              "Coffee",
+              "Wine",
+              "Beer"
+            ]
+          },
+          "unitPrice": {
+            "type": "string",
+            "pattern": "^\\d+\\.[0-9]{2}$"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DailyBarLine": {
+        "type": "object",
+        "required": [
+          "drinkId",
+          "quantity",
+          "unitPrice",
+          "revenue",
+          "synthetic",
+          "sourceId"
+        ],
+        "properties": {
+          "drinkId": {
+            "type": "integer"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "unitPrice": {
+            "type": "string",
+            "pattern": "^\\d+\\.[0-9]{2}$"
+          },
+          "revenue": {
+            "type": "string",
+            "pattern": "^\\d+\\.[0-9]{2}$"
+          },
+          "synthetic": {
+            "type": "boolean",
+            "description": "True when the sales date was generated for demonstration from Excel history."
+          },
+          "sourceId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DailyBarSales": {
+        "type": "object",
+        "required": [
+          "salesDate",
+          "sales"
+        ],
+        "properties": {
+          "salesDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "sales": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DailyBarLine"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "SavedBarSale": {
+        "type": "object",
+        "required": [
+          "salesDate",
+          "drinkId",
+          "quantity",
+          "unitPrice",
+          "revenue",
+          "synthetic",
+          "sourceId"
+        ],
+        "properties": {
+          "salesDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "drinkId": {
+            "type": "integer"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "unitPrice": {
+            "type": "string",
+            "pattern": "^\\d+\\.[0-9]{2}$"
+          },
+          "revenue": {
+            "type": "string",
+            "pattern": "^\\d+\\.[0-9]{2}$"
+          },
+          "synthetic": {
+            "type": "boolean",
+            "description": "True when the sales date was generated for demonstration from Excel history."
+          },
+          "sourceId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DrinkRevenue": {
+        "type": "object",
+        "required": [
+          "drinkId",
+          "name",
+          "category",
+          "units",
+          "revenue",
+          "synthetic"
+        ],
+        "properties": {
+          "drinkId": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "units": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "revenue": {
+            "type": "string",
+            "pattern": "^\\d+\\.[0-9]{2}$",
+            "nullable": true
+          },
+          "synthetic": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BarCategory": {
+        "type": "object",
+        "required": [
+          "category",
+          "units",
+          "revenue"
+        ],
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "units": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "revenue": {
+            "type": "string",
+            "pattern": "^\\d+\\.[0-9]{2}$",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AnnualBarReport": {
+        "type": "object",
+        "required": [
+          "year",
+          "currency",
+          "revenue",
+          "units",
+          "cocktailPercent",
+          "coffeePercent",
+          "mixStatus",
+          "categories",
+          "drinks",
+          "containsSyntheticData"
+        ],
+        "properties": {
+          "year": {
+            "type": "integer"
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "DKK"
+            ]
+          },
+          "revenue": {
+            "type": "string",
+            "pattern": "^\\d+\\.[0-9]{2}$",
+            "nullable": true
+          },
+          "units": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "cocktailPercent": {
+            "type": "number",
+            "nullable": true
+          },
+          "coffeePercent": {
+            "type": "number",
+            "nullable": true
+          },
+          "mixStatus": {
+            "type": "string",
+            "enum": [
+              "available",
+              "no_data",
+              "undefined"
+            ]
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BarCategory"
+            }
+          },
+          "drinks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DrinkRevenue"
+            }
+          },
+          "containsSyntheticData": {
+            "type": "boolean",
+            "description": "Reporting includes imported history whose actual dates are unknown; assigned 2024–2026 dates are demonstration data."
+          }
+        },
+        "additionalProperties": false
+      },
+      "HistoricalSourceTotals": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "bookings",
+          "roomNights",
+          "roomRevenue",
+          "barUnits",
+          "barRevenue"
+        ],
+        "properties": {
+          "bookings": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "roomNights": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "roomRevenue": {
+            "type": "string",
+            "pattern": "^\\d+\\.[0-9]{2}$"
+          },
+          "barUnits": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "barRevenue": {
+            "type": "string",
+            "pattern": "^\\d+\\.[0-9]{2}$"
+          }
+        }
+      },
+      "HistoryStatus": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "state"
+        ],
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "not_imported",
+              "imported"
+            ]
+          },
+          "sourceFile": {
+            "type": "string"
+          },
+          "sourceChecksum": {
+            "type": "string"
+          },
+          "generatorVersion": {
+            "type": "string"
+          },
+          "years": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "sourceTotals": {
+            "$ref": "#/components/schemas/HistoricalSourceTotals"
+          },
+          "generatedDailyBarRows": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "bookingsByYear": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "year",
+                "bookings",
+                "revenue"
+              ],
+              "properties": {
+                "year": {
+                  "type": "integer"
+                },
+                "bookings": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "revenue": {
+                  "type": "string",
+                  "pattern": "^\\d+\\.[0-9]{2}$"
+                }
+              }
+            }
+          },
+          "barByYear": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "year",
+                "units",
+                "revenue"
+              ],
+              "properties": {
+                "year": {
+                  "type": "integer"
+                },
+                "units": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "revenue": {
+                  "type": "string",
+                  "pattern": "^\\d+\\.[0-9]{2}$"
+                }
+              }
+            }
+          }
+        }
       }
     }
   },

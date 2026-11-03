@@ -1,12 +1,14 @@
+import { BarRepository } from './data/barRepository.js';
 import { createPool } from './data/pool.js';
 import { BookingRepository } from './data/bookingRepository.js';
+import { ReportRepository } from './data/reportRepository.js';
 import { initialize } from './startup/initialize.js';
 import { createApp } from './presentation/app.js';
 
 const pool = createPool();
 try {
   await initialize(pool);
-  const app = await createApp(new BookingRepository(pool));
+  const app = await createApp(new BookingRepository(pool), new ReportRepository(pool), new BarRepository(pool));
   const server = app.listen(Number(process.env.PORT || 3000), '0.0.0.0', () => console.log('Hotel booking application ready on port 3000.'));
   async function shutdown() {
     server.close(async () => { await pool.end(); process.exit(0); });

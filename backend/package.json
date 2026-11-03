@@ -8,14 +8,14 @@
   },
   "scripts": {
     "start": "node src/server.js",
-    "test": "node --test tests/pricing.test.js",
-    "test:integration": "node --test --test-concurrency=1 tests/bookings.integration.test.js",
+    "test": "node --test tests/pricing.test.js tests/historyGenerator.test.js",
+    "test:integration": "node --test --test-concurrency=1 tests/bookings.integration.test.js tests/history.integration.test.js",
     "test:browser": "node --test tests/browser.test.js"
   },
   "dependencies": {
     "express": "5.3.0",
-    "mysql2": "3.24.6",
-    "swagger-ui-express": "5.0.1"
+    "swagger-ui-express": "5.0.1",
+    "pg": "8.23.1"
   },
   "devDependencies": {
     "@apidevtools/swagger-parser": "13.1.0",

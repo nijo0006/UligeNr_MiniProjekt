@@ -1,11 +1,12 @@
 # Quickstart and Validation
 
-Status: booking maintenance (US1–US4) is implemented. Reporting, bar sales, satisfaction
-and historical import are still pending. Tableau integration is deferred to the user.
+Status: booking maintenance, guest/staff frontends, annual room/bar reporting, daily bar
+entry and historical Excel import are implemented. Other hotel reports and satisfaction
+remain pending. Tableau integration is deferred to the user.
 
 ## Host prerequisites
 
-Git, Docker with the Compose plugin, and a browser. No host Node, npm, or MySQL is required.
+Git, Docker with the Compose plugin, and a browser. No host Node, npm, or PostgreSQL is required.
 First build may download images/packages. Tableau Public Edition is a separate host tool;
 no automatic install, connector, publishing, or refresh setup is promised.
 
@@ -52,7 +53,7 @@ for the standard local path. Document local-only defaults and port changes in th
 ## Tests and quality gates
 
 Use `npm test` from backend for business tests and
-`docker compose --profile test run --build --rm test` for isolated MySQL/API tests.
+`docker compose --profile test run --build --rm test` for isolated PostgreSQL/API tests.
 The optional `npm run test:browser` uses local Google Chrome; ordinary startup requires
 no browser test tooling or host Node. Package versions are pinned in the lockfile. Contract validation must exercise
 all operations and errors, including stale versions, missing bookings, room conflicts,
@@ -78,3 +79,74 @@ is recorded below.
 These results cover booking maintenance, pricing, availability and startup only.
 The full-feature checks above for reporting, source totals, bar and satisfaction
 remain pending; see tasks.md.
+
+
+## PostgreSQL verification — 2026-11-02
+
+The current Compose setup uses PostgreSQL 18, with application port 3000 and an optional
+host database connection on 5433. Previous MySQL evidence above describes the original
+implementation. The old volume is retained; postgres_data is separate.
+
+Commands: `npm test` in backend; `docker compose --profile test run --build --rm test`
+from the root; `npm run test:browser` in backend with Chrome installed.
+The database migration also checks every transferred row before committing, including
+booking identity, status, dates and exact prices. Final executed results are in converge.md.
+
+
+## Annual room-revenue verification — 2026-11-02
+
+Open the Annual room revenue card at http://localhost:3000 and select a reporting year.
+The View JSON link opens GET /api/reports/revenue?year=YYYY. Swagger documents the
+endpoint, required year, exact decimal-string/null response and error cases.
+
+Executed: seven pricing/input unit tests, sixteen isolated PostgreSQL/API tests, and one
+Chrome browser flow passed. The four new API tests cover no data and invalid years,
+New Year allocation across multiple rooms (2025: 2304.00; 2026: 2062.00), next-request
+freshness after creation/edit/cancellation, decimal aggregation and actual zero versus null.
+The browser verifies year selection, report failure/recovery, and displayed revenue changes
+after create/edit/cancel, alongside the original booking flow.
+
+The ordinary app/database containers were rebuilt and started healthy; the local 2026
+report returned roomRevenue 33329.00 from the three existing active bookings. The clearly
+named browser verification record was cancelled; no existing user booking was changed.
+No Excel historical import or bar/combined-hotel revenue is included.
+
+
+## Guest/staff verification — 2026-11-02
+
+Guest: http://localhost:3000. Staff: http://localhost:3000/staff. Guest and staff share
+the backend and PostgreSQL, with no additional startup command or login in this prototype.
+
+Seven unit tests and twenty PostgreSQL/API integration tests passed. Three Chrome browser
+flows passed: staff booking/revenue lifecycle, guest-to-staff booking with no guest-side
+list/report requests, and controlled bar-form corrections. The real bar SQL integration
+tests verify 10→12 replacement, repeated saves, separate dates/years, fixed price snapshots,
+all-category totals and 75%/25% cocktail/coffee mix from the approved fixture.
+Guest/staff desktop and mobile screenshots were captured; desktop layouts were reviewed.
+Browser bar fixtures do not write live bar data; clearly named test bookings are cancelled.
+Source Excel data remain unchanged. Existing user bookings are retained.
+
+
+## Historical import verification — 2026-11-02
+
+Normal docker compose up imports the bundled workbook extract once. No manual schema,
+Python or seed command is required. Open /staff, inspect Excel history, choose Booking
+year 2025, search or page through imported records, and select annual room/bar years.
+Actual historical dates are unknown: generated 2024–2026 dates and room assignments
+are explicitly demonstration data. Source guest counts remain unknown.
+
+Executed: 10 unit/generator tests, 24 isolated PostgreSQL/API tests and 4 Chrome browser
+flows passed. Controls: 1000 bookings, 5379 nights, 11234034.00 room revenue, 179958 bar
+units, 13448640.34 bar revenue. Every original source nightly-price product and each
+drink's quantity/revenue reconciles. No active room overlaps are introduced.
+
+Live import preserved all 12 pre-existing booking rows, 12 room allocations and 40 nightly
+charges unchanged. It added 1000 source bookings, 5379 source room-nights and 32880 daily
+bar rows. A private pg_dump backup was taken before import. Browser test bookings were
+cancelled. A subsequent forced app recreation preserved complete row-count/hash
+fingerprints for all operational, source and import tables: no duplicates or data changes.
+
+Tests cover existing-row/date-key preservation, raw evidence immutability, edits and
+cancellation surviving repeat startup, impossible-placement rollback/retry and a late
+database failure rolling back bookings/sales/evidence together. Browser history checks
+cover year selection, search, pagination, provenance labels and actual 2025 report totals.

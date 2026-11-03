@@ -6,7 +6,7 @@
 
 **Created**: 2026-10-27
 
-**Last Updated**: 2026-10-29 — Tableau integration deferred to the user; continue other clarifications.
+**Last Updated**: 2026-11-02 — separate guest and staff frontends requested; Tableau remains deferred.
 
 **Status**: Draft — confirmed answers incorporated; remaining business decisions are listed below.
 
@@ -740,6 +740,32 @@ invent person counts, room assignments, or annual allocations missing from K3.
 6. Given the same drink on two different sales dates, when one date’s quantity is corrected, then the other date’s quantity remains unchanged.
 
 ---
+
+### User Story 20 - Guest booking frontend (Priority: Must)
+
+**Card**: As a hotel guest, I want to choose available rooms and book my stay, so that I can arrange accommodation without using the hotel's internal workspace.
+
+**Source**: User request, 2026-11-02: split the frontend into a guest booking frontend and a staff frontend.
+
+**Confirmation**:
+
+1. Given a guest opening the guest frontend, when selecting dates, nights and rooms, then availability and automatic seasonal prices follow the existing booking rules.
+2. Given a successful booking, when it is saved, then the guest sees its booking number, dates, rooms and total, and staff can see the same booking.
+3. Given the guest frontend, when it loads, then it does not fetch or display the hotel's booking list, internal revenue indicators or bar workspace.
+
+### User Story 21 - Staff operations frontend (Priority: Must)
+
+**Card**: As a hotel staff member, I want a separate workspace for bookings, operational indicators and Helene Christine's bar reporting, so that I can manage hotel operations in one place.
+
+**Confirmation**:
+
+1. Given the staff frontend, when opening bookings, then staff can create, read, edit and cancel through the existing API rules.
+2. Given annual room reporting, when selecting a year or changing a booking, then the workspace displays current API values.
+3. Given Helene Christine or the administrator using the bar workspace, then annual revenue and units, drink revenue and cocktail/coffee percentages follow Stories 15–17, and daily corrections follow Story 19.
+4. Missing annual history is labelled as missing rather than supplied as invented dates or totals.
+
+The existing local prototype's no-login decision remains in force. Separate frontends
+are interface separation; this request does not establish authentication or new actor permissions.
 
 ### Deferred Scope
 
