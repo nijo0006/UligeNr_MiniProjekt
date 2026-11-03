@@ -117,3 +117,29 @@ th{background:#e5d8d1}
 [aria-labelledby="room-feedback-title"] td:last-child{color:#0f4080;font-weight:500}
 
 .report-period{font:28px var(--font-heading);color:#123e70;padding:8px 0;white-space:nowrap}
+
+/* Larger numeric seasonal table, sharing each room type's exact chart color. */
+#season-data>h4{font-size:28px;margin-bottom:20px}
+#season-data .table-wrap{max-height:none;border-color:#d8d6d0;border-radius:2px}
+#season-data table{font-size:15px;min-width:640px;font-variant-numeric:tabular-nums}
+#season-data th{padding:18px 22px;font-size:14px;background:#ede8e1;color:#4b4845}
+#season-data td{padding:20px 22px;border-color:#d8d6d0;line-height:1.5}
+#season-report tr{background:color-mix(in srgb,var(--room-type-color) 14%,#fcfaf1)}
+#season-report td:first-child{border-left:6px solid var(--room-type-color);font-weight:500}
+#season-report td:nth-child(3),#season-data th:nth-child(3){text-align:right}
+#season-report td:last-child{font-size:17px;font-weight:500}
+@media(max-width:750px){#season-data th,#season-data td{padding:16px 18px}#season-data table{font-size:14px}#season-report td:last-child{font-size:16px}}
+
+/* Large, readable bar details instead of browser-sized SVG title popups. */
+.season-chart-container{position:relative}
+.season-bar-tooltip{position:absolute;z-index:5;pointer-events:none;display:flex;flex-direction:column;gap:8px;width:320px;max-width:calc(100% - 16px);padding:20px 24px;background:#fcfaf1;color:#263e56;border:1px solid #cbd5d9;border-left:6px solid var(--room-type-color,#657f98);border-radius:3px;box-shadow:0 8px 28px #263e5626}
+#season-tooltip-type{font:24px var(--font-heading);line-height:1.25}
+#season-tooltip-season,#season-tooltip-nights{font:16px var(--font-body);line-height:1.4}
+#season-tooltip-revenue{font:500 28px var(--font-body);line-height:1.3;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.chart-value{font-size:20px;line-height:1.6;padding:20px 24px;min-height:76px}
+@media(max-width:750px){.season-bar-tooltip{padding:16px 18px}#season-tooltip-type{font-size:22px}#season-tooltip-revenue{font-size:25px}.chart-value{font-size:18px;padding:16px 18px}}
+
+/* Room revenue: horizontal bars, with top ten shown by default. */
+.room-chart-heading{display:flex;align-items:center;justify-content:space-between;gap:20px}.room-chart-heading h3{font:26px var(--font-heading);margin:0}.room-chart-heading button{font-size:13px;min-height:44px;padding:10px 16px}
+.room-chart-axis,.room-bar-row{display:grid;grid-template-columns:150px minmax(0,1fr) 155px;align-items:center;gap:22px}.room-chart-axis{padding:18px 0 12px;border-bottom:1px solid #d8e0e5;font-size:12px;color:#526574}.room-chart-axis>div{display:flex;justify-content:space-between;gap:10px}.room-chart-axis>span:last-child{text-align:right}.room-chart-scroll{max-height:none;overflow-y:auto;scrollbar-gutter:stable}.room-chart-scroll.is-all{max-height:760px}.room-chart-scroll:focus-visible{outline:2px solid #657f98;outline-offset:3px}.room-bar-list{list-style:none;margin:0;padding:0}.room-bar-row{padding:17px 0;border-bottom:1px solid #e0e4e5;min-height:76px}.room-bar-label strong{display:block;font-size:16px;font-weight:500}.room-bar-label span,.room-bar-figures span{display:block;font-size:12px;color:var(--muted);margin-top:5px}.room-bar-track{height:27px;background:#edf0ee;border-radius:2px;overflow:hidden}.room-bar-fill{display:block;height:100%;border-radius:2px}.room-bar-fill.is-zero{width:3px!important}.room-bar-figures{text-align:right}.room-bar-figures strong{font-size:18px;font-weight:500;font-variant-numeric:tabular-nums;color:#263e56}
+@media(max-width:750px){.room-chart-heading{align-items:flex-start;flex-direction:column;gap:12px}.room-chart-axis{display:none}.room-bar-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;padding:18px 0}.room-bar-track{grid-column:1 / -1;grid-row:2;height:24px}.room-bar-figures strong{font-size:17px}.room-bar-label strong{font-size:15px}}

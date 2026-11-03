@@ -1140,3 +1140,33 @@ The general API year support and separate booking/bar controls are unchanged.
 The user replaces the seasonal chart's blue shades with eight distinct colors, one per
 room type. Each type retains its color across seasons, filters and the legend. Other
 visualizations and all financial values remain unchanged.
+
+Room-type palette refinement: use eight related muted sage/forest/teal/slate/mauve/
+rose/clay/sand colors that complement the warm hotel frontend, retaining distinct and
+consistent room-type identities in bars and legend. This replaces the bright palette.
+
+
+## Seasonal numeric table styling — 2026-11-03
+
+User request: Seasonal data remains a numeric table and uses the same room-type color
+coding as the chart. Increase text, numeric amounts and row spacing. Keep all rows
+visible while scrolling the page, with horizontal table scrolling on small screens.
+No extra chart/icons or changes to data/financial calculations.
+
+
+## Readable revenue bar details — 2026-11-03
+
+User requests larger readable information on hovering a revenue bar. Replace native
+small popups with a large styled tooltip showing type, season, revenue and room-nights.
+Keyboard focus and touch/click retain access; keep the below-chart detail text larger.
+Hide stale tooltips on filtering/refresh, support Escape and keep mobile content within
+the chart width. No calculation or data changes.
+
+
+## Top-ten horizontal room revenue — 2026-11-03
+
+User requests Highest-earning rooms as horizontal bars, defaulting to the ten highest
+recorded room revenues, with an option to show all rooms and return to top ten. Use
+existing exact API order without invented tie ranks. Display room number/type, revenue
+and room-nights directly, matching type colors. All mode includes rooms without revenue
+as No data; top mode uses recorded revenues only. Preserve fixed 2026 and data/error rules.

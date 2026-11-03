@@ -321,3 +321,18 @@ US20 and the guest entry point from Phase 26 are retired at the user's request.
 ## Phase 38: Distinct room-type colors — 2026-11-03
 
 - [x] T095 Give all eight chart room types distinct stable colors, update legend/copy and verify the existing chart flow visually.
+
+
+## Phase 39: Larger color-coded seasonal table — 2026-11-03
+
+- [x] T096 Share the chart's room-type palette with the numeric seasonal table, increase text/spacing and verify matching colors and responsive layout.
+
+
+## Phase 40: Readable revenue hover details — 2026-11-03
+
+- [x] T097 Replace tiny native bar tooltips with large readable type/season/revenue/night details, increase below-chart information and verify hover/focus/Escape/mobile behavior.
+
+
+## Phase 41: Top-ten horizontal room chart — 2026-11-03
+
+- [x] T098 Replace room ranking table with top-ten horizontal bars, a show-all toggle and shared type colors; verify current values, scopes and responsive behavior.

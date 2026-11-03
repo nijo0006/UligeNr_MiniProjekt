@@ -577,3 +577,25 @@ Update existing browser checks from year changes to explicit refresh of 2026.
 Room-type color amendment: use eight stable categorical colors (blue, orange, green,
 red, purple, brown, yellow, teal) in seasonChart.js. Retain chart behavior and validate
 unique legend colors and matching series through the existing chart browser flow.
+
+Refine the eight categorical series to muted botanical/slate/earth tones matching the
+hotel surfaces. Change only the palette; preserve type assignments, data and controls.
+
+
+Share the exact room-type palette through roomTypePalette.js between seasonal chart
+and table. Tint rows with a pale version and an exact-color left border; keep readable
+dark text and tabular numeric figures. Increase type/spacing and remove the seasonal
+table's internal height limit. Verify with the existing chart browser flow and screenshots.
+
+
+Revenue tooltip amendment: add a local HTML tooltip outside the plot's scroll container,
+with 24px type/28px revenue and 16px supporting text; clamp its position to chart bounds.
+Remove duplicate native SVG title popups, retaining accessible bar labels. Match the room
+color and existing warm/blue surfaces. Verify through the existing chart browser scenario.
+
+
+Implement the room ranking as native horizontal HTML bars from the existing sorted room
+report. Default to the first ten non-null rows; Show all rooms/Show top 10 toggles display
+only. Keep the full period's maximum for bar widths and the shared type palette. Provide
+readable visible values and a bounded scroll region for all 214 rooms on desktop/mobile.
+No backend/API changes. Verify ranking, toggling, values and errors in browser checks.

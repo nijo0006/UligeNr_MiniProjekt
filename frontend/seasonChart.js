@@ -1,8 +1,8 @@
 import {currency} from './shared.js';
+import {roomTypeColors} from './roomTypePalette.js';
 const $=selector=>document.querySelector(selector),ns='http://www.w3.org/2000/svg';
 const svg=$('#season-chart'),legend=$('#season-chart-legend');
-const types=['Standard Single','Grand Lit','Standard Double','Superior Double','Junior Suite','Spa Executive','Suite','LOFT Suite'];
-const colors=['#4e79a7','#f28e2b','#59a14f','#e15759','#b07aa1','#9c755f','#edc948','#76b7b2'];
+const types=Object.keys(roomTypeColors),colors=Object.values(roomTypeColors);
 const seasons=[['low','Low season'],['mid','Mid season'],['high','High season']];
 const hidden=new Set();let rows=[];
 function node(tag,attributes={},text){const e=document.createElementNS(ns,tag);for(const[k,v]of Object.entries(attributes))e.setAttribute(k,v);if(text!==undefined)e.textContent=text;return e;}
@@ -11,11 +11,32 @@ function upperBound(max){
   const unit=10**Math.floor(Math.log10(max/4)),step=[1,2,2.5,5,10].find(n=>n*unit>=max/4)*unit;
   return Math.ceil(max/step)*step;
 }
+const tooltip=$('#season-bar-tooltip'),chartContainer=$('.season-chart-container');
+function hideTooltip(){tooltip.hidden=true;}
+function positionTooltip(shape,event){
+  const bounds=chartContainer.getBoundingClientRect(),bar=shape.getBoundingClientRect();
+  const x=event?.clientX??bar.x+bar.width/2,y=event?.clientY??bar.y;
+  const width=tooltip.offsetWidth,height=tooltip.offsetHeight;
+  const left=Math.max(8,Math.min(bounds.width-width-8,x-bounds.left+16));
+  let top=y-bounds.top+20;
+  if(top+height>bounds.height-8||y+20+height>window.innerHeight-8)top=y-bounds.top-height-16;
+  top=Math.max(8-bounds.top,Math.min(window.innerHeight-bounds.top-height-8,top));
+  tooltip.style.left=`${left}px`;tooltip.style.top=`${top}px`;
+}
+function showTooltip(row,shape,event){
+  showValue(row);
+  $('#season-tooltip-type').textContent=row.roomType;
+  $('#season-tooltip-season').textContent=seasons.find(([key])=>key===row.season)[1];
+  $('#season-tooltip-revenue').textContent=currency(row.roomRevenue);
+  $('#season-tooltip-nights').textContent=`${new Intl.NumberFormat('en-DK').format(row.soldRoomNights)} room-nights`;
+  tooltip.style.setProperty('--room-type-color',roomTypeColors[row.roomType]);
+  tooltip.hidden=false;positionTooltip(shape,event);
+}
 function showValue(row){
   $('#season-chart-value').textContent=`${row.roomType} · ${seasons.find(([key])=>key===row.season)[1]} · ${currency(row.roomRevenue)} · ${new Intl.NumberFormat('en-DK').format(row.soldRoomNights)} room-nights${row.containsSyntheticData?' · includes demonstration history':''}`;
 }
 function draw(){
-  svg.replaceChildren();$('#season-chart-value').textContent='Hover, focus or select a bar for details.';
+  hideTooltip();svg.replaceChildren();$('#season-chart-value').textContent='Hover, focus or select a bar for details.';
   const visible=types.filter(type=>!hidden.has(type)),recorded=rows.filter(row=>row.roomRevenue!==null),shown=recorded.filter(row=>visible.includes(row.roomType));
   $('#season-chart-state').textContent=!recorded.length?'No revenue records for this period.':!visible.length?'Select a room type to display.':`${visible.length} room types · missing revenue is omitted; recorded zero uses a baseline dot.`;
   if(!shown.length){svg.append(node('text',{x:480,y:210,'text-anchor':'middle',class:'chart-empty'},!recorded.length?'No revenue records':!visible.length?'Select a room type':'No records for the selected room types'));return;}
@@ -38,9 +59,13 @@ function draw(){
       const value=Number(row.roomRevenue),x=center-inner/2+inner/visible.length*(typeIndex+.5);
       const shape=value===0?node('circle',{cx:x,cy:plot.bottom,r:4}):node('rect',{x:x-barWidth/2,y:y(value),width:barWidth,height:plot.bottom-y(value),rx:1});
       for(const[k,v]of Object.entries({fill:colors[types.indexOf(type)],tabindex:0,role:'button','data-season':season,'data-room-type':type,'data-revenue':row.roomRevenue,'aria-label':`${type}, ${label}: ${currency(row.roomRevenue)}, ${row.soldRoomNights} room-nights`,class:'season-bar'}))shape.setAttribute(k,v);
-      shape.append(node('title',{},`${type} · ${label}: ${currency(row.roomRevenue)} · ${row.soldRoomNights} room-nights`));
-      for(const event of ['pointerenter','focus','click'])shape.addEventListener(event,()=>showValue(row));
-      shape.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();showValue(row);}});
+      shape.setAttribute('aria-describedby','season-bar-tooltip');
+      shape.addEventListener('pointerenter',event=>showTooltip(row,shape,event));
+      shape.addEventListener('pointermove',event=>positionTooltip(shape,event));
+      shape.addEventListener('focus',()=>showTooltip(row,shape));
+      shape.addEventListener('click',()=>showTooltip(row,shape));
+      shape.addEventListener('pointerleave',hideTooltip);shape.addEventListener('blur',hideTooltip);
+      shape.addEventListener('keydown',event=>{if(event.key==='Escape')hideTooltip();if(event.key==='Enter'||event.key===' '){event.preventDefault();showTooltip(row,shape);}});
       svg.append(shape);
     }
   }
@@ -53,7 +78,7 @@ for(const[typeIndex,type]of types.entries()){
 $('#season-chart-reset').addEventListener('click',()=>{hidden.clear();for(const input of legend.querySelectorAll('input'))input.checked=true;draw();});
 export function clearSeasonChart(message='Loading seasonal revenue…'){
   for(const input of legend.querySelectorAll('input'))input.disabled=true;$('#season-chart-reset').disabled=true;
-  rows=[];svg.replaceChildren();$('#season-chart-state').textContent=message;$('#season-chart-value').textContent='';
+  hideTooltip();rows=[];svg.replaceChildren();$('#season-chart-state').textContent=message;$('#season-chart-value').textContent='';
 }
 export function renderSeasonChart(values,year){
   for(const input of legend.querySelectorAll('input'))input.disabled=false;$('#season-chart-reset').disabled=false;

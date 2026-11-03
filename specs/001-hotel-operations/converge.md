@@ -350,3 +350,31 @@ Eight-color chart amendment: each room type now has a distinct stable categorica
 matching its legend swatch across seasons. Existing chart browser scenario passed,
 including eight unique legend colors, value/filter behavior and mobile layout. Desktop
 screenshot reviewed. No financial/API/database changes. T095 complete.
+
+Palette refinement: replaced saturated room-type colors with coordinated muted sage,
+forest, teal, slate, mauve, rose, clay and sand. Eight distinct stable legend/series colors
+remain. Existing seasonal chart browser flow passed and desktop screenshot reviewed.
+No data, API or financial behavior changes.
+
+Seasonal numeric table refinement: one shared roomTypePalette.js now supplies exact
+chart/legend/table colors. Rows use a pale tint with an exact-color left border, larger
+text/revenue figures and more padding. All 24 rows use page scrolling instead of an
+internal height limit; mobile keeps horizontal table scrolling. Two existing report/
+chart browser flows passed, including shared-color equality, API values and responsive
+layout. Table screenshot reviewed. No backend, database or financial changes. T096 complete.
+
+Revenue hover readability: replaced native SVG titles with a large HTML detail box,
+24px type/28px amount and 16px secondary text, using the room type's accent. Position
+is constrained to the viewport and chart width. Hover, focus/click and Escape work;
+filter/refresh removes stale tooltips. Below-chart detail text is larger too. Existing
+chart browser scenario passed, including actual hover, visible value/font-size checks,
+keyboard dismissal and mobile layout; tooltip screenshot reviewed. No data/API changes.
+T097 complete.
+
+Highest-earning rooms now defaults to ten recorded-revenue rooms as horizontal bars,
+retaining exact API ordering and the shared room-type palette. Visible room/type, revenue
+and room-night values need no hover. Show all rooms exposes all 214 entries in a scroll
+region; Show top 10 restores the default. Missing revenue is labelled No data and zero
+uses a baseline marker. Refresh/error clears stale bars. Existing Overview browser flow
+passed, including API-ordered IDs/amounts, 10→214→10 toggling and responsive layout.
+Desktop/mobile screenshots reviewed. No API/database changes. T098 complete.
