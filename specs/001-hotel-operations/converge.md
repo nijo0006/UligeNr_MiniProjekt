@@ -335,3 +335,18 @@ The live current total is higher because existing manual bookings are preserved.
 A forced app recreation retained identical counts/hashes across nine tables, including
 all dates/allocations and both immutable import markers. T090–T093 complete. No volume
 reset, duplicate source import, new guest counts or questionnaire seed data.
+
+
+## Fixed Overview reporting period — 2026-11-03
+
+Removed the Reporting year dropdown and obsolete option-generation code. Overview now
+displays plain 2026 and always passes year=2026 to its financial reports on load/refresh.
+Inventory/satisfaction remain all-time; API year support and separate booking/bar controls
+are unchanged. Five relevant browser scenarios passed, including static 2026/no select,
+API-backed report values, null/zero/error recovery and map/chart interactions on desktop/
+mobile. Screenshot reviewed. No database change. T094 complete.
+
+Eight-color chart amendment: each room type now has a distinct stable categorical color
+matching its legend swatch across seasons. Existing chart browser scenario passed,
+including eight unique legend colors, value/filter behavior and mobile layout. Desktop
+screenshot reviewed. No financial/API/database changes. T095 complete.

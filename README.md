@@ -201,10 +201,9 @@ Implemented staff bar endpoints (see Swagger):
 ## Annual hotel revenue
 
 The Overview page shows annual **combined hotel revenue**, **room revenue** and **bar
-revenue** from one `GET /api/reports/revenue?year=2026` request. Select a reporting year
-or use **Refresh revenue**; returning from booking administration reloads current values.
-**View JSON** opens the same result. The year selector includes recent reporting years, the source year 2026 and years
-represented by active stays. The API accepts one
+revenue** from one `GET /api/reports/revenue?year=2026` request. The reporting period is fixed to **2026**;
+use **Refresh revenue** to update it; returning from booking administration reloads current values.
+**View JSON** opens the same result. Overview displays a fixed **2026** label. The API independently accepts one
 calendar year from 1000 to 9999.
 
 Example response (illustrative values):
@@ -339,8 +338,7 @@ Assets and attribution: [frontend/assets/README.md](frontend/assets/README.md).
 
 ## Interactive country revenue map
 
-Overview's Guest markets & highest-earning countries report is a world map. The existing
-financial year/All years selector controls its API data. A linear scale maps lowest
+Overview's Guest markets & highest-earning countries report is a world map. Its API data uses fixed reporting year 2026. A linear scale maps lowest
 recorded room revenue to pale blue and highest to deep blue; the legend shows the actual
 minimum/maximum for that scope. Equal values share a color. Missing revenue records are
 gray, distinct from recorded zero. Click/tap a country or use Explore a country to see
@@ -357,9 +355,9 @@ country report's presentation; financial rules, APIs and other report tables are
 
 ## Seasonal room revenue chart
 
-Overview's Room revenue by type & season is a grouped blue bar chart: Revenue (DKK)
-on the vertical axis, Low/Mid/High seasons on the horizontal axis, and one consistent
-blue shade per room type. It follows Reporting year/All years and uses the existing
+Overview's Room revenue by type & season is a grouped bar chart: Revenue (DKK)
+on the vertical axis, Low/Mid/High seasons on the horizontal axis, and one distinct, consistent
+color per room type. It uses fixed year 2026 and the existing
 saved-charge report API. Legend checkboxes hide/show room types; Show all room types
 restores them. The y-scale stays fixed for the selected reporting period when filtering.
 Hover, focus or select a bar for its formatted revenue and room-night count. Missing
@@ -393,3 +391,11 @@ remains; a new correction marker supplies current metadata. Restarts do not repl
 Unexpected manually edited old-year source bookings stop automatic correction for review
 instead of silently resetting them. A private pg_dump backup was taken before the local
 correction; it is outside Git. Do not delete volumes or source evidence to re-import.
+
+
+## Fixed Overview period
+
+Overview displays plain **2026** instead of a Reporting year dropdown. Revenue, occupancy,
+country map, seasonal chart and room reports always request year=2026, including refresh.
+Inventory and satisfaction retain their all-time scope. API year filtering remains
+available independently; the separate booking/bar page controls are unchanged.

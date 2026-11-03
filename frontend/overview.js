@@ -1,5 +1,5 @@
 import {api} from './shared.js';
-import {updateReportingYears,refreshRevenue} from './revenue.js';
+import {refreshRevenue} from './revenue.js';
 import './history.js';
 import './reports.js';
 
@@ -9,7 +9,6 @@ async function loadOverview(){
   try{
     const bookings=await api('/bookings');
     document.querySelector('#active-bookings').textContent=new Intl.NumberFormat('en-DK').format(bookings.length);
-    updateReportingYears(bookings);
   }catch(e){
     document.querySelector('#active-bookings').textContent='Unavailable';
     error.textContent=e.message;error.hidden=false;

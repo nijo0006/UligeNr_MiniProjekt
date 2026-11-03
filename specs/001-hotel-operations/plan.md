@@ -564,3 +564,16 @@ counts/money/nights, per-drink quantities/revenue and no overlaps before committ
 Latest history metadata reports 2026 and both legacy/correction evidence remain immutable.
 Fresh import uses 2026 directly. Test legacy migration, rollback, persistence/idempotence,
 source controls and UI year/report labels before applying to the user's database.
+
+
+## Fixed Overview reporting period — 2026-11-03
+
+Replace the year select with plain 2026 text. Remove obsolete option-generation code
+and its booking-data dependency; refreshRevenue supplies the fixed 2026 period to all
+Overview financial report consumers. Preserve API range support and current data.
+Update existing browser checks from year changes to explicit refresh of 2026.
+
+
+Room-type color amendment: use eight stable categorical colors (blue, orange, green,
+red, purple, brown, yellow, teal) in seasonChart.js. Retain chart behavior and validate
+unique legend colors and matching series through the existing chart browser flow.
