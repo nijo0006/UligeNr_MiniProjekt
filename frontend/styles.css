@@ -143,3 +143,26 @@ th{background:#e5d8d1}
 .room-chart-heading{display:flex;align-items:center;justify-content:space-between;gap:20px}.room-chart-heading h3{font:26px var(--font-heading);margin:0}.room-chart-heading button{font-size:13px;min-height:44px;padding:10px 16px}
 .room-chart-axis,.room-bar-row{display:grid;grid-template-columns:150px minmax(0,1fr) 155px;align-items:center;gap:22px}.room-chart-axis{padding:18px 0 12px;border-bottom:1px solid #d8e0e5;font-size:12px;color:#526574}.room-chart-axis>div{display:flex;justify-content:space-between;gap:10px}.room-chart-axis>span:last-child{text-align:right}.room-chart-scroll{max-height:none;overflow-y:auto;scrollbar-gutter:stable}.room-chart-scroll.is-all{max-height:760px}.room-chart-scroll:focus-visible{outline:2px solid #657f98;outline-offset:3px}.room-bar-list{list-style:none;margin:0;padding:0}.room-bar-row{padding:17px 0;border-bottom:1px solid #e0e4e5;min-height:76px}.room-bar-label strong{display:block;font-size:16px;font-weight:500}.room-bar-label span,.room-bar-figures span{display:block;font-size:12px;color:var(--muted);margin-top:5px}.room-bar-track{height:27px;background:#edf0ee;border-radius:2px;overflow:hidden}.room-bar-fill{display:block;height:100%;border-radius:2px}.room-bar-fill.is-zero{width:3px!important}.room-bar-figures{text-align:right}.room-bar-figures strong{font-size:18px;font-weight:500;font-variant-numeric:tabular-nums;color:#263e56}
 @media(max-width:750px){.room-chart-heading{align-items:flex-start;flex-direction:column;gap:12px}.room-chart-axis{display:none}.room-bar-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;padding:18px 0}.room-bar-track{grid-column:1 / -1;grid-row:2;height:24px}.room-bar-figures strong{font-size:17px}.room-bar-label strong{font-size:15px}}
+/* Story 24: completed stays and the guest questionnaire. */
+.status-badge{display:inline-block;margin-left:6px;padding:2px 8px;border:1px solid #94b199;background:#e1e2db;color:var(--green);font-size:10px;letter-spacing:1px;text-transform:uppercase;border-radius:1px;vertical-align:1px}
+.reservation.completed{border-left:3px solid #94b199;padding-left:14px}
+.reservation-actions button.complete{color:var(--green);font-weight:600}
+.reservation-actions button:disabled,.reservation-actions button:disabled:hover{background:transparent;color:#726b64;text-decoration:none;opacity:1;cursor:not-allowed}
+.survey-page header{justify-content:center}
+.survey-page main{max-width:680px;margin:0 auto;padding:48px 16px 64px}
+.survey-page h1{font-size:clamp(32px,6vw,46px);line-height:1.15;margin:12px 0}
+.survey-room{border:1px solid var(--line);background:var(--paper);padding:20px;margin:0 0 16px;border-radius:2px}
+.survey-room legend{font:22px var(--font-heading);padding:0 6px}
+.survey-room .room-meta{font-size:13px;color:var(--muted);margin:0 0 12px}
+.rating-scale{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.rating-scale label{position:relative;cursor:pointer}
+.rating-scale input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.rating-scale span{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:64px;border:1px solid #c8b9a9;background:#fff;font:400 22px var(--font-heading);border-radius:1px}
+.rating-scale small{font:11px var(--font-body);color:var(--muted)}
+.rating-scale input:checked+span{background:#e5d8d1;border-color:var(--brand-brown);color:var(--brand-brown)}
+.rating-scale input:focus-visible+span{outline:2px solid #a66a0a;outline-offset:3px}
+.survey-room.answered{opacity:.75}
+.survey-thanks{border-left:3px solid #94b199;background:var(--paper);padding:24px}
+@media(max-width:480px){.rating-scale{gap:5px}.rating-scale span{min-height:54px;font-size:19px}.rating-scale small{display:none}}
+.booking-filters{grid-template-columns:130px 170px minmax(0,1fr)}@media(max-width:600px){.booking-filters{grid-template-columns:1fr}}
+.completed-label{color:#537351!important;font-size:10px!important}
