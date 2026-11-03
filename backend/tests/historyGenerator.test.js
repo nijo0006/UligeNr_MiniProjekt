@@ -12,7 +12,7 @@ test('source controls reconcile and seasonal booking assignment is deterministic
   const existing=[{roomNumber:rooms[0].roomNumber,arrival:'2024-01-01',departure:'2027-01-01'}];
   const plan=assignHistoricalBookings(source.payload.bookings,rooms,existing);
   assert.deepEqual(plan,assignHistoricalBookings(source.payload.bookings,rooms,existing));
-  assert.deepEqual([...new Set(plan.map(b=>b.arrival.slice(0,4)))].sort(),['2024','2025','2026']);
+  assert.deepEqual([...new Set(plan.map(b=>b.arrival.slice(0,4)))].sort(),['2026']);
   const byRoom=new Map();
   for(const b of plan){
     assert.equal(rooms.find(r=>r.roomNumber===b.roomNumber).roomType,b.roomType);
@@ -33,17 +33,17 @@ test('impossible seasonal room placement fails rather than changing source facts
 });
 
 test('daily bar distribution preserves each source total and skips existing date/drink pairs',()=>{
-  const existing=[{salesDate:'2024-01-01',drinkId:drinks[0].drinkId}];
+  const existing=[{salesDate:'2026-01-01',drinkId:drinks[0].drinkId}];
   const rows=distributeHistoricalBar(source.payload.bar,drinks,existing);
   assert.deepEqual(rows,distributeHistoricalBar(source.payload.bar,drinks,existing));
-  assert.equal(historicalDays().length,1096);
+  assert.equal(historicalDays().length,365);
   const keys=new Set();const totals=new Map();
   for(const row of rows){
     const key=`${row.salesDate}:${row.drinkId}`;assert.ok(!keys.has(key));keys.add(key);
-    assert.ok(row.salesDate>='2024-01-01'&&row.salesDate<'2027-01-01');assert.ok(Number.isInteger(row.quantity)&&row.quantity>0);
+    assert.ok(row.salesDate>='2026-01-01'&&row.salesDate<'2027-01-01');assert.ok(Number.isInteger(row.quantity)&&row.quantity>0);
     assert.equal(toMinor(row.revenue),toMinor(row.unitPrice)*row.quantity);
     const total=totals.get(row.drinkId)??{units:0,minor:0};total.units+=row.quantity;total.minor+=toMinor(row.revenue);totals.set(row.drinkId,total);
   }
-  assert.ok(!keys.has(`2024-01-01:${drinks[0].drinkId}`));
+  assert.ok(!keys.has(`2026-01-01:${drinks[0].drinkId}`));
   for(const record of source.payload.bar){const id=drinks.find(d=>d.name===record.name).drinkId;assert.deepEqual(totals.get(id),{units:record.units,minor:toMinor(record.revenue)});}
 });

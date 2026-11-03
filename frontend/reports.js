@@ -1,4 +1,6 @@
 import {api,currency} from './shared.js';
+import {clearCountryMap,renderCountryMap} from './countryMap.js';
+import {clearSeasonChart,renderSeasonChart} from './seasonChart.js';
 const $=selector=>document.querySelector(selector);
 let requestNumber=0;
 const count=value=>value===null?'No data':new Intl.NumberFormat('en-DK').format(value);
@@ -11,13 +13,15 @@ export async function refreshReports(year){
   const request=++requestNumber,query=year?`?year=${encodeURIComponent(year)}`:'';
   const panel=$('#operational-reports');panel.setAttribute('aria-busy','true');
   $('#reports-error').hidden=true;
+  clearCountryMap();
+  clearSeasonChart();
   $('#report-scope').textContent=year?`Calendar year ${year}`:'All saved years · occupancy requires one year';
   for(const id of ['#occupancy','#sold-nights','#known-guests'])$(id).textContent='Loading…';
   for(const id of ['#country-report','#season-report','#room-report','#inventory-report','#satisfaction-report'])$(id).replaceChildren();
   try{
     const [summary,countries,seasons,rooms,inventory,satisfaction]=await Promise.all([
       api(`/reports/summary${query}`),api(`/reports/countries${query}`),api(`/reports/room-types-seasons${query}`),
-      api(`/reports/rooms${query}`),api('/reports/inventory'),api('/reports/satisfaction')
+      api(`/reports/rooms${query}`),api('/reports/inventory'),api('/reports/satisfaction?groupBy=roomType')
     ]);
     if(request!==requestNumber)return;
     $('#occupancy').textContent=summary.year===null?'Select one year':summary.occupancyPercent===null?'No data':`${summary.occupancyPercent.toFixed(1)}%`;
@@ -26,13 +30,17 @@ export async function refreshReports(year){
     $('#known-guests').textContent=count(summary.guestCount);
     $('#guest-note').textContent=summary.unknownGuestBookingCount?`${count(summary.knownGuestCount)} known guests; ${count(summary.unknownGuestBookingCount)} bookings have unknown guest counts.`:`${count(summary.bookingCount)} bookings · guests counted once per booking.`;
     $('#report-provenance').textContent=summary.containsSyntheticData?'Includes imported history with demonstration dates and room assignments.':'Based on saved operational records.';
+    renderCountryMap(countries,year);
+    renderSeasonChart(seasons,year);
     table('#country-report',countries,r=>[r.country,count(r.bookingCount),count(r.guestCount),count(r.knownGuestCount),count(r.unknownGuestBookingCount),currency(r.roomRevenue)]);
     table('#season-report',seasons,r=>[r.roomType,{low:'Low',mid:'Mid',high:'High'}[r.season],count(r.soldRoomNights),currency(r.roomRevenue)]);
     table('#room-report',rooms,r=>[r.roomNumber,r.roomType,count(r.soldRoomNights),currency(r.roomRevenue)]);
     table('#inventory-report',inventory,r=>[r.roomType,count(r.roomCount),r.synthetic?'Demonstration inventory':'Hotel inventory']);
-    table('#satisfaction-report',satisfaction,r=>[r.roomNumber,r.roomType,count(r.responseCount),r.meanRating===null?'No data':`${r.meanRating.toFixed(1)} / 5`]);
+    table('#satisfaction-report',satisfaction,r=>[r.roomType,r.meanRating===null?'No data':`${r.meanRating.toFixed(1)} / 5`]);
   }catch(error){
     if(request!==requestNumber)return;
+    clearCountryMap('Country revenue unavailable');
+    clearSeasonChart('Seasonal revenue unavailable');
     $('#reports-error').textContent=`Reports unavailable: ${error.message}`;$('#reports-error').hidden=false;
     for(const id of ['#occupancy','#sold-nights','#known-guests'])$(id).textContent='Unavailable';
     for(const id of ['#occupancy-note','#guest-note','#report-provenance'])$(id).textContent='';

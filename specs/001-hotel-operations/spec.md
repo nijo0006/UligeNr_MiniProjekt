@@ -48,16 +48,15 @@ registration confirmed in Q8. The English story form is “As <role>, I want <go
   season (`low`/`mid`/`high`), and total price. Future bookings can contain multiple guests
   and rooms (Q9). Source booking counts MUST NOT be presented as verified person counts.
 - Bar source data are undated totals per drink; actual daily history cannot be
-  reconstructed. Synthetic daily allocation across 2024–2026 is now authorized,
+  reconstructed. Synthetic daily allocation within 2026 is now authorized,
   preserving each source drink’s price, total units, and total revenue.
-- K5 requires arrival and departure for all bookings and states that the data cover three
-  years (Q2, Q12). K6 authorizes clearly labelled demonstration booking dates based on
-  the source seasons in 2024, 2025, and 2026. All occupied nights must stay within the
+- K5 requires arrival and departure for all bookings and was originally interpreted as three years; the user corrects this to 2026 only. K6 authorizes clearly labelled demonstration booking dates based on
+  the source seasons in 2026. All occupied nights must stay within the
   recorded season, and each booking receives an available room of its recorded type.
   Generated dates and room assignments remain separate, labelled synthetic enrichment;
   original source prices are preserved. Questionnaire responses are not generated.
-- Workbook labels such as “annual revenue” use a one-year assumption that K5 replaces.
-  Workbook totals remain whole-source reconciliation values, not verified annual totals.
+- Workbook annual totals belong to 2026, as corrected by the user. Exact dates remain
+  generated while original yearly amounts remain source evidence.
 - Historical prices can fall outside K1's approximate price ranges. Original source
   amounts are reference evidence and are not overwritten with the new K6 tariff.
   The supplied tariff applies to new calculations; source reconciliation retains source prices.
@@ -129,7 +128,7 @@ chosen-arrival wording. They do not authorize invented historical facts.
   using a date picker; departure is calculated as arrival plus the number of nights.
 - Q: May missing historical dates be generated as demonstration data? → A: Yes, based
   on the source seasons. Generated dates must remain labelled as demonstration data;
-  approved demonstration years are 2024, 2025, and 2026; seasonal generation details remain R2.
+  approved demonstration years are 2026; seasonal generation details remain R2.
 - Q: Is an actual or demonstration room inventory available/authorized? → A: Yes.
   After the meaning of inventory was explained, the user explicitly requested generated
   room inventory, superseding the earlier prohibition. Use clearly labelled synthetic
@@ -143,10 +142,9 @@ chosen-arrival wording. They do not authorize invented historical facts.
   rate, then sum the nightly charges across the booked rooms. This resolves new-booking
   cross-season pricing; historical source amounts remain unchanged.
 
-- Q: Which three years should generated historical booking dates use? → A: 2024, 2025,
-  and 2026, consistent with each booking's recorded season and clearly labelled as
-  demonstration dates. This assigns a demonstration horizon, not verified dates to
-  the original source. Allocation across years and detailed generation remain R2.
+- Q: Which year should generated source booking dates use? → A (corrected 2026-11-03):
+  2026 only. The earlier three-year allocation is superseded; keep source seasons and
+  label exact dates as generated.
 
 - Q: How are mixed-country bookings counted? → A: Count the booking, all guests
   belonging to it, and its room revenue under the booking holder's country. Do not
@@ -262,8 +260,7 @@ for this prototype; questionnaire responses are not generated.
   No customer country or booking link is required for a bar sale.
 
 - Q: May undated historical bar totals receive demonstration sales dates? → A: Yes.
-  Distribute each drink's recorded sales quantities across dates in 2024, 2025, and
-  2026. Preserve its original price, total units, and total revenue. Label all generated
+  Distribute each drink's recorded sales quantities across dates in 2026. Preserve its original price, total units, and total revenue. Label all generated
   daily records synthetic and retain the original aggregate rows as source evidence.
   Do not count both source aggregates and their generated daily records in reporting.
 
@@ -284,7 +281,7 @@ for this prototype; questionnaire responses are not generated.
   ratings. The per-room arithmetic mean, one decimal, and null for no responses remain.
 
 - Q: How should historical demonstration bookings receive dates and rooms? → A:
-  Distribute them across 2024, 2025, and 2026. Keep every occupied night within each
+  Distribute them across 2026. Keep every occupied night within each
   booking's recorded source season and assign an available room of the recorded type,
   without overlapping active stays. Preserve original source prices. Label generated
   dates and room assignments synthetic; they are not actual historical observations.
@@ -424,7 +421,7 @@ invent person counts, room assignments, or annual allocations missing from K3.
 **Conversation**:
 
 - Refresh the booking page after successful creation, edits, and cancellation. API reporting must reflect saved changes on the next request. Tableau integration and refresh are deferred for the user to investigate (R9).
-- Q8 adds daily dated bar updates. Historical source totals can be allocated to synthetic daily records in 2024–2026; preserve prices and totals and do not double-count the source aggregates.
+- Q8 adds daily dated bar updates. Historical source totals can be allocated to synthetic daily records in 2026; preserve prices and totals and do not double-count the source aggregates.
 
 **Confirmation (acceptance criteria)**:
 
@@ -468,7 +465,7 @@ invent person counts, room assignments, or annual allocations missing from K3.
 **Conversation**:
 
 - Q3: high is June–August; mid is April–May and September–December; low is January–March. December is mid season despite the earlier general assignment description.
-- K6 confirms the complete nightly tariff. New stays use each night’s date for seasonal pricing. Historical demonstration dates span 2024–2026, with every occupied night in the recorded source season. Preserve historical source prices; label generated dates synthetic.
+- K6 confirms the complete nightly tariff. New stays use each night’s date for seasonal pricing. Historical demonstration dates are within 2026, with every occupied night in the recorded source season. Preserve historical source prices; label generated dates synthetic.
 
 **Confirmation (acceptance criteria)**:
 
@@ -549,13 +546,13 @@ invent person counts, room assignments, or annual allocations missing from K3.
 **Conversation**:
 
 - Q10: booking total prices are all-inclusive and bar revenue is included in combined hotel revenue for the same reporting period.
-- Q12: the source covers three years; undated whole-source totals cannot be called one year. New booking revenue is assigned per occupied night to that night’s calendar year. Generated booking and bar dates remain labelled synthetic; annual demonstration results use those dates without claiming actual historical dates.
+- Q12 (corrected 2026-11-03): the source covers 2026 only. New booking revenue is assigned per occupied night to that night’s calendar year. Generated booking and bar dates remain labelled synthetic; annual demonstration results use those dates without claiming actual historical dates.
 - Q20: bar guests may be walk-ins; high bar revenue is accepted and is not filtered by booking existence.
 
 **Confirmation (acceptance criteria)**:
 
 1. Given dated room and bar revenue for one year, when annual revenue is shown, then room revenue includes occupied nights whose dates fall in that year, room and bar components are shown distinctly, and combined revenue equals their sum.
-2. Given the unchanged complete source dataset, when whole-source totals are reconciled, then room revenue is DKK 11,234,034.0, bar revenue is DKK 13,448,640.3, and combined revenue is DKK 24,682,674.3; these are not labelled as verified annual totals.
+2. Given the unchanged complete source dataset, when whole-source totals are reconciled, then room revenue is DKK 11,234,034.0, bar revenue is DKK 13,448,640.3, and combined revenue is DKK 24,682,674.3; these are the source annual totals for 2026, with generated exact dates clearly identified.
 3. Given bar sales without any booking link, when revenue is calculated for their reporting period, then those sales contribute to bar and combined revenue.
 4. Given a Standard Single stay arriving 31 December 2025 for two nights, when annual room revenue is calculated, then 2025 receives DKK 1,152.0 and 2026 receives DKK 1,031.0, summing to the DKK 2,183.0 booking price without duplication.
 
@@ -581,7 +578,7 @@ invent person counts, room assignments, or annual allocations missing from K3.
 **Conversation**:
 
 - Q13 confirms a one-year formula with denominator 214 × 365 = 78,110 room-nights. A multi-room booking contributes the room-nights for its rooms, not guest-nights.
-- K3 contains 5,379 recorded nights over an undated three-year source. Its former 6.9% one-year estimate is not a verified annual occupancy result.
+- K3 contains 5,379 recorded nights over an undated 2026 source. Its former 6.9% one-year estimate is not a verified annual occupancy result.
 - Occupied room-nights are counted in the calendar year of each occupied night. No per-type occupancy formula or leap-year variation is added; the approved denominator remains 214 × 365.
 
 **Confirmation (acceptance criteria)**:
@@ -649,13 +646,13 @@ invent person counts, room assignments, or annual allocations missing from K3.
 **Conversation**:
 
 - Q16 requires both revenue and units. Q17 makes these results visible to both Helene Christine and the administrator.
-- Q20 permits non-resident customers. Q12 replaces the one-year source assumption; generated daily bar records are distributed across 2024–2026 and labelled synthetic, with per-drink prices and complete-source totals preserved.
+- Q20 permits non-resident customers. Q12 replaces the one-year source assumption; generated daily bar records are distributed within 2026 and labelled synthetic, with per-drink prices and complete-source totals preserved.
 
 **Confirmation (acceptance criteria)**:
 
 1. Given unchanged complete source bar data, when source totals are shown, then revenue is DKK 13,448,640.3 and units sold are 179,958 without claiming those undated totals are for one known year.
 2. Given dated daily sales for a year, when annual totals are shown, then revenue and units each equal the sum of that year’s eligible sales.
-3. Given generated historical daily records for 2024–2026, when reconciled by drink across all three years, then each drink retains its source price, total units, and total revenue; combined units are 179,958 and unrounded combined revenue is DKK 13,448,640.34. The original aggregate rows are not added again.
+3. Given generated historical daily records for 2026, when reconciled by drink across the source year 2026, then each drink retains its source price, total units, and total revenue; combined units are 179,958 and unrounded combined revenue is DKK 13,448,640.34. The original aggregate rows are not added again.
 3. Given a sale without a booking, when totals are calculated, then the sale is included and can be viewed by both Helene Christine and the administrator.
 
 ---
@@ -839,7 +836,7 @@ are interface separation; this request does not establish authentication or new 
 Approved historical-enrichment acceptance: given raw bookings with recorded season,
 room type, nights, and price, when demonstration records are generated, then:
 
-1. Dates are distributed across 2024, 2025, and 2026; departure equals arrival plus nights.
+1. Dates are distributed across 2026; departure equals arrival plus nights.
 2. Every occupied night belongs to the recorded source season; departure itself is not
    an occupied night and may be the next season's first date.
 3. Each booking receives a room number of its recorded type from the demonstration
@@ -875,7 +872,7 @@ room type, nights, and price, when demonstration records are generated, then:
 | FR-018 | The system MUST show revenue per drink with separate Cocktails, Coffee, Wine, and Beer categories. Overall bar revenue and units MUST include all four categories. | Story 16; R8 |
 | FR-019 | Cocktail/coffee percentages MUST use only combined cocktail and coffee revenue as their denominator, excluding wine and beer; display one decimal place. Zero-denominator behavior remains R10. | Story 17 |
 | FR-020 | The system MUST provide indicators through the API to an interactive Tableau dashboard. Final interactions are deferred for exploration. | Story 18 |
-| FR-021 | The source bookings and bar data MUST be usable as starting data. Authorized historical booking-date enrichment MUST use 2024, 2025, and 2026, be clearly labelled demonstration data, and be based on source seasons; original source values remain identifiable. The authorized generated room inventory MUST be labelled demonstration data; Historical bookings MUST receive available rooms of their source type with no overlaps; every occupied night MUST remain in their recorded source season, and original prices MUST be preserved. Historical bar totals MUST be allocated to labelled synthetic daily records in 2024–2026, preserving per-drink price, total units, and revenue without counting source aggregates twice. | Stories 1, 5–17, 19; A6/R2 |
+| FR-021 | The source bookings and bar data MUST be usable as starting data. Authorized historical booking-date enrichment MUST use 2026, be clearly labelled demonstration data, and be based on source seasons; original source values remain identifiable. The authorized generated room inventory MUST be labelled demonstration data; Historical bookings MUST receive available rooms of their source type with no overlaps; every occupied night MUST remain in their recorded source season, and original prices MUST be preserved. Historical bar totals MUST be allocated to labelled synthetic daily records in 2026, preserving per-drink price, total units, and revenue without counting source aggregates twice. | Stories 1, 5–17, 19; A6/R2 |
 | FR-022 | No-data results MUST be null. Displayed numeric amounts and percentages MUST use one decimal place; counts remain counts. | Stories 6, 9, 13, 15–18; R10 |
 | FR-023 | The system MUST generate a unique BookingID and price, accept selected arrival, and calculate departure as arrival plus nights. Price MUST use the confirmed seasonal tariff with no manual override. Each occupied night MUST use its own date’s seasonal rate; sum nights per room and room totals per booking, excluding departure night. | Stories 1, 2, 4; R1/R2 |
 | FR-024 | A booking MUST support multiple guests and multiple selected available room numbers and be held in one guest's name. Overlapping active stays for the same room MUST be rejected; arrival on another stay's departure date MUST be allowed, through both browser and API. Guest-capacity validation is out of scope for this prototype. | Stories 1, 6–9, 12; R4/R5 |
@@ -904,11 +901,11 @@ These are conceptual requirements, not a technical data model.
 - **Season**: Low = January–March; mid = April, May, September–December;
   high = June–August. For pricing, season is derived separately for each occupied
   night; a booking can span multiple seasons.
-- **Reporting Period**: Source horizon of three years; annual reporting for dated records.
+- **Reporting Period**: Source year 2026; annual reporting for dated records.
   Demonstration booking dates based on source seasons are authorized and must be labelled;
-  demonstration years are 2024, 2025, and 2026, with all occupied nights within the
+  demonstration years are 2026, with all occupied nights within the
   source season. New room revenue is allocated by the calendar year of each occupied
-  night. Historical bar dates are synthetic allocations over 2024–2026, with source
+  night. Historical bar dates are synthetic allocations within 2026, with source
   prices, quantities, and revenue preserved.
 - **Hotel Capacity**: 214 rooms from K1, with the confirmed annual occupancy denominator
   214 × 365. K1 describes 1–4 people per room and approximate maximum guest capacity 428;
@@ -917,7 +914,7 @@ These are conceptual requirements, not a technical data model.
 - **Drink / Daily Bar Sale**: Drink, category, price, daily quantity, calculated revenue,
   and selected sales date. Each date/drink pair has one effective quantity; corrections
   replace that quantity. Source rows are undated aggregates; authorized daily demonstration records allocate
-  their quantities across 2024–2026 with preserved prices and totals. Do not add the
+  their quantities within 2026 with preserved prices and totals. Do not add the
   source aggregates a second time when reporting the generated daily records.
   A hotel booking is optional for bar customers.
 - **Questionnaire Response**: One overall rating from 1 to 5 linked to a room number.
@@ -934,7 +931,7 @@ Proposed acceptance measures (A8), not invented service-level targets.
 - **SC-001**: Every Must story passes its acceptance criteria with an approved fixture;
   unresolved rules must be settled before that story is declared complete.
 - **SC-002**: Unchanged source booking and bar totals match K3, displayed to one decimal
-  where appropriate, without relabelling three-year undated totals as annual figures.
+  where appropriate, while identifying the source year as 2026 and exact dates as generated.
 - **SC-003**: After every successful creation, edit, or cancellation, the booking page
   refreshes to reflect the result. The next reporting API request reflects the saved
   change. Tableau's refresh mechanism and interval still require R9.
@@ -974,7 +971,7 @@ Each item records the part still unanswered; it does not reopen the confirmed pa
   and sum rooms for the booking. Exclude departure night. Historical source totals
   are preserved and attributed to their authorized synthetic room assignments.
 - **R2 — Resolved: reporting dates and demonstration enrichment**: Generate historical
-  booking dates in 2024–2026 with every occupied night in the source season and available
+  booking dates in 2026 with every occupied night in the source season and available
   rooms of the source type, preserving prices. Generate synthetic daily bar allocations
   over the same years, preserving each drink's original price, units, and revenue.
   Label generated records synthetic and avoid double-counting raw aggregates. New
@@ -1040,7 +1037,7 @@ Acceptance criteria for this increment:
   revenue descending; equal values remain equal, with alphabetical/room-number ordering
   solely for stable display. No business rank-number/tie-breaking policy is introduced.
 - Summary exposes current booking/person/night counts and annual occupancy. Without a
-  year, occupancy is null: the three-year history is not treated as one year. With no
+  year, occupancy is null: a multi-year operational scope is not treated as one year. With no
   eligible room nights annual occupancy is null. Counts use zero for an empty scope.
 - Inventory counts unique room numbers by type, totals 214 and never changes with bookings.
 - Receptionists can select an existing active booking, one of its rooms and a 1–5 rating;
@@ -1061,3 +1058,70 @@ Acceptance criteria for this increment:
 Verify fixtures for multi-room/cross-year and mixed-known guest counts; edits/cancellation;
 source country/type/season reconciliation; exact and tied revenues; inventory invariance;
 ratings 2/4/5 => 3.7, invalid room/rating rejection, cancelled exclusion and persistence.
+
+
+## Interactive country revenue map — 2026-11-03
+
+User request: replace Guest markets & highest-earning countries with an interactive
+world map. Higher saved room revenue uses deeper blue; lower revenue uses lighter blue.
+Acceptance: selected year/all years keeps the existing API scope and holder-country
+attribution; a labelled linear color legend shows actual minimum/maximum recorded
+revenue. Equal values use equal colors; countries without revenue records are neutral
+gray, distinct from a recorded zero. Hover/focus and click/tap reveal country revenue,
+bookings, complete/known guest counts and unknown-booking count without inventing data.
+The selection also works through a labelled country dropdown and keyboard. Zoom/reset
+and drag panning support small countries. Failed/loading report updates clear stale
+colors/details; empty scopes state no data. Unmapped names remain selectable and are
+identified rather than silently dropped. Other report tables remain unchanged.
+
+
+## Seasonal room-revenue bar chart — 2026-11-03
+
+Replace the type/season table presentation with grouped bars: Revenue (DKK) on the
+vertical axis and Low/Mid/High seasons on the horizontal axis. Each season groups
+one bar per room type, using a fixed legend of the same pale-to-deep blue palette.
+The existing API and selected year/all-year scope remain authoritative. Color identifies
+room type consistently across seasons, while bar height represents revenue. Show exact
+formatted values and room-nights on hover/focus/selection. Optional legend controls
+hide/show types without modifying data. Missing revenue is not a zero bar; recorded zero
+has an explicit baseline marker. Retain the source table in a closed data disclosure.
+Clear stale bars on loading/error, show empty states, and support keyboard/mobile use.
+
+
+## Always-visible report cards — 2026-11-03
+
+User request supersedes expandable report sections and closed data disclosures. All
+Overview graphs and tables must appear in fixed rectangular cards as the user scrolls,
+without clicking headings to reveal them. Headings are static; chart/map controls,
+financial year selection and table/plot scrolling remain available.
+
+
+## Simple satisfaction table — 2026-11-03
+
+User request: show satisfaction as a simple table with rating and room type; real data
+will arrive later. Overview displays one row per room type and only Room type/Rating.
+Ratings use the arithmetic mean of actual questionnaire responses for that type, not
+an unweighted mean of room averages. Keep one decimal and null/No data without responses.
+Do not generate scores. Existing per-room API and questionnaire entry remain available.
+
+Visual follow-up: the satisfaction table uses the same blue palette as the map/chart,
+with a deep-blue header, pale-blue rows and blue text/borders.
+
+
+## Authoritative source-year correction — 2026-11-03
+
+The user corrects the previous three-year premise: the complete workbook belongs to
+2026. This supersedes every earlier 2024–2026 source-horizon instruction in this spec.
+All workbook bookings/room-nights and bar quantities belong to 2026, preserving source
+seasons, room types, nights, prices, quantities and totals. Exact dates and room numbers
+remain generated, not observed. Guest counts and questionnaire data remain unknown.
+
+Existing installations must migrate once transactionally, preserving booking IDs,
+statuses, original source evidence and unrelated manual records. Do not delete volumes,
+reset the database or re-import duplicate bookings. Reassign generated room dates/numbers
+without overlaps against existing operational stays. Preserve saved bar totals and skip
+manual date/drink keys. Keep old immutable evidence and append a correction marker;
+restart must not repeat the correction or overwrite later edits. Validate totals and
+rollback on errors. Fresh clones must import directly into 2026. Update UI provenance,
+report years and current documentation so workbook data is no longer described as three
+years. Unrelated genuine operational years may remain selectable when records exist.

@@ -3,7 +3,7 @@
   "info": {
     "title": "Hotel Kong Arthur Operations API",
     "version": "0.4.0",
-    "description": "Staff booking and hotel/bar operations, including reconciled Excel history with labelled generated dates/room assignments across 2024\u20132026. Original source values are preserved independently of operational edits. Other hotel reports, satisfaction and Tableau remain pending. Local prototype without login."
+    "description": "Staff booking and hotel/bar operations, including reconciled Excel history with labelled generated dates/room assignments within source year 2026. Original source values are preserved independently of operational edits. Operational reports and satisfaction are implemented; Tableau remains user-deferred. Local prototype without login."
   },
   "servers": [
     {
@@ -607,7 +607,7 @@
       "get": {
         "operationId": "annualBarReport",
         "summary": "Read annual bar revenue, units, category mix and revenue per drink",
-        "description": "Only dated daily sales are included. Source aggregates are allocated to labelled synthetic daily records across 2024\u20132026. Only the generated daily records contribute to revenue; raw aggregates are not counted a second time. containsSyntheticData identifies these results. Wine/beer contribute to overall totals, but not the cocktail/coffee denominator. No-data values are null. For recorded zero comparison revenue, mixStatus is undefined: no numeric percentage is invented and the outstanding zero-denominator clarification is not marked resolved. Exact DKK strings; frontend displays one decimal.",
+        "description": "Only dated daily sales are included. Source aggregates are allocated to labelled synthetic daily records within source year 2026. Only the generated daily records contribute to revenue; raw aggregates are not counted a second time. containsSyntheticData identifies these results. Wine/beer contribute to overall totals, but not the cocktail/coffee denominator. No-data values are null. For recorded zero comparison revenue, mixStatus is undefined: no numeric percentage is invented and the outstanding zero-denominator clarification is not marked resolved. Exact DKK strings; frontend displays one decimal.",
         "parameters": [
           {
             "name": "year",
@@ -951,8 +951,22 @@
       "get": {
         "operationId": "reportSatisfaction",
         "summary": "Read Satisfaction",
-        "description": "All-time room questionnaire means and counts; no query parameters allowed. Financial year selection does not apply. Excludes responses linked to cancelled bookings. A recorded response retains its original room if a booking is edited. Null mean with zero responses; arithmetic mean, formatted to one decimal by the UI. No historical ratings are generated.",
-        "parameters": [],
+        "description": "All-time questionnaire mean/count. Optional groupBy=room (default) returns each room; groupBy=roomType returns the eight types, averaging actual responses directly, not averaging room means. Excludes cancelled bookings; null mean without responses. The financial year does not apply. No historical ratings generated.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "groupBy",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "room",
+                "roomType"
+              ],
+              "default": "room"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Current saved results; empty scopes preserve null amounts and unknown counts.",
@@ -961,7 +975,14 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/SatisfactionRow"
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/SatisfactionRow"
+                      },
+                      {
+                        "$ref": "#/components/schemas/SatisfactionTypeRow"
+                      }
+                    ]
                   }
                 }
               }
@@ -1749,7 +1770,7 @@
           },
           "containsSyntheticData": {
             "type": "boolean",
-            "description": "Reporting includes imported history whose actual dates are unknown; assigned 2024\u20132026 dates are demonstration data."
+            "description": "Reporting includes imported history whose actual dates are unknown; assigned 2026 dates are demonstration data."
           }
         },
         "additionalProperties": false
@@ -2241,6 +2262,30 @@
           "recordedAt"
         ],
         "additionalProperties": false
+      },
+      "SatisfactionTypeRow": {
+        "type": "object",
+        "required": [
+          "roomType",
+          "responseCount",
+          "meanRating"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "roomType": {
+            "type": "string"
+          },
+          "responseCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "meanRating": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 5
+          }
+        }
       }
     }
   },

@@ -233,3 +233,105 @@ and formal business tie numbering if later requested; current UI exposes undefin
 percentages and equal values explicitly. No missing products, guests, ratings or rank
 rules are invented. Full project acceptance and the Tableau deliverable are not claimed.
 GitHub publication and presentation preparation are not performed by this implementation.
+
+
+## Interactive country revenue map — 2026-11-03
+
+Implemented user-requested country-report choropleth using the existing scoped API.
+Locally bundled Natural Earth polygons and explicit ISO3 aliases cover all 21 approved
+country names. Deep/pale blue encodes the selected period's max/min room revenue, with
+labelled linear legend and equal-value colors. No-record countries are neutral; recorded
+zero remains data. Selection exposes all country metrics without inventing missing guest
+counts. Hover/focus, tap/click, dropdown, keyboard zoom/pan, drag/reset and mobile layout
+are supported. A closed data disclosure retains the accessible table. Missing geometry
+opens fallback figures and supports retry; API failure clears stale colors/details.
+Unmapped country names remain available in selection/details/table.
+
+9 browser scenarios passed, plus targeted actual-drag verification. Reviewed desktop/
+mobile screenshots. Source attribution/checksum recorded locally; no external map
+requests, API changes or database migrations. T083–T085 complete. Other report visual
+conversions and deferred Tableau integration are not claimed by this first map increment.
+
+The focused map rerun passed after preventing pointer-induced focus from selecting a
+country during drag. Actual mouse drag changes the zoomed transform while retaining
+the selected country; ordinary click and keyboard selection still pass.
+
+
+## Seasonal room-revenue bar chart — 2026-11-03
+
+Implemented the user's requested grouped bar chart with Revenue (DKK) on the y-axis and
+seasons on the x-axis. Eight fixed blue series match the map palette's light/deep ends;
+color identifies room type while height encodes saved room revenue. Existing year scope,
+nightly/season attribution and API calculations are preserved. Checkboxes filter visible
+series without changing period scale; hover/focus/selection shows source values/counts.
+Null amounts do not become zero bars; recorded zero has a baseline dot. Stale bars clear
+on loading/error and empty states are explicit. Local native SVG supports keyboard
+interaction and horizontal scrolling on mobile. Original table remains as a disclosure.
+
+10 browser scenarios passed, including the new chart-value/filter/edge-case flow and
+retained country-map, booking/bar/history/questionnaire workflows. Desktop/mobile
+screenshots reviewed. No backend, contract, schema or data changes; API/SQL suites not
+repeated. T086–T087 complete. Other report visual conversions and Tableau remain outside
+this particular presentation increment.
+
+
+## Always-visible report cards — 2026-11-03
+
+All Overview charts, maps and data tables now appear as fixed rectangular cards while
+scrolling. No details/summary toggles remain, including the country/season data sections.
+Static named section headings replace disclosure controls. Existing year, map, chart
+filters and table/plot scrolling remain available. This supersedes earlier expandable/
+closed-table descriptions. Four relevant Chrome browser scenarios passed, covering
+immediate report/table visibility, year/error recovery, map selection/zoom/fallback and
+season chart controls on desktop/mobile. Screenshots reviewed; no API/database changes.
+T088 complete.
+
+
+## Simple satisfaction table — 2026-11-03
+
+Overview now shows eight room-type rows with only Room type and Rating. Real responses
+will populate the mean; without responses the display is No data, never an invented
+rating. Optional groupBy=roomType is validated and documented in OpenAPI; the default
+per-room API and questionnaire entry remain available. Arithmetic mean uses actual
+responses directly so differently sized room-response sets receive correct weighting.
+No schema/data/seed changes. 33 isolated PostgreSQL/API tests passed, including a
+four-response type mean of 3.25 (rather than an average of room means) and invalid
+grouping rejection. Two relevant Chrome browser scenarios passed, verifying the eight
+rows/two headers, retained questionnaire flow and desktop/mobile reports. Screenshot
+reviewed. T089 complete.
+
+Satisfaction styling follow-up: deep-blue header, pale-blue alternating rows and blue
+text/borders applied. Existing Overview browser flow passed; screenshot reviewed.
+CSS only; ratings and missing-data behavior unchanged.
+
+
+## Source-year correction to 2026 — 2026-11-03
+
+The user confirms that the workbook is for 2026 only, superseding all earlier three-year
+source descriptions. Fresh startup now imports directly into 2026. Existing installations
+correct in one transaction with a new append-only marker, keeping source identities,
+immutable v1 evidence, booking IDs/statuses, saved prices/night counts and unrelated manual
+rows. Exact dates/room numbers remain generated according to source season and availability.
+Current source-linked bar quantities/amounts are redistributed only within 2026 and manual
+date/drink keys are skipped. Later startup skips the completed correction. Unexpected
+edited old-year source bookings cause a safe rollback for review rather than being reset.
+History API/UI and OpenAPI/source documentation identify 2026. General recent-year choices
+still permit empty-year reporting; they do not imply workbook records exist in those years.
+
+Verification: 10 pure pricing/generator tests and 36 isolated PostgreSQL/API tests passed.
+Fresh 2026 import reconciles all 1,000 bookings/5,379 nights and 179,958 bar units. Legacy
+migration tests cover preserved IDs/cancellation/current bar corrections/manual stays,
+room conflict avoidance, immutable evidence, late-failure rollback/retry, restart and
+refusal to overwrite edited old-year sources. Ten browser scenarios were verified, with
+focused passing reruns after updating old assumptions that the first booking was imported
+and that 2024 recovery still contained workbook data. Reviewed the live 2026 Overview.
+
+Before applying locally, created a private pg_dump backup outside Git. Live correction
+completed successfully: all 11 before/after control groups match, including booking
+business fields, source evidence, original marker, saved per-booking night totals,
+per-source bar totals, manual data, guests and questionnaire records. Source annual
+controls are DKK 11,234,034.00 rooms and DKK 13,448,640.34 bar, total DKK 24,682,674.34.
+The live current total is higher because existing manual bookings are preserved.
+A forced app recreation retained identical counts/hashes across nine tables, including
+all dates/allocations and both immutable import markers. T090–T093 complete. No volume
+reset, duplicate source import, new guest counts or questionnaire seed data.

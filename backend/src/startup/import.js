@@ -1,3 +1,4 @@
+import {correctLegacySourceYear} from './correctSourceYear.js';
 import {readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
@@ -39,7 +40,7 @@ export async function importHistoricalData(connection){
   const {rows:prior}=await connection.query('SELECT source_checksum,summary FROM historical_imports WHERE version=$1',[IMPORT_VERSION]);
   if(prior.length){
     assert.equal(prior[0].source_checksum,source.workbookSha256,'Historical workbook changed: use a new reviewed import version.');
-    return prior[0].summary;
+    return correctLegacySourceYear(connection,source,prior[0].summary);
   }
   // Follow the normal sorted room-lock protocol and protect concurrent daily sales.
   const {rows:rooms}=await connection.query('SELECT room_number AS "roomNumber",room_type AS "roomType" FROM rooms ORDER BY room_number FOR UPDATE');
@@ -81,7 +82,7 @@ export async function importHistoricalData(connection){
     JOIN booking_rooms br ON br.booking_id=b.id JOIN rooms r ON r.room_number=br.room_number
     WHERE s.record_kind='booking' AND (b.guest_count IS NOT NULL OR b.total_price<>(s.original_payload->>'totalPrice')::numeric
     OR b.nights<>(s.original_payload->>'nights')::integer OR r.room_type<>s.original_payload->>'roomType'
-    OR NOT b.synthetic_dates OR NOT b.synthetic_room_assignment OR b.arrival<'2024-01-01' OR b.departure>'2027-01-01')`);
+    OR NOT b.synthetic_dates OR NOT b.synthetic_room_assignment OR b.arrival<'2026-01-01' OR b.departure>'2027-01-01')`);
   assert.equal(bookChecks.length,0,'Historical booking values or provenance changed');
   const {rows:[nightCheck]}=await connection.query(`SELECT COUNT(*)::integer AS count,SUM(rn.exact_charge)::text AS revenue
     FROM room_nights rn JOIN bookings b ON b.id=rn.booking_id JOIN source_records s ON s.source_id=b.source_id WHERE s.record_kind='booking'`);
@@ -103,7 +104,7 @@ export async function importHistoricalData(connection){
     FROM bookings b JOIN source_records s ON s.source_id=b.source_id WHERE s.record_kind='booking' GROUP BY 1 ORDER BY 1`);
   const {rows:barByYear}=await connection.query(`SELECT EXTRACT(YEAR FROM sales_date)::integer AS year,SUM(quantity)::integer AS units,SUM(exact_revenue)::text AS revenue
     FROM daily_bar_sales WHERE source_id IS NOT NULL GROUP BY 1 ORDER BY 1`);
-  const summary={sourceFile:source.sourceFile,sourceChecksum:source.workbookSha256,generatorVersion:GENERATOR_VERSION,years:[2024,2025,2026],
+  const summary={sourceFile:source.sourceFile,sourceChecksum:source.workbookSha256,generatorVersion:GENERATOR_VERSION,years:[2026],
     sourceTotals:{bookings:1000,roomNights:5379,roomRevenue:'11234034.00',barUnits:179958,barRevenue:'13448640.34'},
     generatedDailyBarRows:sales.length,bookingsByYear,barByYear};
   await connection.query('INSERT INTO historical_imports(version,source_checksum,generator_version,summary) VALUES ($1,$2,$3,$4)',[IMPORT_VERSION,source.workbookSha256,GENERATOR_VERSION,JSON.stringify(summary)]);

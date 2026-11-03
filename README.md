@@ -72,7 +72,7 @@ in the approved booking acceptance examples. The browser's quantity selectors ca
 extend to show more values; their initial option count is not a maximum-stay policy.
 
 Normal startup now imports the **1,000 source bookings** and **179,958 bar units** once.
-Generated dates/room assignments across 2024–2026 are labelled demonstration data.
+Generated dates/room assignments within 2026 are labelled demonstration data.
 Source prices and immutable Excel evidence are retained. Operational edits/cancellations
 affect current reporting without rewriting source reference totals. Country/type/season and room reports, occupancy, inventory and questionnaire means are implemented.
 Tableau remains deferred. The served OpenAPI lists implemented endpoints.
@@ -94,9 +94,9 @@ source IDs. The 25-row display page size does not limit stored bookings.
 | Bar units | 179,958 |
 | Bar revenue | DKK 13,448,640.34 |
 
-These are whole-source reference values, not amounts for one observed historical year.
+The user confirmed that the complete workbook belongs to 2026; these are its original annual reference totals.
 Excel lacks actual stay/sales dates and numbered room assignments. The authorized
-demonstration allocation uses 2024–2026, source seasons and available same-type rooms.
+demonstration allocation within that source year uses 2026, source seasons and available same-type rooms.
 Guest counts remain null; no satisfaction responses or additional people are generated.
 Original per-night prices exist in every source booking and sum exactly to its original
 total; these saved charges are retained, without applying the current booking tariff.
@@ -185,7 +185,7 @@ snapshot is retained for corrections and prices cannot be entered manually.
 
 The 30 drink names/categories/prices are read from the source workbook and seeded once.
 Undated source aggregates are allocated once to labelled synthetic daily records across
-2024–2026, preserving quantities/prices and totals. Empty reporting scopes show No data. Wine/beer products remain an open input and are not invented. A recorded
+2026, preserving quantities/prices and totals. Empty reporting scopes show No data. Wine/beer products remain an open input and are not invented. A recorded
 zero comparison denominator displays Not defined; its business treatment and exact
 half-way rounding remain open under R10. The extendable whole-quantity selector includes
 zero as an explicit prototype assumption in the plan; remaining R8 input/menu choices
@@ -203,8 +203,8 @@ Implemented staff bar endpoints (see Swagger):
 The Overview page shows annual **combined hotel revenue**, **room revenue** and **bar
 revenue** from one `GET /api/reports/revenue?year=2026` request. Select a reporting year
 or use **Refresh revenue**; returning from booking administration reloads current values.
-**View JSON** opens the same result. The year selector includes demonstration years
-2024–2026, the current year and years represented by active stays. The API accepts one
+**View JSON** opens the same result. The year selector includes recent reporting years, the source year 2026 and years
+represented by active stays. The API accepts one
 calendar year from 1000 to 9999.
 
 Example response (illustrative values):
@@ -240,9 +240,9 @@ the extended response, input validation and errors. Other operational reports an
 
 ## Operational reports and questionnaires
 
-Overview includes expandable API-backed reports with the same financial year selector.
+Overview shows all API-backed reports as permanently visible rectangular cards with the same financial year selector.
 Choose **All years** to reconcile the complete saved dataset; annual occupancy then
-requires a single year rather than dividing three years by one year's capacity.
+requires a single year rather than treating a multi-year operational scope as one year.
 
 | API | Result |
 | --- | --- |
@@ -335,3 +335,61 @@ Selecting a photo filters room types; actual room numbers still come from availa
 Photos illustrate types, not each generated room. Staff pages use the hotel's warm
 palette, header logo, local Barlow fonts and original headline fallback stack.
 Assets and attribution: [frontend/assets/README.md](frontend/assets/README.md).
+
+
+## Interactive country revenue map
+
+Overview's Guest markets & highest-earning countries report is a world map. The existing
+financial year/All years selector controls its API data. A linear scale maps lowest
+recorded room revenue to pale blue and highest to deep blue; the legend shows the actual
+minimum/maximum for that scope. Equal values share a color. Missing revenue records are
+gray, distinct from recorded zero. Click/tap a country or use Explore a country to see
+room revenue, bookings and complete/known/unknown guest counts. Hover/focus previews
+revenue. Zoom controls, drag panning, arrow-key panning and Reset map are available.
+The country data table is always visible below the map, including when geography cannot load.
+
+Geometry is bundled locally from public-domain Natural Earth 1:110m data, without map
+service keys/CDNs. Source and original checksum: frontend/assets/maps/README.md.
+Country catalog names map explicitly to ISO3 in frontend/countryMap.js; unmapped rows
+remain selectable and in the table rather than being discarded. This changes only the
+country report's presentation; financial rules, APIs and other report tables are unchanged.
+
+
+## Seasonal room revenue chart
+
+Overview's Room revenue by type & season is a grouped blue bar chart: Revenue (DKK)
+on the vertical axis, Low/Mid/High seasons on the horizontal axis, and one consistent
+blue shade per room type. It follows Reporting year/All years and uses the existing
+saved-charge report API. Legend checkboxes hide/show room types; Show all room types
+restores them. The y-scale stays fixed for the selected reporting period when filtering.
+Hover, focus or select a bar for its formatted revenue and room-night count. Missing
+amounts are omitted, recorded zero has a baseline dot, and empty/error scopes are explicit.
+On small screens scroll the plot horizontally; the data table remains permanently visible below the chart. Native SVG is local, with no chart library/CDN or backend/database change.
+
+
+## Simple satisfaction table
+
+Overview shows only Room type and Rating, one row for each of the eight types. Until
+actual questionnaires exist, the rating is No data. Once responses arrive, the backend
+averages the actual ratings per type and the UI displays one decimal out of 5; room
+averages are not averaged again. `/api/reports/satisfaction?groupBy=roomType` supplies
+this table. The default endpoint still supplies per-room results. No data is generated,
+no schema migration is needed, and the existing questionnaire entry remains available.
+
+
+## Workbook period corrected to 2026
+
+The complete workbook belongs to 2026. This supersedes the earlier three-year premise.
+Fresh clones allocate all 1,000 source bookings/5,379 nights and 179,958 bar units within
+2026, preserving seasons, room types and original amounts. Source annual revenue is
+DKK 11,234,034.00 rooms + DKK 13,448,640.34 bar = DKK 24,682,674.34. Operational
+transactions/edits may change current totals; the immutable reference totals stay fixed.
+Exact daily dates and numbered room assignments are still generated, not observed.
+
+Existing legacy installations correct once during normal startup, transactionally,
+without replacing booking IDs or resetting the database. Saved prices, quantities,
+statuses and unrelated manual records are preserved. The old immutable import marker
+remains; a new correction marker supplies current metadata. Restarts do not replay it.
+Unexpected manually edited old-year source bookings stop automatic correction for review
+instead of silently resetting them. A private pg_dump backup was taken before the local
+correction; it is outside Git. Do not delete volumes or source evidence to re-import.

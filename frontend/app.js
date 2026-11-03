@@ -41,7 +41,7 @@ function renderBookings() {
 async function loadBookings(){
   bookings=await api('/bookings');
   updateQuestionnaireBookings(bookings);
-  const selectedYear=$('#booking-year').value,years=new Set([2024,2025,2026]);
+  const selectedYear=$('#booking-year').value,years=new Set([2026]);
   for(const b of bookings){const last=new Date(`${b.departure}T00:00:00Z`);last.setUTCDate(last.getUTCDate()-1);for(let year=Number(b.arrival.slice(0,4));year<=last.getUTCFullYear();year++)years.add(year);}
   $('#booking-year').replaceChildren(new Option('All years',''),...[...years].sort().reverse().map(y=>new Option(String(y),String(y))));$('#booking-year').value=selectedYear;
   renderBookings();
