@@ -306,7 +306,8 @@ for this prototype; questionnaire responses are not generated.
   email is required? → A: When a booking is completed, the booking holder automatically
   receives a satisfaction questionnaire by email. Completing a booking is a new receptionist
   action (check-out) and a new booking status, `completed`, alongside `active` and
-  `cancelled`. Completed bookings remain real stays and keep counting in all indicators;
+  `cancelled`. A booking can be completed only on or after its arrival date, since the
+  guest must have arrived before they can check out. Completed bookings remain real stays and keep counting in all indicators;
   only cancelled bookings are excluded. Guests answer through a questionnaire page reached
   by a link unique to their booking, rating each booked room separately. These responses
   become the main source for Story 13; receptionist entry remains available as a fallback.
@@ -834,7 +835,7 @@ are interface separation; this request does not establish authentication or new 
 
 **Conversation**:
 
-- Completing a booking is a receptionist action on the Bookings page and through the API. It changes the booking status from `active` to `completed`. A completed booking is a finished stay, not a cancellation: its revenue, room-nights, guests and country still count in every indicator.
+- Completing a booking is a receptionist action on the Bookings page and through the API. It changes the booking status from `active` to `completed`. Completion is only allowed on or after the booking’s arrival date; a stay that has not started cannot be checked out. A completed booking is a finished stay, not a cancellation: its revenue, room-nights, guests and country still count in every indicator.
 - The questionnaire email is sent automatically when completion is saved, to the booking holder’s email. It contains a link unique to that booking. The questionnaire page asks for one overall rating from 1 to 5 for each room on the booking.
 - The questionnaire page is the only guest-facing page. It shows nothing except that booking’s rooms and the rating form, so the retired guest frontend (Story 20) is not reintroduced.
 - For the local prototype, sent emails may be delivered to a local test mailbox instead of real recipients.
@@ -844,13 +845,14 @@ are interface separation; this request does not establish authentication or new 
 1. Given an active booking with an email address, when the receptionist completes it, then its status becomes `completed` and exactly one questionnaire email with a link unique to that booking is sent to the booking holder.
 2. Given an already completed booking, when it is completed again, then it stays completed and no further email is sent.
 3. Given a cancelled booking or an unknown BookingID, when completion is attempted, then it is rejected (“Booking not found” for an unknown ID) and no email is sent.
-4. Given a completed booking, when an edit or cancellation is attempted, then it is rejected without changing the booking.
-5. Given a completed booking, when revenue, occupancy, country and room reports are calculated, then the booking still contributes exactly as it did while active.
-6. Given a booking with rooms 001 and 002, when the guest opens the questionnaire link, then they can give a separate rating from 1 to 5 for each room, and each submitted rating is linked to its booking and room (Story 13).
-7. Given a room on that booking that has already been rated through the questionnaire, when another rating for the same room is submitted through the link, then it is rejected and the room’s score is unchanged.
-8. Given an invalid or unknown questionnaire link, when it is opened or submitted, then no booking information is shown and no rating is recorded.
-9. Given an imported historical booking without an email address, when it is completed, then it becomes `completed`, no email is sent, and the receptionist is told that no questionnaire could be sent.
-10. Given that sending the email fails, when the booking is completed, then the completion is still saved and the receptionist is told that the questionnaire was not sent.
+4. Given an active booking whose arrival date is in the future, when completion is attempted, then it is rejected with a message that the stay has not started, the booking remains active, and no email is sent. On the arrival date itself, or any later date, completion is allowed.
+5. Given a completed booking, when an edit or cancellation is attempted, then it is rejected without changing the booking.
+6. Given a completed booking, when revenue, occupancy, country and room reports are calculated, then the booking still contributes exactly as it did while active.
+7. Given a booking with rooms 001 and 002, when the guest opens the questionnaire link, then they can give a separate rating from 1 to 5 for each room, and each submitted rating is linked to its booking and room (Story 13).
+8. Given a room on that booking that has already been rated through the questionnaire, when another rating for the same room is submitted through the link, then it is rejected and the room’s score is unchanged.
+9. Given an invalid or unknown questionnaire link, when it is opened or submitted, then no booking information is shown and no rating is recorded.
+10. Given an imported historical booking without an email address, when it is completed, then it becomes `completed`, no email is sent, and the receptionist is told that no questionnaire could be sent.
+11. Given that sending the email fails, when the booking is completed, then the completion is still saved and the receptionist is told that the questionnaire was not sent.
 
 ### Deferred Scope
 
@@ -873,8 +875,9 @@ are interface separation; this request does not establish authentication or new 
 - Deleted/cancelled bookings are excluded from indicators (Q4), while independent bar
   sales remain valid without a booking (Q20). Completed bookings are not cancellations
   and remain included in every indicator (Story 24).
-- Completing a booking sends at most one questionnaire email, even when completion is
-  repeated; completed bookings can no longer be edited or cancelled. A booking without an
+- A booking can be completed on or after its arrival date, never before; a rejected
+  early completion leaves it active and sends no email. Completing a booking sends at
+  most one questionnaire email, even when completion is repeated; completed bookings can no longer be edited or cancelled. A booking without an
   email address can be completed without an email. A failed email does not undo completion.
 - Cross-season pricing uses each night’s seasonal tariff, summed across rooms.
   Room revenue is allocated by each occupied night's calendar year, not wholly to the
@@ -931,7 +934,7 @@ room type, nights, and price, when demonstration records are generated, then:
 | FR-024 | A booking MUST support multiple guests and multiple selected available room numbers and be held in one guest's name. Overlapping active stays for the same room MUST be rejected; arrival on another stay's departure date MUST be allowed, through both browser and API. Guest-capacity validation is out of scope for this prototype. | Stories 1, 6–9, 12; R4/R5 |
 | FR-025 | The closing shift MUST select a sales date and record daily total quantities per drink. Each date/drink pair MUST have one effective quantity; corrections MUST replace rather than add, enabling daily comparisons without double-counting. | Story 19; R8 |
 | FR-026 | Bar sales MUST NOT require a booking and MUST include sales to non-resident customers in applicable bar and combined totals. | Stories 11, 15, 19 |
-| FR-027 | Receptionists MUST be able to complete an active booking through the browser and API, changing its status to `completed`. Repeated completion MUST change nothing; cancelled or unknown bookings MUST NOT be completed. Completed bookings MUST NOT be edited or cancelled and MUST remain included in all indicators, as active bookings are. | Story 24 |
+| FR-027 | Receptionists MUST be able to complete an active booking through the browser and API, changing its status to `completed`. Repeated completion MUST change nothing; cancelled or unknown bookings MUST NOT be completed, and a booking MUST NOT be completed before its arrival date. Completed bookings MUST NOT be edited or cancelled and MUST remain included in all indicators, as active bookings are. | Story 24 |
 | FR-028 | When a booking is completed, the system MUST send one satisfaction questionnaire email to the booking holder’s email address, with a link unique to that booking, and MUST NOT send it again for the same booking. Through the link, the guest MUST be able to give one 1–5 rating per room on the booking; invalid links MUST NOT reveal booking data or record ratings. Bookings without an email address are completed without an email, and a failed email MUST NOT undo completion; in both cases the receptionist is informed. | Stories 13, 24 |
 
 ### Key Entities *(include if feature involves data)*
