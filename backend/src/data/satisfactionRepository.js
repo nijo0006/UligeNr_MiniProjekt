@@ -1,23 +1,6 @@
 export class SatisfactionRepository {
   constructor(database) { this.database=database; }
 
-  async record({bookingId,roomNumber,rating}) {
-    const connection=await this.database.connect();
-    try {
-      await connection.query('BEGIN');
-      // Booking edits/cancellations lock this same row before changing allocations.
-      const {rows:[booking]}=await connection.query('SELECT status FROM bookings WHERE id=$1 FOR UPDATE',[bookingId]);
-      if (!booking) {await connection.query('ROLLBACK');return {error:'not_found'};}
-      if (booking.status === 'cancelled') {await connection.query('ROLLBACK');return {error:'cancelled'};}
-      const {rows}=await connection.query('SELECT 1 FROM booking_rooms WHERE booking_id=$1 AND room_number=$2',[bookingId,roomNumber]);
-      if (!rows.length) {await connection.query('ROLLBACK');return {error:'unrelated_room'};}
-      const {rows:[saved]}=await connection.query(`INSERT INTO satisfaction_responses(booking_id,room_number,rating)
-        VALUES ($1,$2,$3) RETURNING id AS "responseId",booking_id AS "bookingId",room_number AS "roomNumber",rating::double precision,recorded_at AS "recordedAt"`,[bookingId,roomNumber,rating]);
-      await connection.query('COMMIT');return saved;
-    }catch(error){await connection.query('ROLLBACK');throw error;}
-    finally{connection.release();}
-  }
-
   // Guest questionnaire (Story 24): the token is the only key a guest holds.
   async questionnaire(token) {
     const {rows:[invitation]}=await this.database.query(`SELECT i.booking_id AS "bookingId" FROM satisfaction_invitations i

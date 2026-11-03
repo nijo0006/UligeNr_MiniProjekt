@@ -37,8 +37,8 @@ export class BookingService {
     return this.repository.transaction(async repo => {
       const existing = editing ? await repo.get(id, true) : null;
       if (editing && !existing) throw new AppError(404, 'BOOKING_NOT_FOUND', 'Booking not found');
-      if (existing?.status === 'completed') throw completedError();
-      if (existing && (existing.version !== data.version || existing.status !== 'active')) throw new AppError(409, 'STALE_BOOKING', 'The booking has changed. Reload the current booking before saving.');
+      // Completed stays stay editable (and stay completed); cancelled bookings are not.
+      if (existing && (existing.version !== data.version || existing.status === 'cancelled')) throw new AppError(409, 'STALE_BOOKING', 'The booking has changed. Reload the current booking before saving.');
       if (data.guestCount === null && !(existing?.sourceId && existing.guestCount === null)) throw badInput('An unknown guest count can only be retained on an imported booking whose count is unknown.');
       if (data.holderEmail === null && !(existing?.sourceId && existing.holderEmail === null)) throw badInput('holderEmail is required. Only an imported booking without an email may keep it empty.');
       if (!await repo.countryExists(data.holderCountry)) throw badInput('Select a country from the catalog.');
@@ -92,7 +92,7 @@ export class BookingService {
   }
 }
 
-const completedError = () => new AppError(409, 'BOOKING_COMPLETED', 'This stay is completed and can no longer be edited or cancelled.');
+const completedError = () => new AppError(409, 'BOOKING_COMPLETED', 'This stay is completed and can no longer be cancelled.');
 export const hotelToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Copenhagen' }).format(new Date());
 function describe(invitation, note) {
   const sent = Boolean(invitation.sentAt);

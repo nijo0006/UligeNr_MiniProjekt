@@ -1,6 +1,5 @@
 import {api,currency} from './shared.js';
 import {mountBookingForm} from './bookingForm.js';
-import {updateQuestionnaireBookings,openQuestionnaire} from './satisfaction.js';
 const $=selector=>document.querySelector(selector);
 let bookings=[];
 let bookingPage=1;
@@ -36,16 +35,15 @@ function renderBookings() {
     const edit = document.createElement('button'); edit.type = 'button'; edit.textContent = 'Edit booking'; edit.addEventListener('click', () => bookingForm.edit(booking.bookingId));
     const cancel = document.createElement('button'); cancel.type = 'button'; cancel.className = 'danger'; cancel.textContent = 'Cancel booking';
     cancel.addEventListener('click', async () => { if (!confirm(`Cancel booking #${booking.bookingId} for ${booking.holderFirstName} ${booking.holderLastName}?`)) return; try { await api(`/bookings/${booking.bookingId}`, { method: 'DELETE' }); bookingForm.cancelEditing(booking.bookingId); await loadBookings(); await bookingForm.refreshRooms(); notice(`Booking #${booking.bookingId} cancelled.`); } catch (error) { notice(error.message, true); } });
-    const questionnaire=document.createElement('button');questionnaire.type='button';questionnaire.textContent='Record satisfaction';questionnaire.addEventListener('click',()=>openQuestionnaire(booking));
-    if (booking.status === 'completed') actions.append(questionnaire);
+    if (booking.status === 'completed') actions.append(edit);
     else {
       const complete = document.createElement('button'); complete.type = 'button'; complete.className = 'complete'; complete.textContent = 'Complete stay';
       if (booking.arrival > today) { complete.disabled = true; complete.title = `Check-out is possible from the arrival date, ${booking.arrival}.`; complete.textContent = `Check-out from ${booking.arrival}`; }
       complete.addEventListener('click', () => completeStay(booking));
-      actions.append(complete, edit, cancel, questionnaire);
+      actions.append(complete, edit, cancel);
     }
     article.append(top,stay,rooms);
-    if (booking.status === 'completed') { const done = document.createElement('p'); done.className = 'completed-label'; done.textContent = `Checked out ${booking.completedAt ? new Date(booking.completedAt).toLocaleString('en-GB',{timeZone:'Europe/Copenhagen',dateStyle:'medium',timeStyle:'short'}) : ''} · can no longer be edited or cancelled`; article.append(done); }
+    if (booking.status === 'completed') { const done = document.createElement('p'); done.className = 'completed-label'; done.textContent = `Checked out ${booking.completedAt ? new Date(booking.completedAt).toLocaleString('en-GB',{timeZone:'Europe/Copenhagen',dateStyle:'medium',timeStyle:'short'}) : ''} · can still be edited, but not cancelled`; article.append(done); }
     if(booking.sourceId){const provenance=document.createElement('p');provenance.className='source-label';provenance.textContent=`Excel booking ${booking.sourceId.split(':').at(-1)} · ${booking.syntheticDates?'demonstration dates':'updated dates'} · ${booking.pricingMode==='source-preserved'?'original Excel price':'recalculated tariff'}`;article.append(provenance);}
     article.append(actions); container.append(article);
   }
@@ -53,7 +51,7 @@ function renderBookings() {
 
 async function completeStay(booking){
   const mail=booking.holderEmail?` A satisfaction questionnaire will be emailed to ${booking.holderEmail}.`:' The booking has no email address, so no questionnaire can be sent.';
-  if(!confirm(`Complete the stay for booking #${booking.bookingId} (${booking.holderFirstName} ${booking.holderLastName})?${mail}\n\nA completed stay can no longer be edited or cancelled.`))return;
+  if(!confirm(`Complete the stay for booking #${booking.bookingId} (${booking.holderFirstName} ${booking.holderLastName})?${mail}\n\nA completed stay can still be edited, but no longer cancelled.`))return;
   try{
     const result=await api(`/bookings/${booking.bookingId}/complete`,{method:'POST'});
     bookingForm.cancelEditing(booking.bookingId);await loadBookings();
@@ -63,7 +61,6 @@ async function completeStay(booking){
 
 async function loadBookings(){
   bookings=await api('/bookings');
-  updateQuestionnaireBookings(bookings);
   const selectedYear=$('#booking-year').value,years=new Set([2026]);
   for(const b of bookings){const last=new Date(`${b.departure}T00:00:00Z`);last.setUTCDate(last.getUTCDate()-1);for(let year=Number(b.arrival.slice(0,4));year<=last.getUTCFullYear();year++)years.add(year);}
   $('#booking-year').replaceChildren(new Option('All years',''),...[...years].sort().reverse().map(y=>new Option(String(y),String(y))));$('#booking-year').value=selectedYear;

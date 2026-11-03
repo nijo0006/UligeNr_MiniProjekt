@@ -279,38 +279,6 @@ test('remaining Overview reports use fixed 2026, recover from failures and fit m
   }finally{await browser.close();}
 });
 
-test('receptionist records room questionnaires through API fixtures without writing live satisfaction data',async()=>{
-  const browser=await chromium.launch({channel:'chrome',headless:true});
-  const page=await browser.newPage({viewport:{width:1440,height:1000}});
-  const bookings=await(await fetch(`${origin}/api/bookings`)).json();const target=bookings[0];let submitted;
-  try{
-    await page.route('**/api/satisfaction',async route=>{
-      submitted=route.request().postDataJSON();
-      await route.fulfill({status:201,json:{...submitted,responseId:999,recordedAt:'2026-11-03T12:00:00.000Z'}});
-    });
-    await page.goto(`${origin}/staff/bookings`);
-    await page.getByLabel('Search bookings').fill(`#${target.bookingId}`);
-    await page.locator(`[data-booking-id="${target.bookingId}"]`).getByRole('button',{name:'Record satisfaction',exact:true}).click();
-    await expect(page.getByLabel('Questionnaire booking',{exact:true})).toHaveValue(String(target.bookingId));
-    await expect(page.getByLabel('Questionnaire room',{exact:true}).locator('option')).toHaveCount(target.roomNumbers.length+1);
-    await page.getByLabel('Questionnaire room',{exact:true}).selectOption(target.roomNumbers[0]);
-    await page.getByLabel('Overall satisfaction',{exact:true}).selectOption('4');
-    await page.getByRole('button',{name:'Record questionnaire',exact:true}).click();
-    await expect(page.locator('#questionnaire-status')).toContainText('Questionnaire #999 recorded');
-    assert.deepEqual(submitted,{bookingId:target.bookingId,roomNumber:target.roomNumbers[0],rating:4});
-    await page.unroute('**/api/satisfaction');
-    await page.route('**/api/satisfaction',route=>route.fulfill({status:400,json:{message:'Questionnaire test rejection'}}));
-    await page.getByLabel('Overall satisfaction',{exact:true}).selectOption('3');
-    await page.getByRole('button',{name:'Record questionnaire',exact:true}).click();
-    await expect(page.locator('#questionnaire-status')).toContainText('Questionnaire test rejection');
-    await expect(page.getByRole('button',{name:'Record questionnaire',exact:true})).toBeEnabled();
-    await page.locator('#questionnaire').screenshot({path:'/tmp/hotel-questionnaire-desktop.png'});
-    await page.setViewportSize({width:390,height:844});
-    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
-    await page.locator('#questionnaire').screenshot({path:'/tmp/hotel-questionnaire-mobile.png'});
-  }finally{await browser.close();}
-});
-
 test('country map uses scoped blue revenue colors and supports selection, keyboard, zoom, missing/zero data and recovery',async()=>{
   const browser=await chromium.launch({channel:'chrome',headless:true});
   const page=await browser.newPage({viewport:{width:1440,height:1100}});

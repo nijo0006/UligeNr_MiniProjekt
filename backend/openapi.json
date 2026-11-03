@@ -297,7 +297,7 @@
             }
           },
           "409": {
-            "description": "Stale edit: reload; or room unavailable; no partial mutation / completed stays cannot be changed (BOOKING_COMPLETED)",
+            "description": "Stale edit: reload; or room unavailable; no partial mutation",
             "content": {
               "application/json": {
                 "schema": {
@@ -355,7 +355,7 @@
             }
           },
           "409": {
-            "description": "Conflict / completed stays cannot be changed (BOOKING_COMPLETED)",
+            "description": "Conflict / completed stays cannot be cancelled (BOOKING_COMPLETED)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1021,76 +1021,6 @@
         }
       }
     },
-    "/api/satisfaction": {
-      "post": {
-        "operationId": "recordSatisfaction",
-        "summary": "Record a rating linked to a booking and one of its rooms",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SatisfactionResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input or attempted override of read-only calculations",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Booking not found; no mutation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Booking is cancelled",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Database temporarily unavailable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SatisfactionInput"
-              }
-            }
-          }
-        },
-        "description": "Record a distinct questionnaire for one room on an active or completed booking, without login. Validate numeric rating 1\u20135 and current booking-room membership in one transaction serialized with booking edits/cancellation. Each POST is a new actual response, not an overwrite; correction/deduplication policy remains open. No historical ratings generated. Original room linkage persists after booking edits; responses linked to cancelled bookings are excluded from reports."
-      }
-    },
     "/api/reports/drinks": {
       "get": {
         "operationId": "reportDrinks",
@@ -1149,7 +1079,7 @@
       "post": {
         "operationId": "completeBooking",
         "summary": "Complete a stay (check-out) and email the satisfaction questionnaire",
-        "description": "Story 24. Allowed for an active booking on or after its arrival date (hotel date, Europe/Copenhagen). Status becomes completed; the stay keeps counting in all indicators and can no longer be edited or cancelled. One questionnaire email with a unique link is sent to the booking holder after the change is saved; repeated completion sends nothing. A booking without email is completed without email, and a failed email does not undo completion.",
+        "description": "Story 24. Allowed for an active booking on or after its arrival date (hotel date, Europe/Copenhagen). Status becomes completed; the stay keeps counting in all indicators and stays editable but can no longer be cancelled. One questionnaire email with a unique link is sent to the booking holder after the change is saved; repeated completion sends nothing. A booking without email is completed without email, and a failed email does not undo completion.",
         "parameters": [
           {
             "name": "bookingId",
@@ -1269,7 +1199,7 @@
       "post": {
         "operationId": "submitQuestionnaire",
         "summary": "Submit 1\u20135 ratings per room through a questionnaire link",
-        "description": "Each room can be rated once through the questionnaire; all ratings in one request are saved together or not at all. Responses count in the room satisfaction report like receptionist entries.",
+        "description": "Each room can be rated once through the questionnaire; all ratings in one request are saved together or not at all. Responses count in the room satisfaction report; this guest questionnaire is the only way ratings are recorded.",
         "parameters": [
           {
             "name": "token",
@@ -2444,62 +2374,6 @@
             "maximum": 5
           }
         }
-      },
-      "SatisfactionInput": {
-        "type": "object",
-        "properties": {
-          "bookingId": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "roomNumber": {
-            "type": "string"
-          },
-          "rating": {
-            "type": "number",
-            "minimum": 1,
-            "maximum": 5
-          }
-        },
-        "required": [
-          "bookingId",
-          "roomNumber",
-          "rating"
-        ],
-        "additionalProperties": false
-      },
-      "SatisfactionResponse": {
-        "type": "object",
-        "properties": {
-          "responseId": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "bookingId": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "roomNumber": {
-            "type": "string"
-          },
-          "rating": {
-            "type": "number",
-            "minimum": 1,
-            "maximum": 5
-          },
-          "recordedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "required": [
-          "responseId",
-          "bookingId",
-          "roomNumber",
-          "rating",
-          "recordedAt"
-        ],
-        "additionalProperties": false
       },
       "SatisfactionTypeRow": {
         "type": "object",

@@ -253,7 +253,9 @@ requires a single year rather than treating a multi-year operational scope as on
 | `GET /api/reports/inventory` | All-time room stock by type, totaling 214 |
 | `GET /api/reports/satisfaction` | All-time room questionnaire means and response counts |
 | `GET /api/reports/drinks?year=2026` | Per-drink rows from the existing annual bar report |
-| `POST /api/satisfaction` | Record one actual room-linked questionnaire |
+| `POST /api/bookings/{id}/complete` | Complete a stay (check-out) and email the guest questionnaire |
+| `GET /api/questionnaires/{token}` | Rooms the guest can rate through the emailed link |
+| `POST /api/questionnaires/{token}/responses` | Save the guest's 1–5 rating per room (once per room) |
 
 Omit `year` on summary/country/type-season/room reports for all saved years. A booking
 counts once per scope if it has occupied nights in it; it may appear in both years when
@@ -267,12 +269,12 @@ leap years, and is null without occupied nights. Equal revenues remain equal; na
 number stabilizes display without inventing business rank numbers. Synthetic date/room
 provenance accompanies reports; the room inventory itself is demonstration data.
 
-On **Bookings**, select **Record satisfaction** on a booking, or use the questionnaire
-form below the list. Select one of that booking's rooms and a rating from 1 to 5.
-Example JSON: `{"bookingId":123,"roomNumber":"001","rating":4}`. The API also accepts
-numeric ratings within the range. It validates active booking and current room membership
-inside a transaction serialized with booking edits/cancellation. Each POST records a
-distinct actual response; correction and duplicate-questionnaire policies remain open.
+On **Bookings**, select **Complete stay** when the guest checks out (possible from the
+arrival date). The booking holder then receives one email with a personal questionnaire
+link (`/survey.html?token=…`), where each room on the stay is rated once from 1 to 5.
+Locally, the emails land in the Mailpit inbox at http://localhost:8025. Completed stays
+keep counting in every report, stay editable and can no longer be cancelled. Staff no
+longer enter ratings themselves; the guest questionnaire is the only source.
 Feedback keeps its original room link after booking edits; cancelled bookings are
 excluded from reporting. Questionnaire means are all-time, independent of the financial
 year, and display one decimal. No historical responses are seeded. Normal startup creates

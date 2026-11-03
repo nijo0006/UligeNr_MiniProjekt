@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { badInput } from '../services/errors.js';
 export function satisfactionRoutes(service){
   const router=Router();
-  router.post('/satisfaction',async(req,res)=>res.status(201).json(await service.record(req.body)));
   router.get('/questionnaires/:token',async(req,res)=>res.json(await service.questionnaire(req.params.token)));
   router.post('/questionnaires/:token/responses',async(req,res)=>res.status(201).json(await service.submitQuestionnaire(req.params.token,req.body)));
   router.get('/reports/satisfaction',async(req,res)=>{

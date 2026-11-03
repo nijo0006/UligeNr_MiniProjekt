@@ -123,7 +123,7 @@ test('serves valid implemented OpenAPI and rejects malformed JSON as JSON', asyn
   const result=await call('/openapi.json'); assert.equal(result.status,200);
   await SwaggerParser.validate(result.data);
   assert.ok(result.data.paths['/api/bar-sales']);
-  assert.ok(result.data.paths['/api/satisfaction']);
+  assert.ok(result.data.paths['/api/questionnaires/{token}/responses']); assert.equal(result.data.paths['/api/satisfaction'],undefined);
   const response=await fetch(base+'/bookings',{method:'POST',headers:{'Content-Type':'application/json'},body:'{broken'});
   assert.equal(response.status,400); assert.equal((await response.json()).code,'INVALID_JSON');
   assert.equal((await call('/unimplemented')).status,404);
@@ -399,18 +399,22 @@ test('country and type-season reports add exact stored fractional amounts withou
   assert.equal(seasons.find(r=>r.roomType==='Standard Single'&&r.season==='high').roomRevenue,'0.20');
 });
 
-test('questionnaires validate booking-room membership and persist separate room means without generated scores',async()=>{
+// Ratings come only from the guest questionnaire: complete a stay, then answer through its emailed link.
+async function rateStay(overrides, ratings) {
+  const created = await call('/bookings','POST',payload(overrides));
+  await call(`/bookings/${created.data.bookingId}/complete`,'POST');
+  const token = /token=([A-Za-z0-9_-]{32})/.exec(sentEmails.at(-1).text)[1];
+  assert.equal((await call(`/questionnaires/${token}/responses`,'POST',{ ratings })).status,201);
+  return created.data;
+}
+
+test('room satisfaction means use questionnaire responses per room, without generated scores (Story 13)',async()=>{
   assert.ok((await call('/reports/satisfaction')).data.every(r=>r.meanRating===null&&r.responseCount===0));
-  const booking=await call('/bookings','POST',payload({roomNumbers:['001','002']}));const id=booking.data.bookingId;
-  const submit=(roomNumber,rating,extra={})=>call('/satisfaction','POST',{bookingId:id,roomNumber,rating,...extra});
-  for(const rating of [2,4,5])assert.equal((await submit('001',rating)).status,201);
-  assert.equal((await submit('002',2)).status,201);
-  for(const rating of [0,6,null,'4'])assert.equal((await submit('001',rating)).status,400);
-  assert.equal((await submit('003',4)).status,400);
-  assert.equal((await submit('001',4,{meanRating:5})).status,400);
-  assert.equal((await submit('001',4,{bookingId:4294967295})).status,404);
+  const first=await rateStay({roomNumbers:['001','002'],arrival:'2026-05-01',nights:1},[{roomNumber:'001',rating:2},{roomNumber:'002',rating:2}]);
+  await rateStay({arrival:'2026-05-03',nights:1},[{roomNumber:'001',rating:4}]);
+  await rateStay({arrival:'2026-05-05',nights:1},[{roomNumber:'001',rating:5}]);
   assert.equal((await call('/reports/satisfaction?year=2026')).status,400);
-  let report=(await call('/reports/satisfaction')).data;
+  const report=(await call('/reports/satisfaction')).data;
   assert.equal(report.length,214);assert.equal(report.find(r=>r.roomNumber==='001').responseCount,3);
   assert.equal(report.find(r=>r.roomNumber==='001').meanRating,11/3);
   assert.equal(report.find(r=>r.roomNumber==='002').meanRating,2);
@@ -421,24 +425,12 @@ test('questionnaires validate booking-room membership and persist separate room 
   assert.equal(single.responseCount,4);assert.equal(single.meanRating,3.25);
   assert.ok(types.filter(r=>r.roomType!=='Standard Single').every(r=>r.meanRating===null&&r.responseCount===0));
   for(const query of ['?groupBy=invalid','?groupBy=','?groupBy=room&groupBy=roomType'])assert.equal((await call('/reports/satisfaction'+query)).status,400);
-
   await initialize(pool,{history:false});
   assert.deepEqual((await call('/reports/satisfaction')).data,report);
-  assert.equal((await call(`/bookings/${id}`,'PUT',payload({roomNumbers:['003'],version:1}))).status,200);
-  assert.equal((await call('/reports/satisfaction')).data.find(r=>r.roomNumber==='001').responseCount,3);
-  assert.equal((await submit('001',4)).status,400);
-  await call(`/bookings/${id}`,'DELETE');
-  assert.equal((await submit('003',4)).status,409);
-  assert.ok((await call('/reports/satisfaction')).data.every(r=>r.meanRating===null&&r.responseCount===0));
-});
-
-test('questionnaire insertion serializes with booking cancellation',async()=>{
-  const booking=await call('/bookings','POST',payload());const id=booking.data.bookingId;
-  const [response,cancelled]=await Promise.all([
-    call('/satisfaction','POST',{bookingId:id,roomNumber:'001',rating:4}),call(`/bookings/${id}`,'DELETE')
-  ]);
-  assert.ok([201,409].includes(response.status));assert.equal(cancelled.status,200);
-  assert.equal((await call('/reports/satisfaction')).data.find(r=>r.roomNumber==='001').responseCount,0);
+  const current=(await call(`/bookings/${first.bookingId}`)).data;
+  assert.equal((await call(`/bookings/${first.bookingId}`,'PUT',payload({roomNumbers:['003'],arrival:'2026-05-01',nights:1,version:current.version}))).status,200);
+  assert.equal((await call('/reports/satisfaction')).data.find(r=>r.roomNumber==='001').responseCount,3,'responses keep their original room after an edit');
+  assert.equal((await call('/satisfaction','POST',{bookingId:first.bookingId,roomNumber:'003',rating:4})).status,404,'receptionist entry is removed');
 });
 
 // ---- Story 24: complete a booking and send a satisfaction questionnaire ----
@@ -456,8 +448,9 @@ test('completing a stay emails one unique questionnaire link and keeps the stay 
   assert.equal(repeat.status,200); assert.equal(repeat.data.booking.status,'completed'); assert.equal(sentEmails.length,1);
   assert.deepEqual((await call('/reports/revenue?year=2026')).data,before);
   assert.equal((await call('/bookings')).data[0].status,'completed');
-  const edit = await call(`/bookings/${id}`,'PUT',payload({ roomNumbers:['001','002'], version: done.data.booking.version }));
-  assert.equal(edit.status,409); assert.equal(edit.data.code,'BOOKING_COMPLETED');
+  const edit = await call(`/bookings/${id}`,'PUT',payload({ holderFirstName:'Frede', roomNumbers:['001','002'], version: done.data.booking.version }));
+  assert.equal(edit.status,200,'completed stays remain editable'); assert.equal(edit.data.status,'completed'); assert.equal(edit.data.holderFirstName,'Frede');
+  assert.equal(sentEmails.length,1,'editing a completed stay sends no new email');
   const cancel = await call(`/bookings/${id}`,'DELETE');
   assert.equal(cancel.status,409); assert.equal(cancel.data.code,'BOOKING_COMPLETED');
   assert.equal((await call('/bookings','POST',payload({ arrival:'2026-06-01', nights:1 }))).status,409,'a completed stay still occupies its rooms until departure');
@@ -498,7 +491,6 @@ test('bookings without email complete silently and a failed email does not undo 
 
 test('guests rate each room once through the questionnaire link and responses join the room means (Stories 13, 24)', async () => {
   const created = await call('/bookings','POST',payload({ roomNumbers:['001','002'] })); const id = created.data.bookingId;
-  await call('/satisfaction','POST',{ bookingId:id, roomNumber:'001', rating:2 });
   await call(`/bookings/${id}/complete`,'POST');
   const token = tokenOf(sentEmails[0]);
   const form = await call(`/questionnaires/${token}`);
@@ -508,7 +500,7 @@ test('guests rate each room once through the questionnaire link and responses jo
     assert.equal((await call(`/questionnaires/${token}/responses`,'POST',{ ratings })).status,400,JSON.stringify(ratings));
   const unrelated = await call(`/questionnaires/${token}/responses`,'POST',{ ratings:[{roomNumber:'001',rating:5},{roomNumber:'003',rating:5}] });
   assert.equal(unrelated.status,400);
-  assert.equal((await call('/reports/satisfaction')).data.find(r=>r.roomNumber==='001').responseCount,1,'rejected requests save nothing');
+  assert.equal((await call('/reports/satisfaction')).data.find(r=>r.roomNumber==='001').responseCount,0,'rejected requests save nothing');
   const saved = await call(`/questionnaires/${token}/responses`,'POST',{ ratings:[{roomNumber:'001',rating:5}] });
   assert.equal(saved.status,201); assert.equal(saved.data.responses[0].rating,5);
   assert.equal((await call(`/questionnaires/${token}`)).data.rooms[0].answered,true);
@@ -516,7 +508,7 @@ test('guests rate each room once through the questionnaire link and responses jo
   assert.equal(again.status,409); assert.equal(again.data.code,'ALREADY_ANSWERED');
   assert.equal((await call(`/questionnaires/${token}/responses`,'POST',{ ratings:[{roomNumber:'002',rating:3}] })).status,201);
   const report = (await call('/reports/satisfaction')).data;
-  assert.equal(report.find(r=>r.roomNumber==='001').meanRating,3.5,'guest and receptionist responses count equally');
+  assert.equal(report.find(r=>r.roomNumber==='001').meanRating,5);
   assert.equal(report.find(r=>r.roomNumber==='002').meanRating,3);
   for (const bad of ['A'.repeat(32),'short','../../etc'])
     assert.equal((await call(`/questionnaires/${encodeURIComponent(bad)}`)).status,404);
