@@ -1,0 +1,80 @@
+{
+  "fetchedAt": "2026-11-04T11:30:10.980660+00:00",
+  "year": 2026,
+  "hotelRevenueDKK": "24725969.34",
+  "roomRevenueDKK": "11277329.00",
+  "barRevenueDKK": "13448640.34",
+  "sources": {
+    "countries": {
+      "url": "http://localhost:3000/api/reports/countries?year=2026",
+      "jsonPath": "$",
+      "rows": 21,
+      "extract": "exports/tableau/data/countries.hyper",
+      "roomRevenueControl": "11277329.00"
+    },
+    "seasons": {
+      "url": "http://localhost:3000/api/reports/room-types-seasons?year=2026",
+      "jsonPath": "$",
+      "rows": 24,
+      "extract": "exports/tableau/data/seasons.hyper",
+      "roomRevenueControl": "11277329.00"
+    },
+    "rooms": {
+      "url": "http://localhost:3000/api/reports/rooms?year=2026",
+      "jsonPath": "$",
+      "rows": 214,
+      "extract": "exports/tableau/data/rooms.hyper",
+      "roomRevenueControl": "11277329.00"
+    },
+    "inventory": {
+      "url": "http://localhost:3000/api/reports/inventory",
+      "jsonPath": "$",
+      "rows": 8,
+      "extract": "exports/tableau/data/inventory.hyper"
+    },
+    "satisfaction": {
+      "url": "http://localhost:3000/api/reports/satisfaction?groupBy=roomType",
+      "jsonPath": "$",
+      "rows": 8,
+      "extract": "exports/tableau/data/satisfaction.hyper"
+    },
+    "summary": {
+      "url": "http://localhost:3000/api/reports/summary?year=2026",
+      "jsonPath": "$",
+      "rows": 1,
+      "extract": "exports/tableau/data/summary.hyper"
+    },
+    "drinks": {
+      "url": "http://localhost:3000/api/reports/drinks?year=2026",
+      "jsonPath": "$",
+      "rows": 30,
+      "extract": "exports/tableau/data/drinks.hyper"
+    },
+    "bar": {
+      "url": "http://localhost:3000/api/reports/bar?year=2026",
+      "jsonPath": "$",
+      "rows": 1,
+      "extract": "exports/tableau/data/bar.hyper"
+    },
+    "mix": {
+      "url": "http://localhost:3000/api/reports/bar?year=2026",
+      "jsonPath": "$.categories",
+      "rows": 4,
+      "extract": "exports/tableau/data/mix.hyper"
+    },
+    "overall": {
+      "url": "http://localhost:3000/api/reports/stay-feedback",
+      "jsonPath": "$.overall",
+      "rows": 1,
+      "extract": "exports/tableau/data/overall.hyper"
+    },
+    "recommend": {
+      "url": "http://localhost:3000/api/reports/stay-feedback",
+      "jsonPath": "$.recommendation",
+      "rows": 1,
+      "extract": "exports/tableau/data/recommend.hyper"
+    }
+  },
+  "connectionMode": "native-hyper-api-snapshot",
+  "visualVerification": "Not completed: native app control unavailable; workbook structure and API controls checked."
+}
