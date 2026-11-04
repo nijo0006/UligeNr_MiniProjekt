@@ -1,8 +1,13 @@
+import { randomBytes } from 'node:crypto';
 import { AppError, badInput } from './errors.js';
+import { questionnaireEmail } from './mailer.js';
 import { calculateStay, parseDate, stayDates, validateBookingInput } from './pricing.js';
 
 export class BookingService {
-  constructor(repository) { this.repository = repository; }
+  // options: mailer ({send}), today (() => 'YYYY-MM-DD' hotel date), publicBaseUrl for questionnaire links.
+  constructor(repository, { mailer, today = hotelToday, publicBaseUrl = 'http://localhost:3000' } = {}) {
+    this.repository = repository; this.mailer = mailer; this.today = today; this.publicBaseUrl = publicBaseUrl.replace(/\/$/, '');
+  }
   id(value) {
     if (!/^[1-9]\d*$/.test(String(value)) || !Number.isSafeInteger(Number(value)) || Number(value) > 4294967295) throw badInput('BookingID must be a valid positive identifier.');
     return Number(value);
@@ -32,7 +37,8 @@ export class BookingService {
     return this.repository.transaction(async repo => {
       const existing = editing ? await repo.get(id, true) : null;
       if (editing && !existing) throw new AppError(404, 'BOOKING_NOT_FOUND', 'Booking not found');
-      if (existing && (existing.version !== data.version || existing.status !== 'active')) throw new AppError(409, 'STALE_BOOKING', 'The booking has changed. Reload the current booking before saving.');
+      // Completed stays stay editable (and stay completed); cancelled bookings are not.
+      if (existing && (existing.version !== data.version || existing.status === 'cancelled')) throw new AppError(409, 'STALE_BOOKING', 'The booking has changed. Reload the current booking before saving.');
       if (data.guestCount === null && !(existing?.sourceId && existing.guestCount === null)) throw badInput('An unknown guest count can only be retained on an imported booking whose count is unknown.');
       if (data.holderEmail === null && !(existing?.sourceId && existing.holderEmail === null)) throw badInput('holderEmail is required. Only an imported booking without an email may keep it empty.');
       if (!await repo.countryExists(data.holderCountry)) throw badInput('Select a country from the catalog.');
@@ -56,8 +62,40 @@ export class BookingService {
       const existing = await repo.get(id, true);
       if (!existing) throw new AppError(404, 'BOOKING_NOT_FOUND', 'Booking not found');
       if (existing.status === 'cancelled') return existing;
+      if (existing.status === 'completed') throw completedError();
       await repo.lockRooms(existing.roomNumbers);
       return repo.cancel(id);
     });
   }
+  // Story 24: check-out. The email is sent after commit, so a mail failure never undoes completion.
+  async complete(value) {
+    const id = this.id(value);
+    const { booking, invitation, newlyCompleted } = await this.repository.transaction(async repo => {
+      const existing = await repo.get(id, true);
+      if (!existing) throw new AppError(404, 'BOOKING_NOT_FOUND', 'Booking not found');
+      if (existing.status === 'cancelled') throw new AppError(409, 'BOOKING_CANCELLED', 'A cancelled booking cannot be completed.');
+      if (existing.status === 'completed') return { booking: existing, invitation: await repo.invitation(id), newlyCompleted: false };
+      if (existing.arrival > this.today()) throw new AppError(409, 'STAY_NOT_STARTED', `The stay has not started yet. The booking can be completed from its arrival date, ${existing.arrival}.`);
+      const booking = await repo.complete(id);
+      if (booking.holderEmail) await repo.createInvitation(id, randomBytes(24).toString('base64url'), booking.holderEmail);
+      return { booking, invitation: await repo.invitation(id), newlyCompleted: true };
+    });
+    if (!invitation) return { booking, questionnaire: { status: 'no_email', message: 'The booking has no email address, so no questionnaire was sent.' } };
+    if (!newlyCompleted) return { booking, questionnaire: describe(invitation, 'The booking was already completed; the questionnaire is not sent again.') };
+    let error = null;
+    try {
+      if (!this.mailer) throw new Error('No mailer configured.');
+      await this.mailer.send(questionnaireEmail({ to: invitation.email, firstName: booking.holderFirstName, link: `${this.publicBaseUrl}/survey.html?token=${invitation.token}` }));
+    } catch (failure) { error = String(failure?.message || failure).slice(0, 500); }
+    await this.repository.markInvitation(id, error);
+    return { booking, questionnaire: describe(await this.repository.invitation(id)) };
+  }
+}
+
+const completedError = () => new AppError(409, 'BOOKING_COMPLETED', 'This stay is completed and can no longer be cancelled.');
+export const hotelToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Copenhagen' }).format(new Date());
+function describe(invitation, note) {
+  const sent = Boolean(invitation.sentAt);
+  return { status: sent ? 'sent' : 'failed', sentTo: invitation.email,
+    message: note ?? (sent ? `A satisfaction questionnaire was sent to ${invitation.email}.` : 'The booking was completed, but the questionnaire email could not be sent.') };
 }

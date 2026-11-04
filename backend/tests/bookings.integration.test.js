@@ -12,6 +12,9 @@ import { createApp } from '../src/presentation/app.js';
 
 if (!process.env.POSTGRES_DB?.endsWith('_test')) throw new Error('Integration tests require a dedicated database ending in _test; refusing to change application data.');
 let pool, server, base;
+// Story 24 test doubles: captured emails, switchable SMTP failure and a fixed hotel date.
+const sentEmails = []; let mailFails = false;
+const mailer = { async send(message) { if (mailFails) throw new Error('SMTP unavailable'); sentEmails.push(message); } };
 const payload = (overrides = {}) => ({ holderFirstName: 'Frederik', holderLastName: 'Johansen', holderEmail: 'frederik@example.com', holderCountry: 'Denmark', guestCount: 1, roomNumbers: ['001'], arrival: '2026-05-31', nights: 2, ...overrides });
 async function call(path, method = 'GET', body) {
   const response = await fetch(base + path, { method, headers: { 'Content-Type': 'application/json' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
@@ -19,12 +22,13 @@ async function call(path, method = 'GET', body) {
 }
 before(async () => {
   pool = createPool(); await initialize(pool,{history:false});
-  const app = await createApp(new BookingRepository(pool), new ReportRepository(pool), new BarRepository(pool), new SatisfactionRepository(pool));
+  const app = await createApp(new BookingRepository(pool), new ReportRepository(pool), new BarRepository(pool), new SatisfactionRepository(pool), { mailer, today: () => '2026-06-01', publicBaseUrl: 'http://hotel.test' });
   server = app.listen(0, '0.0.0.0'); await new Promise(resolve => server.once('listening', resolve));
   base = `http://127.0.0.1:${server.address().port}/api`;
 });
 beforeEach(async () => {
-  for (const table of ['satisfaction_responses','daily_bar_sales','room_nights','booking_rooms','booking_guests','bookings']) await pool.query(`DELETE FROM ${table}`);
+  sentEmails.length = 0; mailFails = false;
+  for (const table of ['satisfaction_invitations','satisfaction_responses','daily_bar_sales','room_nights','booking_rooms','booking_guests','bookings']) await pool.query(`DELETE FROM ${table}`);
   await pool.query('DELETE FROM drinks WHERE id>30');
 });
 after(async () => { if (server) await new Promise(resolve => server.close(resolve)); if (pool) await pool.end(); });
@@ -119,7 +123,7 @@ test('serves valid implemented OpenAPI and rejects malformed JSON as JSON', asyn
   const result=await call('/openapi.json'); assert.equal(result.status,200);
   await SwaggerParser.validate(result.data);
   assert.ok(result.data.paths['/api/bar-sales']);
-  assert.ok(result.data.paths['/api/satisfaction']);
+  assert.ok(result.data.paths['/api/questionnaires/{token}/responses']); assert.equal(result.data.paths['/api/satisfaction'],undefined);
   const response=await fetch(base+'/bookings',{method:'POST',headers:{'Content-Type':'application/json'},body:'{broken'});
   assert.equal(response.status,400); assert.equal((await response.json()).code,'INVALID_JSON');
   assert.equal((await call('/unimplemented')).status,404);
@@ -395,18 +399,22 @@ test('country and type-season reports add exact stored fractional amounts withou
   assert.equal(seasons.find(r=>r.roomType==='Standard Single'&&r.season==='high').roomRevenue,'0.20');
 });
 
-test('questionnaires validate booking-room membership and persist separate room means without generated scores',async()=>{
+// Ratings come only from the guest questionnaire: complete a stay, then answer through its emailed link.
+async function rateStay(overrides, ratings) {
+  const created = await call('/bookings','POST',payload(overrides));
+  await call(`/bookings/${created.data.bookingId}/complete`,'POST');
+  const token = /token=([A-Za-z0-9_-]{32})/.exec(sentEmails.at(-1).text)[1];
+  assert.equal((await call(`/questionnaires/${token}/responses`,'POST',{ ratings })).status,201);
+  return created.data;
+}
+
+test('room satisfaction means use questionnaire responses per room, without generated scores (Story 13)',async()=>{
   assert.ok((await call('/reports/satisfaction')).data.every(r=>r.meanRating===null&&r.responseCount===0));
-  const booking=await call('/bookings','POST',payload({roomNumbers:['001','002']}));const id=booking.data.bookingId;
-  const submit=(roomNumber,rating,extra={})=>call('/satisfaction','POST',{bookingId:id,roomNumber,rating,...extra});
-  for(const rating of [2,4,5])assert.equal((await submit('001',rating)).status,201);
-  assert.equal((await submit('002',2)).status,201);
-  for(const rating of [0,6,null,'4'])assert.equal((await submit('001',rating)).status,400);
-  assert.equal((await submit('003',4)).status,400);
-  assert.equal((await submit('001',4,{meanRating:5})).status,400);
-  assert.equal((await submit('001',4,{bookingId:4294967295})).status,404);
+  const first=await rateStay({roomNumbers:['001','002'],arrival:'2026-05-01',nights:1},[{roomNumber:'001',rating:2},{roomNumber:'002',rating:2}]);
+  await rateStay({arrival:'2026-05-03',nights:1},[{roomNumber:'001',rating:4}]);
+  await rateStay({arrival:'2026-05-05',nights:1},[{roomNumber:'001',rating:5}]);
   assert.equal((await call('/reports/satisfaction?year=2026')).status,400);
-  let report=(await call('/reports/satisfaction')).data;
+  const report=(await call('/reports/satisfaction')).data;
   assert.equal(report.length,214);assert.equal(report.find(r=>r.roomNumber==='001').responseCount,3);
   assert.equal(report.find(r=>r.roomNumber==='001').meanRating,11/3);
   assert.equal(report.find(r=>r.roomNumber==='002').meanRating,2);
@@ -417,22 +425,139 @@ test('questionnaires validate booking-room membership and persist separate room 
   assert.equal(single.responseCount,4);assert.equal(single.meanRating,3.25);
   assert.ok(types.filter(r=>r.roomType!=='Standard Single').every(r=>r.meanRating===null&&r.responseCount===0));
   for(const query of ['?groupBy=invalid','?groupBy=','?groupBy=room&groupBy=roomType'])assert.equal((await call('/reports/satisfaction'+query)).status,400);
-
   await initialize(pool,{history:false});
   assert.deepEqual((await call('/reports/satisfaction')).data,report);
-  assert.equal((await call(`/bookings/${id}`,'PUT',payload({roomNumbers:['003'],version:1}))).status,200);
-  assert.equal((await call('/reports/satisfaction')).data.find(r=>r.roomNumber==='001').responseCount,3);
-  assert.equal((await submit('001',4)).status,400);
-  await call(`/bookings/${id}`,'DELETE');
-  assert.equal((await submit('003',4)).status,409);
-  assert.ok((await call('/reports/satisfaction')).data.every(r=>r.meanRating===null&&r.responseCount===0));
+  const current=(await call(`/bookings/${first.bookingId}`)).data;
+  assert.equal((await call(`/bookings/${first.bookingId}`,'PUT',payload({roomNumbers:['003'],arrival:'2026-05-01',nights:1,version:current.version}))).status,200);
+  assert.equal((await call('/reports/satisfaction')).data.find(r=>r.roomNumber==='001').responseCount,3,'responses keep their original room after an edit');
+  assert.equal((await call('/satisfaction','POST',{bookingId:first.bookingId,roomNumber:'003',rating:4})).status,404,'receptionist entry is removed');
 });
 
-test('questionnaire insertion serializes with booking cancellation',async()=>{
-  const booking=await call('/bookings','POST',payload());const id=booking.data.bookingId;
-  const [response,cancelled]=await Promise.all([
-    call('/satisfaction','POST',{bookingId:id,roomNumber:'001',rating:4}),call(`/bookings/${id}`,'DELETE')
-  ]);
-  assert.ok([201,409].includes(response.status));assert.equal(cancelled.status,200);
-  assert.equal((await call('/reports/satisfaction')).data.find(r=>r.roomNumber==='001').responseCount,0);
+// ---- Story 24: complete a booking and send a satisfaction questionnaire ----
+const tokenOf = email => /token=([A-Za-z0-9_-]{32})/.exec(email.text)[1];
+
+test('completing a stay emails one unique questionnaire link and keeps the stay in every indicator (Story 24)', async () => {
+  const created = await call('/bookings','POST',payload({ roomNumbers:['001','002'] })); const id = created.data.bookingId;
+  const before = (await call('/reports/revenue?year=2026')).data;
+  const done = await call(`/bookings/${id}/complete`,'POST');
+  assert.equal(done.status,200); assert.equal(done.data.booking.status,'completed'); assert.ok(done.data.booking.completedAt);
+  assert.equal(done.data.questionnaire.status,'sent'); assert.equal(done.data.questionnaire.sentTo,'frederik@example.com');
+  assert.equal(sentEmails.length,1); assert.equal(sentEmails[0].to,'frederik@example.com');
+  assert.match(sentEmails[0].text,/^Dear Frederik,/); assert.match(sentEmails[0].text,/http:\/\/hotel\.test\/survey\.html\?token=/);
+  const repeat = await call(`/bookings/${id}/complete`,'POST');
+  assert.equal(repeat.status,200); assert.equal(repeat.data.booking.status,'completed'); assert.equal(sentEmails.length,1);
+  assert.deepEqual((await call('/reports/revenue?year=2026')).data,before);
+  assert.equal((await call('/bookings')).data[0].status,'completed');
+  const edit = await call(`/bookings/${id}`,'PUT',payload({ holderFirstName:'Frede', roomNumbers:['001','002'], version: done.data.booking.version }));
+  assert.equal(edit.status,200,'completed stays remain editable'); assert.equal(edit.data.status,'completed'); assert.equal(edit.data.holderFirstName,'Frede');
+  assert.equal(sentEmails.length,1,'editing a completed stay sends no new email');
+  const cancel = await call(`/bookings/${id}`,'DELETE');
+  assert.equal(cancel.status,409); assert.equal(cancel.data.code,'BOOKING_COMPLETED');
+  assert.equal((await call('/bookings','POST',payload({ arrival:'2026-06-01', nights:1 }))).status,409,'a completed stay still occupies its rooms until departure');
+  const second = await call('/bookings','POST',payload({ roomNumbers:['003'] }));
+  await call(`/bookings/${second.data.bookingId}/complete`,'POST');
+  assert.notEqual(tokenOf(sentEmails[0]),tokenOf(sentEmails[1]));
+});
+
+test('completion is rejected before arrival, for cancelled and unknown bookings, without email (Story 24)', async () => {
+  const future = await call('/bookings','POST',payload({ arrival:'2026-06-02' }));
+  const early = await call(`/bookings/${future.data.bookingId}/complete`,'POST');
+  assert.equal(early.status,409); assert.equal(early.data.code,'STAY_NOT_STARTED'); assert.match(early.data.message,/2026-06-02/);
+  assert.equal((await call(`/bookings/${future.data.bookingId}`)).data.status,'active');
+  const today = await call('/bookings','POST',payload({ roomNumbers:['002'], arrival:'2026-06-01' }));
+  assert.equal((await call(`/bookings/${today.data.bookingId}/complete`,'POST')).status,200,'arrival day itself is allowed');
+  const cancelled = await call('/bookings','POST',payload({ roomNumbers:['003'] }));
+  await call(`/bookings/${cancelled.data.bookingId}`,'DELETE');
+  const rejected = await call(`/bookings/${cancelled.data.bookingId}/complete`,'POST');
+  assert.equal(rejected.status,409); assert.equal(rejected.data.code,'BOOKING_CANCELLED');
+  const unknown = await call('/bookings/4294967295/complete','POST');
+  assert.equal(unknown.status,404); assert.equal(unknown.data.message,'Booking not found');
+  assert.equal((await call('/bookings/abc/complete','POST')).status,400);
+  assert.equal(sentEmails.length,1);
+});
+
+test('bookings without email complete silently and a failed email does not undo completion (Story 24)', async () => {
+  const imported = await call('/bookings','POST',payload());
+  await pool.query('UPDATE bookings SET holder_email=NULL WHERE id=$1',[imported.data.bookingId]);
+  const noEmail = await call(`/bookings/${imported.data.bookingId}/complete`,'POST');
+  assert.equal(noEmail.status,200); assert.equal(noEmail.data.booking.status,'completed'); assert.equal(noEmail.data.questionnaire.status,'no_email');
+  mailFails = true;
+  const other = await call('/bookings','POST',payload({ roomNumbers:['002'] }));
+  const failed = await call(`/bookings/${other.data.bookingId}/complete`,'POST');
+  assert.equal(failed.status,200); assert.equal(failed.data.booking.status,'completed'); assert.equal(failed.data.questionnaire.status,'failed');
+  assert.equal((await call(`/bookings/${other.data.bookingId}`)).data.status,'completed');
+  assert.equal(sentEmails.length,0);
+});
+
+test('guests rate each room once through the questionnaire link and responses join the room means (Stories 13, 24)', async () => {
+  const created = await call('/bookings','POST',payload({ roomNumbers:['001','002'] })); const id = created.data.bookingId;
+  await call(`/bookings/${id}/complete`,'POST');
+  const token = tokenOf(sentEmails[0]);
+  const form = await call(`/questionnaires/${token}`);
+  assert.equal(form.status,200);
+  assert.deepEqual(form.data,{ rooms:[{ roomNumber:'001', roomType:'Standard Single', answered:false },{ roomNumber:'002', roomType:'Standard Single', answered:false }], overallAnswered:false, recommendationAnswered:false });
+  for (const ratings of [[{roomNumber:'001',rating:0}],[{roomNumber:'001',rating:4.5}],[],[{roomNumber:'001',rating:4},{roomNumber:'001',rating:5}]])
+    assert.equal((await call(`/questionnaires/${token}/responses`,'POST',{ ratings })).status,400,JSON.stringify(ratings));
+  const unrelated = await call(`/questionnaires/${token}/responses`,'POST',{ ratings:[{roomNumber:'001',rating:5},{roomNumber:'003',rating:5}] });
+  assert.equal(unrelated.status,400);
+  assert.equal((await call('/reports/satisfaction')).data.find(r=>r.roomNumber==='001').responseCount,0,'rejected requests save nothing');
+  const saved = await call(`/questionnaires/${token}/responses`,'POST',{ ratings:[{roomNumber:'001',rating:5}] });
+  assert.equal(saved.status,201); assert.equal(saved.data.responses[0].rating,5);
+  assert.equal((await call(`/questionnaires/${token}`)).data.rooms[0].answered,true);
+  const again = await call(`/questionnaires/${token}/responses`,'POST',{ ratings:[{roomNumber:'002',rating:3},{roomNumber:'001',rating:1}] });
+  assert.equal(again.status,409); assert.equal(again.data.code,'ALREADY_ANSWERED');
+  assert.equal((await call(`/questionnaires/${token}/responses`,'POST',{ ratings:[{roomNumber:'002',rating:3}] })).status,201);
+  const report = (await call('/reports/satisfaction')).data;
+  assert.equal(report.find(r=>r.roomNumber==='001').meanRating,5);
+  assert.equal(report.find(r=>r.roomNumber==='002').meanRating,3);
+  for (const bad of ['A'.repeat(32),'short','../../etc'])
+    assert.equal((await call(`/questionnaires/${encodeURIComponent(bad)}`)).status,404);
+  assert.equal((await call(`/questionnaires/${'A'.repeat(32)}/responses`,'POST',{ ratings:[{roomNumber:'001',rating:5}] })).status,404);
+  assert.ok((await call('/openapi.json')).data.paths['/api/bookings/{bookingId}/complete']);
+});
+
+test('guests answer once whether they would recommend the hotel, alone or with room ratings (Story 24)', async () => {
+  assert.deepEqual((await call('/reports/stay-feedback')).data,{ overall:{ responseCount:0, meanRating:null }, recommendation:{ responseCount:0, recommendCount:0, recommendPercent:null } });
+  const tokens=[];
+  for (const room of ['001','002','003']) {
+    const created = await call('/bookings','POST',payload({ roomNumbers:[room] }));
+    await call(`/bookings/${created.data.bookingId}/complete`,'POST');
+    tokens.push(/token=([A-Za-z0-9_-]{32})/.exec(sentEmails.at(-1).text)[1]);
+  }
+  for (const body of [{ wouldRecommend:'yes' },{ wouldRecommend:null },{},{ ratings:[] },{ wouldRecommend:true, extra:1 }])
+    assert.equal((await call(`/questionnaires/${tokens[0]}/responses`,'POST',body)).status,400,JSON.stringify(body));
+  const only = await call(`/questionnaires/${tokens[0]}/responses`,'POST',{ wouldRecommend:true });
+  assert.equal(only.status,201); assert.deepEqual(only.data,{ responses:[], wouldRecommend:true });
+  const form = (await call(`/questionnaires/${tokens[0]}`)).data;
+  assert.equal(form.recommendationAnswered,true); assert.equal(form.rooms[0].answered,false);
+  const twice = await call(`/questionnaires/${tokens[0]}/responses`,'POST',{ ratings:[{roomNumber:'001',rating:4}], wouldRecommend:false });
+  assert.equal(twice.status,409); assert.equal(twice.data.code,'ALREADY_ANSWERED');
+  assert.equal((await call('/reports/satisfaction')).data.find(r=>r.roomNumber==='001').responseCount,0,'a rejected answer saves no rating either');
+  assert.equal((await call(`/questionnaires/${tokens[0]}/responses`,'POST',{ ratings:[{roomNumber:'001',rating:4}] })).status,201);
+  assert.equal((await call(`/questionnaires/${tokens[1]}/responses`,'POST',{ ratings:[{roomNumber:'002',rating:2}], wouldRecommend:false })).status,201);
+  assert.equal((await call(`/questionnaires/${tokens[2]}/responses`,'POST',{ wouldRecommend:true })).status,201);
+  const report=(await call('/reports/stay-feedback')).data.recommendation;
+  assert.equal(report.responseCount,3); assert.equal(report.recommendCount,2); assert.equal(report.recommendPercent,2/3*100);
+});
+
+test('guests rate the whole stay once from 1 to 5, separately from room ratings (Story 24)', async () => {
+  const tokens=[];
+  for (const room of ['001','002']) {
+    const created = await call('/bookings','POST',payload({ roomNumbers:[room] }));
+    await call(`/bookings/${created.data.bookingId}/complete`,'POST');
+    tokens.push(/token=([A-Za-z0-9_-]{32})/.exec(sentEmails.at(-1).text)[1]);
+  }
+  for (const overallRating of [0,6,4.5,'5',null])
+    assert.equal((await call(`/questionnaires/${tokens[0]}/responses`,'POST',{ overallRating })).status,400,String(overallRating));
+  const saved = await call(`/questionnaires/${tokens[0]}/responses`,'POST',{ overallRating:5, ratings:[{roomNumber:'001',rating:3}] });
+  assert.equal(saved.status,201); assert.equal(saved.data.overallRating,5);
+  const form=(await call(`/questionnaires/${tokens[0]}`)).data;
+  assert.equal(form.overallAnswered,true); assert.equal(form.recommendationAnswered,false);
+  const twice = await call(`/questionnaires/${tokens[0]}/responses`,'POST',{ overallRating:1, wouldRecommend:true });
+  assert.equal(twice.status,409); assert.equal(twice.data.code,'ALREADY_ANSWERED');
+  assert.equal((await call(`/questionnaires/${tokens[0]}`)).data.recommendationAnswered,false,'a rejected request saves nothing');
+  assert.equal((await call(`/questionnaires/${tokens[1]}/responses`,'POST',{ overallRating:2 })).status,201);
+  const feedback=(await call('/reports/stay-feedback')).data;
+  assert.deepEqual(feedback.overall,{ responseCount:2, meanRating:3.5 });
+  assert.equal((await call('/reports/satisfaction')).data.find(r=>r.roomNumber==='001').meanRating,3,'the overall stay rating is not mixed into room means');
 });

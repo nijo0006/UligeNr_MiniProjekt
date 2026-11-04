@@ -20,18 +20,9 @@
       </section>
       <section class="panel list-panel" aria-labelledby="list-title">
         <div class="section-heading"><span class="step">02</span><div><h2 id="list-title">Bookings &amp; history</h2><p id="reservation-count">Loading bookings…</p></div><button id="refresh" class="text-button" type="button">Refresh</button></div>
-        <div class="booking-filters"><label>Booking year<select id="booking-year" aria-label="Booking year"><option value="">All years</option></select></label><label>Search bookings<input id="booking-search" type="search" placeholder="Name, country, room or booking ID"></label></div><p id="booking-page-status" class="hint" aria-live="polite"></p><div id="bookings"></div><div class="pagination"><button id="previous-bookings" class="secondary" type="button">Previous bookings</button><button id="next-bookings" class="secondary" type="button">Next bookings</button></div>
+        <div class="booking-filters"><label>Booking year<select id="booking-year" aria-label="Booking year"><option value="">All years</option></select></label><label>Status<select id="booking-status" aria-label="Booking status"><option value="">Active and completed</option><option value="active">Active</option><option value="completed">Completed stays</option></select></label><label>Search bookings<input id="booking-search" type="search" placeholder="Name, country, room or booking ID"></label></div><p id="booking-page-status" class="hint" aria-live="polite"></p><div id="bookings"></div><div class="pagination"><button id="previous-bookings" class="secondary" type="button">Previous bookings</button><button id="next-bookings" class="secondary" type="button">Next bookings</button></div>
       </section>
     </div>
 
 
-<section id="questionnaire" class="panel questionnaire-panel" aria-labelledby="questionnaire-title">
-  <p class="eyebrow">GUEST EXPERIENCE</p><h2 id="questionnaire-title">Record a room questionnaire</h2>
-  <p class="hint">Select an active booking and one of its rooms. Each submission records a distinct questionnaire response, not a correction. No historical responses are generated.</p>
-  <form id="questionnaire-form"><label>Questionnaire booking<select id="questionnaire-booking" aria-label="Questionnaire booking" required><option value="">Select a booking</option></select></label>
-    <div class="fields"><label>Questionnaire room<select id="questionnaire-room" aria-label="Questionnaire room" required><option value="">Select a booked room</option></select></label>
-    <label>Overall satisfaction<select name="rating" aria-label="Overall satisfaction" required><option value="">Select a rating</option><option value="1">1 / 5</option><option value="2">2 / 5</option><option value="3">3 / 5</option><option value="4">4 / 5</option><option value="5">5 / 5</option></select></label></div>
-    <button type="submit" disabled>Record questionnaire</button>
-  </form><p id="questionnaire-status" class="notice" role="status" hidden></p><p><a href="/staff/overview">View room satisfaction on Overview ↗</a></p>
-</section>
 <footer>Hotel Kong Arthur · Staff workspace · <a href="/api/docs">API documentation</a></footer></main><script type="module" src="/app.js"></script></body></html>

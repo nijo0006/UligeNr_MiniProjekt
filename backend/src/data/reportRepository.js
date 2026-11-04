@@ -3,7 +3,7 @@ const scopedNights = `
     SELECT rn.*, b.holder_country, b.guest_count,
            (b.synthetic_dates OR b.synthetic_room_assignment) AS synthetic
     FROM room_nights rn JOIN bookings b ON b.id=rn.booking_id
-    WHERE b.status='active' AND ($1::date IS NULL OR rn.night_date >= $1::date)
+    WHERE b.status<>'cancelled' AND ($1::date IS NULL OR rn.night_date >= $1::date)
       AND ($2::date IS NULL OR rn.night_date < $2::date)
   )`;
 
@@ -28,7 +28,7 @@ export class ReportRepository {
                COALESCE(BOOL_OR(b.synthetic_dates OR b.synthetic_room_assignment),FALSE) AS synthetic
         FROM room_nights rn
         JOIN bookings b ON b.id = rn.booking_id
-        WHERE b.status = 'active'
+        WHERE b.status <> 'cancelled'
           AND rn.night_date >= $1::date AND rn.night_date < $2::date
       ) rooms
       CROSS JOIN (

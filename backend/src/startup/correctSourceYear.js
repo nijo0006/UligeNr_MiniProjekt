@@ -31,7 +31,7 @@ export async function correctLegacySourceYear(db,source,legacy){
     assert.ok(b.arrival>='2026-01-01'&&b.departure<='2027-01-01',`Edited source booking ${b.id} needs an explicit date review before automatic year correction.`);
   }
   const {rows:occupied}=await db.query(`SELECT br.room_number AS "roomNumber",b.arrival,b.departure
-    FROM booking_rooms br JOIN bookings b ON b.id=br.booking_id WHERE b.status='active' AND NOT (b.id=ANY($1::bigint[]))`,[ids]);
+    FROM booking_rooms br JOIN bookings b ON b.id=br.booking_id WHERE b.status<>'cancelled' AND NOT (b.id=ANY($1::bigint[]))`,[ids]);
   const plan=assignHistoricalBookings(movable.map(b=>b.original_payload),rooms,occupied);
   const bySource=new Map(movable.map(b=>[b.source_id,b.id]));
 
@@ -82,7 +82,7 @@ export async function correctLegacySourceYear(db,source,legacy){
   assert.deepEqual(invalid,{nights:0,sales:0});
   const {rows:overlaps}=await db.query(`SELECT a.id FROM booking_rooms ar JOIN bookings a ON a.id=ar.booking_id
     JOIN booking_rooms br ON br.room_number=ar.room_number JOIN bookings b ON b.id=br.booking_id
-    WHERE a.id<b.id AND a.status='active' AND b.status='active' AND a.arrival<b.departure AND a.departure>b.arrival
+    WHERE a.id<b.id AND a.status<>'cancelled' AND b.status<>'cancelled' AND a.arrival<b.departure AND a.departure>b.arrival
     AND (a.source_id IS NOT NULL OR b.source_id IS NOT NULL) LIMIT 1`);
   assert.equal(overlaps.length,0,'Year correction would create overlapping room bookings');
   const {rows:bookingsByYear}=await db.query(`SELECT EXTRACT(YEAR FROM arrival)::integer AS year,COUNT(*)::integer AS bookings,SUM(total_price)::text AS revenue FROM bookings WHERE source_id IS NOT NULL GROUP BY 1 ORDER BY 1`);

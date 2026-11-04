@@ -2,7 +2,7 @@
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-10-27
-**Last Updated**: 2026-11-03 — implementation reviewed against reports, history and questionnaires.
+**Last Updated**: 2026-11-03 — implementation reviewed against reports, history and questionnaires; Story 24 (booking completion and emailed guest questionnaire) added and verified.
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality

@@ -252,6 +252,10 @@ test('remaining Overview reports use fixed 2026, recover from failures and fit m
     await expect(page.locator('#inventory-report tr')).toHaveCount(8);
     await expect(page.locator('#satisfaction-report tr')).toHaveCount(8);
     await expect(page.locator('[aria-labelledby=room-feedback-title] th')).toHaveText(['Room type','Rating']);
+    const feedback=await(await fetch(`${origin}/api/reports/stay-feedback`)).json();
+    await expect(page.locator('#overall-rating')).toHaveText(feedback.overall.meanRating===null?'No data':`${feedback.overall.meanRating.toFixed(1)} / 5`);
+    await expect(page.locator('#recommendation-percent')).toHaveText(feedback.recommendation.recommendPercent===null?'No data':`${feedback.recommendation.recommendPercent.toFixed(1)}%`);
+
     await page.getByRole('button',{name:'Refresh revenue',exact:true}).click();
     await expect(page.locator('#report-year')).toHaveText('2026');
     await expect(page.locator('select#report-year')).toHaveCount(0);
@@ -267,6 +271,8 @@ test('remaining Overview reports use fixed 2026, recover from failures and fit m
     await expect(page.locator('#reports-error')).toContainText('Report test outage');
     await expect(page.locator('#country-report tr')).toHaveCount(0);
     await expect(page.locator('#occupancy')).toHaveText('Unavailable');
+    await expect(page.locator('#overall-rating')).toHaveText('Unavailable');
+    await expect(page.locator('#recommendation-percent')).toHaveText('Unavailable');
     await page.unroute('**/api/reports/countries*');
     await page.getByRole('button',{name:'Refresh revenue',exact:true}).click();
     await expect(page.locator('#reports-error')).toBeHidden();
@@ -276,38 +282,6 @@ test('remaining Overview reports use fixed 2026, recover from failures and fit m
     await page.screenshot({path:'/tmp/hotel-complete-reports-mobile.png',fullPage:true});
     await page.locator('.room-chart-report').screenshot({path:'/tmp/hotel-top-rooms-mobile.png'});
     assert.deepEqual(errors,[]);
-  }finally{await browser.close();}
-});
-
-test('receptionist records room questionnaires through API fixtures without writing live satisfaction data',async()=>{
-  const browser=await chromium.launch({channel:'chrome',headless:true});
-  const page=await browser.newPage({viewport:{width:1440,height:1000}});
-  const bookings=await(await fetch(`${origin}/api/bookings`)).json();const target=bookings[0];let submitted;
-  try{
-    await page.route('**/api/satisfaction',async route=>{
-      submitted=route.request().postDataJSON();
-      await route.fulfill({status:201,json:{...submitted,responseId:999,recordedAt:'2026-11-03T12:00:00.000Z'}});
-    });
-    await page.goto(`${origin}/staff/bookings`);
-    await page.getByLabel('Search bookings').fill(`#${target.bookingId}`);
-    await page.locator(`[data-booking-id="${target.bookingId}"]`).getByRole('button',{name:'Record satisfaction',exact:true}).click();
-    await expect(page.getByLabel('Questionnaire booking',{exact:true})).toHaveValue(String(target.bookingId));
-    await expect(page.getByLabel('Questionnaire room',{exact:true}).locator('option')).toHaveCount(target.roomNumbers.length+1);
-    await page.getByLabel('Questionnaire room',{exact:true}).selectOption(target.roomNumbers[0]);
-    await page.getByLabel('Overall satisfaction',{exact:true}).selectOption('4');
-    await page.getByRole('button',{name:'Record questionnaire',exact:true}).click();
-    await expect(page.locator('#questionnaire-status')).toContainText('Questionnaire #999 recorded');
-    assert.deepEqual(submitted,{bookingId:target.bookingId,roomNumber:target.roomNumbers[0],rating:4});
-    await page.unroute('**/api/satisfaction');
-    await page.route('**/api/satisfaction',route=>route.fulfill({status:400,json:{message:'Questionnaire test rejection'}}));
-    await page.getByLabel('Overall satisfaction',{exact:true}).selectOption('3');
-    await page.getByRole('button',{name:'Record questionnaire',exact:true}).click();
-    await expect(page.locator('#questionnaire-status')).toContainText('Questionnaire test rejection');
-    await expect(page.getByRole('button',{name:'Record questionnaire',exact:true})).toBeEnabled();
-    await page.locator('#questionnaire').screenshot({path:'/tmp/hotel-questionnaire-desktop.png'});
-    await page.setViewportSize({width:390,height:844});
-    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
-    await page.locator('#questionnaire').screenshot({path:'/tmp/hotel-questionnaire-mobile.png'});
   }finally{await browser.close();}
 });
 
@@ -468,6 +442,33 @@ test('seasonal grouped bar chart preserves API values, axes, distinct room-type 
     assert.ok(await page.locator('.season-chart-scroll').evaluate(e=>e.scrollLeft>0));
     await page.locator('.season-chart-scroll').evaluate(e=>{e.scrollLeft=0;});
     await page.locator('.season-chart-report').screenshot({path:'/tmp/hotel-season-chart-mobile.png'});
+    assert.deepEqual(errors,[]);
+  }finally{await browser.close();}
+});
+
+
+test('merged guest questionnaire collects stay, room and recommendation answers without sending live mail',async()=>{
+  const browser=await chromium.launch({channel:'chrome',headless:true});
+  const page=await browser.newPage({viewport:{width:1440,height:1000}});
+  const token='A'.repeat(32);let answered=false,submitted;
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  try{
+    await page.route(`**/api/questionnaires/${token}`,route=>route.fulfill({json:{rooms:[{roomNumber:'001',roomType:'Standard Single',answered}],overallAnswered:answered,recommendationAnswered:answered}}));
+    await page.route(`**/api/questionnaires/${token}/responses`,async route=>{
+      submitted=route.request().postDataJSON();answered=true;await route.fulfill({status:201,json:{saved:true}});
+    });
+    await page.goto(`${origin}/survey.html?token=${token}`);
+    await expect(page.locator('#survey-form')).toBeVisible();
+    await page.getByRole('radio',{name:'Your stay overall: 5 of 5, Excellent',exact:true}).check();
+    await page.getByRole('radio',{name:'Room 001: 4 of 5, Very good',exact:true}).check();
+    await page.getByRole('radio',{name:'Yes, I would recommend Hotel Kong Arthur',exact:true}).check();
+    await page.screenshot({path:'/tmp/hotel-merged-guest-survey.png',fullPage:true});
+    await page.setViewportSize({width:390,height:844});
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+    await page.getByRole('button',{name:'Send my answers',exact:true}).click();
+    await expect(page.locator('#survey-thanks')).toBeVisible();
+    assert.deepEqual(submitted,{ratings:[{roomNumber:'001',rating:4}],overallRating:5,wouldRecommend:true});
+    await page.reload();await expect(page.locator('#survey-thanks')).toBeVisible();
     assert.deepEqual(errors,[]);
   }finally{await browser.close();}
 });

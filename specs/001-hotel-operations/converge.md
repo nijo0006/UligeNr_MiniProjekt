@@ -418,3 +418,19 @@ Reviewed wide/desktop/tablet/mobile screenshots; a focused final rerun verified 
 smallest mobile revenue fits one line after a typography adjustment. Docker rebuilt
 and healthy; git diff --check passed. T102–T103 complete. No API/SQL suites repeated
 for this DOM/CSS presentation change.
+
+
+## Main/dashboard merge — 2026-11-04
+
+Combined main's completed-booking and guest questionnaire flow with the full-width
+Overview dashboard. Retained overall stay rating and recommendation statistics inside
+the satisfaction card, including loading/error recovery. The retired receptionist
+rating flow remains removed. Booking summary wording now reflects active and completed
+bookings. Preserved both specification amendments and moved Story 24 tasks to Phase 44
+(T104–T112), after dashboard tasks T102–T103, without duplicate task identifiers.
+
+Validation: 12 unit tests, 42 isolated PostgreSQL/API tests and all 10 Chrome browser
+scenarios passed. Guest questionnaire browser checks use intercepted responses; email
+checks use a capturing mailer, with no real guest emails sent by verification. Reviewed
+survey and satisfaction-card screenshots. Docker app, database and Mailpit are healthy.
+Git conflict-marker and whitespace checks passed.

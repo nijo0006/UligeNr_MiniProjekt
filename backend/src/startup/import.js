@@ -46,7 +46,7 @@ export async function importHistoricalData(connection){
   const {rows:rooms}=await connection.query('SELECT room_number AS "roomNumber",room_type AS "roomType" FROM rooms ORDER BY room_number FOR UPDATE');
   await connection.query('LOCK TABLE daily_bar_sales IN SHARE ROW EXCLUSIVE MODE');
   const {rows:occupied}=await connection.query(`SELECT br.room_number AS "roomNumber",b.arrival,b.departure
-    FROM booking_rooms br JOIN bookings b ON b.id=br.booking_id WHERE b.status='active'`);
+    FROM booking_rooms br JOIN bookings b ON b.id=br.booking_id WHERE b.status<>'cancelled'`);
   const {rows:menu}=await connection.query('SELECT id AS "drinkId",name,category FROM drinks');
   const {rows:existingSales}=await connection.query('SELECT sales_date AS "salesDate",drink_id AS "drinkId" FROM daily_bar_sales');
   const bookings=assignHistoricalBookings(source.payload.bookings,rooms,occupied);
@@ -90,7 +90,7 @@ export async function importHistoricalData(connection){
   for(const night of nights)assert.equal(seasonFor(new Date(night.night_date+'T00:00:00Z')),night.season);
   const {rows:overlap}=await connection.query(`SELECT a.id FROM booking_rooms ar JOIN bookings a ON a.id=ar.booking_id
     JOIN booking_rooms br ON br.room_number=ar.room_number JOIN bookings b ON b.id=br.booking_id
-    WHERE a.id<b.id AND a.status='active' AND b.status='active' AND a.arrival<b.departure AND a.departure>b.arrival
+    WHERE a.id<b.id AND a.status<>'cancelled' AND b.status<>'cancelled' AND a.arrival<b.departure AND a.departure>b.arrival
     AND (a.source_id IS NOT NULL OR b.source_id IS NOT NULL) LIMIT 1`);
   assert.equal(overlap.length,0,'Historical import would create overlapping room bookings');
   const {rows:barChecks}=await connection.query(`SELECT s.source_id,SUM(s.quantity)::integer AS units,SUM(s.exact_revenue)::text AS revenue
