@@ -1440,8 +1440,8 @@
         </view>
         <style>
           <style-rule element='axis'>
-            <encoding attr='space' class='0' field='[federated.hotel_countries].[Longitude (generated)]' field-type='quantitative' max='23499351.460436247' min='6272636.5634375624' projection='EPSG:3857' range-type='fixed' scope='cols' type='space' />
-            <encoding attr='space' class='0' field='[federated.hotel_countries].[Latitude (generated)]' field-type='quantitative' max='11063502.458558001' min='4742409.3598312633' projection='EPSG:3857' range-type='fixed' scope='rows' type='space' />
+            <encoding attr='space' class='0' field='[federated.hotel_countries].[Longitude (generated)]' field-type='quantitative' max='56956041.717064269' min='-20689304.32678169' projection='EPSG:3857' range-type='fixed' scope='cols' type='space' />
+            <encoding attr='space' class='0' field='[federated.hotel_countries].[Latitude (generated)]' field-type='quantitative' max='20915412.051181108' min='-7575421.1669105161' projection='EPSG:3857' range-type='fixed' scope='rows' type='space' />
           </style-rule>
           <style-rule element='cell'>
             <format attr='font-size' value='12' />
@@ -3221,7 +3221,7 @@ Historical dates and numbered rooms are demonstration allocations. Missing histo
           <zoom type='entire-view' />
         </viewpoint>
       </viewpoints>
-      <active id='10' />
+      <active id='-1' />
       <simple-id uuid='{299BD29F-82FB-514D-B9A4-671169049CD1}' />
     </window>
     <window class='dashboard' name='Helene Christine’s Bar · 2026'>
