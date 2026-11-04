@@ -42,7 +42,7 @@ Normal restarts preserve bookings and do not repeat catalog seeds.
 ## PostgreSQL change — week 2
 
 PostgreSQL replaces MySQL under Constitution v2.0.0. The previous working code is
-preserved at Git tag `uge-1-mysql-demo-2026-11-02`; migration work is on
+preserved at Git tag `MySQL_tag`; migration work is on
 `feature/postgresql`. The old `mysql_data` Docker volume is retained, while the current
 application uses a separate `postgres_data` volume. Legacy `MYSQL_*` values in an old
 `.env` are ignored; see `.env.example` for optional `POSTGRES_*` overrides.
@@ -122,15 +122,42 @@ roll back the entire import. Never delete volumes or markers to force a re-impor
 
 ```mermaid
 flowchart LR
-  Browser[Browser: HTML / CSS / JavaScript] --> Presentation
-  subgraph app[app container]
-    Presentation[Express routes and JSON errors] --> Services[Booking rules / nightly prices / transaction orchestration]
-    Services --> Data[Repositories and parameterized SQL]
-    Swagger[Swagger UI and OpenAPI]
+  subgraph clients[API consumers]
+    Browser["Staff browser<br/>Overview · Bookings · Bar"]
+    Guest["Guest browser<br/>survey.html questionnaire"]
+    Tableau["Tableau dashboard<br/>JSON from /api/reports/*"]
+    External["Hotel booking system<br/>(future POST/PUT/DELETE)"]
   end
-  Data --> DB[(PostgreSQL db container / persistent volume)]
+
+  subgraph compose["docker compose up"]
+    subgraph app["app container · Node 24 / Express · :3000"]
+      Static["Static frontend<br/>HTML / CSS / JS"]
+      Swagger["Swagger UI /api/docs<br/>openapi.json"]
+      Presentation["Presentation layer<br/>routes · HTTP status · JSON errors"]
+      Services["Service layer<br/>validation · seasonal pricing · KPIs<br/>booking lifecycle · transactions"]
+      Data["Data layer<br/>repositories · parameterized SQL · row locks"]
+      Presentation --> Services --> Data
+    end
+    DB[("db container<br/>PostgreSQL 18<br/>volume postgres_data")]
+    Mail["mailpit container<br/>SMTP :1025 · inbox :8025"]
+  end
+
+  Browser -- "fetch /api (JSON)" --> Presentation
+  Guest -- "fetch /api/questionnaires" --> Presentation
+  Tableau -- "GET /api/reports/*" --> Presentation
+  External -. "REST/JSON" .-> Presentation
+  Browser --> Static
   Browser --> Swagger
+  Data -- "SQL · db:5432" --> DB
+  Services -- "questionnaire email" --> Mail
 ```
+
+`docker compose up` starts three containers on Compose's internal network, where they
+find each other by service name (`db`, `mailpit`). The app waits until the database
+healthcheck passes (`depends_on: condition: service_healthy`), then creates tables,
+seeds the catalog and imports the workbook history once. Data survives `docker compose
+down`/restart in the `postgres_data` volume; only `down -v` deletes it. The optional
+`test` profile adds `test` and `test-db` (in-memory) containers for the integration suite.
 
 - `backend/src/presentation`: HTTP parsing, statuses, JSON errors, Swagger UI and frontend serving.
 - `backend/src/services`: validation, seasonal pricing, booking lifecycle, transaction orchestration.

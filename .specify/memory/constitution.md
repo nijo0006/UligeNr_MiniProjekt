@@ -4,7 +4,7 @@ Sync Impact Report — 2026-11-02
 - Principle IV: MySQL replaced by PostgreSQL, authorized by the user following
   Tillægsopgave_uge_2.pdf. Other four principles unchanged; no principles added.
 - Synchronized plan, research, data model, README, environment example and Compose.
-- Previous implementation preserved at Git tag uge-1-mysql-demo-2026-11-02.
+- Previous implementation preserved at Git tag MySQL_tag.
 -->
 
 # Hotel Kong Arthur Constitution
