@@ -328,3 +328,25 @@ Inventory/satisfaction remain all-time; API year support and separate booking/ba
 are unchanged. Five relevant browser scenarios passed, including static 2026/no select,
 API-backed report values, null/zero/error recovery and map/chart interactions on desktop/
 mobile. Screenshot reviewed. No database change. T094 complete.
+
+
+## Full-width Overview dashboard — 2026-11-04
+
+Overview now uses a near-full-width shell with a compact fixed-2026 toolbar and a row
+of revenue, active-booking, occupancy, room-night and guest cards. Revenue receives a
+strong green visual emphasis while the warm hotel palette and existing report colors
+remain. Wide screens use independent main/sidebar columns: map, seasonal chart and
+seasonal data in the main column; room top-ten/all, inventory, satisfaction and source
+references in the sidebar. Source metadata no longer separates headline figures from
+charts. All charts/tables stay open and every existing data/control ID remains available.
+Tablet/mobile layouts stack reports and adapt KPI cards. Styling is scoped to Overview.
+No calculations, APIs, database records or other staff page flows changed.
+
+Verification: seven relevant existing Chrome browser scenarios passed (staff navigation,
+history, annual/report null/zero/error recovery, map interaction/fallback and seasonal
+chart values/filters/hover). Top-ten/all toggle remains covered in Overview checks.
+Visual QA at 1920, 1440, 1024, 390 and 320px confirmed no page-wide horizontal overflow.
+Reviewed wide/desktop/tablet/mobile screenshots; a focused final rerun verified the
+smallest mobile revenue fits one line after a typography adjustment. Docker rebuilt
+and healthy; git diff --check passed. T102–T103 complete. No API/SQL suites repeated
+for this DOM/CSS presentation change.

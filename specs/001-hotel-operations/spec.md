@@ -1175,3 +1175,12 @@ recorded room revenues, with an option to show all rooms and return to top ten. 
 existing exact API order without invented tie ranks. Display room number/type, revenue
 and room-nights directly, matching type colors. All mode includes rooms without revenue
 as No data; top mode uses recorded revenues only. Preserve fixed 2026 and data/error rules.
+
+
+## Dashboard layout refinement — 2026-11-04
+
+User requests a more visual Overview dashboard using the available page width. Place
+existing headline figures together at the top, use complementary report columns on wide
+screens and a single readable flow on small screens. Retain all always-visible charts/
+tables, fixed 2026, room-type colors, large tooltips, top-ten/all toggle and source labels.
+No invented trends, financial changes or hidden data. Other staff pages are unchanged.

@@ -599,3 +599,15 @@ report. Default to the first ten non-null rows; Show all rooms/Show top 10 toggl
 only. Keep the full period's maximum for bar widths and the shared type palette. Provide
 readable visible values and a bounded scroll region for all 214 rooms on desktop/mobile.
 No backend/API changes. Verify ranking, toggling, values and errors in browser checks.
+
+
+## Full-width Overview dashboard — 2026-11-04
+
+Scope styling to an overview-dashboard body class. Use a near-full-width shell, a compact
+page toolbar and a responsive KPI grid. Preserve all data IDs and scripts; rearrange the
+existing DOM cards into independent main/sidebar columns so tall seasonal data does not
+create empty grid rows. Map, chart and seasonal table occupy the main column; top-ten,
+inventory, satisfaction and source references form the sidebar. At tablet/mobile widths
+stack columns and adapt KPI cards. Keep all reports open. Reuse existing APIs, palette
+and accessible controls. Verify existing browser workflows, wide/tablet/mobile overflow,
+visual hierarchy and shared chart interactions without backend/database changes.

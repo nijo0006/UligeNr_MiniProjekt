@@ -346,3 +346,9 @@ clarified so that only prices are excluded from manual entry.
 - [x] T099 Correct Q1/Q5, Stories 1–2, FR-001/FR-002 and Key Entities in spec.md; update data model, plan and both OpenAPI contracts with holderEmail.
 - [x] T100 Add nullable holder_email column, require and format-validate email for new bookings, and allow imported bookings without email to remain empty on edit.
 - [x] T101 Add the email field to the browser booking form and booking list, and extend pricing/integration tests for missing, invalid and imported-without-email cases.
+
+
+## Phase 43: Full-width Overview dashboard — 2026-11-04
+
+- [x] T102 Rearrange Overview into a wide responsive dashboard with headline KPI cards and complementary report columns, preserving all current values/controls.
+- [x] T103 Verify the existing report/map/chart flows, inspect wide/tablet/mobile layouts and document the finished dashboard.

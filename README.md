@@ -406,3 +406,13 @@ rows, larger text/amounts and spacing. All rows stay visible while scrolling the
 Highest-earning rooms displays horizontal revenue bars for the top ten recorded rooms
 in 2026. Show all rooms displays the full 214-room list; Show top 10 switches back.
 Bars use the same room-type colors, with room number/type, amount and room-nights visible.
+
+
+## Overview dashboard layout
+
+Overview uses the available page width, with a row of revenue/booking/occupancy/night/
+guest cards and a fixed 2026 toolbar. On wide screens the main column contains the map,
+seasonal chart and numeric seasonal table; the sidebar contains top-ten rooms, inventory,
+satisfaction and source references. All reports stay open. Tablet/mobile widths stack
+cards and report sections, retaining chart/table scrolling and existing controls.
+The layout is scoped to Overview; report calculations and other staff pages are unchanged.
