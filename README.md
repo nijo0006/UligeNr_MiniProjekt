@@ -449,3 +449,16 @@ seasonal chart and numeric seasonal table; the sidebar contains top-ten rooms, i
 satisfaction and source references. All reports stay open. Tablet/mobile widths stack
 cards and report sections, retaining chart/table scrolling and existing controls.
 The layout is scoped to Overview; report calculations and other staff pages are unchanged.
+
+## Commit attribution note
+
+Two early commits by Freja Johnna Tromborg (GitHub: frtr0002@stud.ek.dk) were made before
+her local Git identity was configured, so GitHub does not link them to her account:
+
+| Commit | Date | Change |
+|---|---|---|
+| `99f7f6e` | 2026-10-28 | Added MySQL to Docker Compose and `.env.example` |
+| `16929df` | 2026-10-28 | Updated the spec with Clarify answers Q1–Q23 and assumptions A10–A23 |
+
+Both are authored as `Freja Johnna Tromborg <frejajohnnatromborg@MacBook-Air.local>` in the
+history. Later commits use her GitHub email and are linked normally.
