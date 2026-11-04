@@ -53,7 +53,7 @@ Executed results:
 - An isolated project started healthy from an empty volume without .env, using the
   already-built application image and the normal database health dependency.
 
-The previous working version is preserved at Git tag uge-1-mysql-demo-2026-11-02. The
+The previous working version is preserved at Git tag MySQL_tag. The
 legacy MySQL volume is retained; PostgreSQL uses a separate postgres_data volume. Private
 snapshots and screenshots contain local guest data and are not committed. The application
 runs at http://localhost:3000; Swagger UI is at /api/docs.
@@ -434,3 +434,40 @@ scenarios passed. Guest questionnaire browser checks use intercepted responses; 
 checks use a capturing mailer, with no real guest emails sent by verification. Reviewed
 survey and satisfaction-card screenshots. Docker app, database and Mailpit are healthy.
 Git conflict-marker and whitespace checks passed.
+
+
+## Final convergence check — 2026-11-04
+
+Summary of the last Converge pass against the assignment, the week-2 supplement,
+spec.md, plan.md and tasks.md. Evidence: 12 unit tests, 42 isolated PostgreSQL/API tests
+and 10 Chrome browser scenarios passed on the merged main (see entry above).
+
+### Implemented
+
+| Requirement (source) | Status | Where |
+| --- | --- | --- |
+| 3-layer backend, REST/JSON (assignment) | Done | `backend/src/presentation` → `services` → `data` |
+| OpenAPI contract + Swagger UI in Docker (assignment) | Done | `backend/openapi.json`, `/api/docs`; contract validated in integration tests |
+| Everything starts with one `docker compose up` (assignment) | Done | app + PostgreSQL + Mailpit; healthcheck-ordered startup |
+| Browser frontend: create, edit, delete bookings (assignment, US1–US4) | Done | `/staff/bookings` |
+| Live, continuously updated data instead of static CSV (assignment, US5) | Done | Reports read current database state; workbook imported once as history |
+| KPIs: countries, revenue per room type/season and per country, top rooms, top countries, annual revenue (assignment, US6–US11) | Done in API and frontend | `/api/reports/*`, `/staff/overview` |
+| Own extra indicators (assignment) | Done | Occupancy (US12), room inventory (US14), guest satisfaction/recommendation (US13, US24) |
+| Bar: annual sales, revenue per drink, cocktail/coffee split (assignment, US15–US17, US19) | Done | `/api/reports/bar`, `/api/reports/drinks`, `/staff/bar` |
+| Analyses readable directly from the API and shown in frontend (week-2 supplement) | Done | Same report endpoints feed Overview and Tableau |
+| Replace MySQL (week-2 supplement) | Done | PostgreSQL 18; constitution v2.0.0 |
+| Week-1 work preserved in Git before the change (week-2 supplement) | Done | Tag `MySQL_tag` (commit 670b535, last MySQL version) |
+| Spec Kit artifacts, user stories with acceptance criteria (assignment) | Done | `.specify/memory/constitution.md`, `specs/001-hotel-operations/` |
+| README with architecture diagram, CONTRIBUTE (assignment) | Done | `README.md`, `CONTRIBUTE.md` |
+
+### Missing / open
+
+| Item | Task | Status |
+| --- | --- | --- |
+| Interactive Tableau dashboard built on the API's report data (US18, FR-020) | T033, T046 | In progress: JSON extracts fetched from `/api/reports/*`; workbook being built. Add workbook/link, screenshot and value check against the API when delivered. |
+| Tableau live refresh | T046 | Not implemented: extracts are snapshots. Production option: Web Data Connector or scheduled extract refresh against `/api/reports/*`. |
+| Remaining business choices R3 (valid night counts / broader catalogs), R4 (historical guest counts), R7 (repeated-request behaviour), R8 (wine/beer menu items, selector limits), R10 (zero denominator, half-way rounding) | T037, T044 | Open by decision: prototype defaults documented in plan.md; no data or rules invented. |
+| Login, roles and access control | — | Out of scope for the prototype (spec clarification 2026-10-29); required before production. |
+
+The hotel feature is therefore complete except Tableau delivery and the explicitly
+open business choices above.

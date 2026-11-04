@@ -338,7 +338,7 @@ and READ COMMITTED transactions with sorted room row locks. Preserve decimal str
 calendar date strings, booking IDs, versions and all existing booking behavior.
 
 Normal database: db:5432, host localhost:5433, dedicated postgres_data volume. Retain
-the original MySQL volume and Git tag uge-1-mysql-demo-2026-11-02. Existing local
+the original MySQL volume and Git tag MySQL_tag. Existing local
 booking records are transferred once with a private snapshot and verified table-by-table;
 this is distinct from the still-pending Excel historical-data import.
 The week-2 report endpoints/frontend calculations remain separate pending report tasks.
