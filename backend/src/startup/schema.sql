@@ -116,3 +116,5 @@ ALTER TABLE satisfaction_responses ADD COLUMN IF NOT EXISTS synthetic BOOLEAN NO
 -- frontend can be shared through backend/src/startup/demo-bookings.json.
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS shared_id UUID NULL DEFAULT gen_random_uuid();
 CREATE UNIQUE INDEX IF NOT EXISTS booking_shared_identity ON bookings (shared_id);
+-- Guest counts filled in from backend/src/startup/demo-guest-counts.json are marked here.
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS synthetic_guest_count BOOLEAN NOT NULL DEFAULT FALSE;

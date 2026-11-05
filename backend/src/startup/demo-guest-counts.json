@@ -1,0 +1,13 @@
+{
+  "about": "Demo guest counts for the 1,000 Excel bookings, which have no guest count. Each booking gets a fixed number within its room type's range, the same on every computer. The Excel sheet (K1) says 1-4 people per room and about 428 guests for 214 rooms (2 per room). Bookings are marked synthetic_guest_count in the database. Edit a range and run docker compose up -d --build to change it everywhere. A guest count someone has edited in the app is kept.",
+  "guestsByRoomType": {
+    "Standard Single": [1, 1],
+    "Grand Lit": [1, 2],
+    "Standard Double": [1, 2],
+    "Superior Double": [2, 2],
+    "Spa Executive": [2, 2],
+    "Junior Suite": [2, 3],
+    "Suite": [2, 4],
+    "LOFT Suite": [2, 4]
+  }
+}

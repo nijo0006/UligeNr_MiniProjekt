@@ -325,6 +325,12 @@ are loaded on every startup:
   normal questionnaire answers, marked `synthetic`. Stays that already have a
   questionnaire are left alone. The file starts with 40 demo reviews.
 
+- `backend/src/startup/demo-guest-counts.json`: the Excel workbook has no guest counts, so
+  each Excel booking gets a demo count within a range per room type (e.g. Standard Single
+  1, Suite 2–4), based on the workbook's 1–4 people per room and about 2 per room on
+  average. The same booking gets the same count on every computer. Counts are marked
+  `synthetic_guest_count`; editing a booking's guest count in the app replaces it.
+
 Restarts never add anything twice. To share what you have made yourself:
 
 1. `git pull`, then `docker compose up -d --build` so your database has everyone's data.
