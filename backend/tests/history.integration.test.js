@@ -11,6 +11,8 @@ import {createApp} from '../src/presentation/app.js';
 import {readHistoricalSource} from '../src/startup/import.js';
 import {IMPORT_VERSION,sourceBookingId} from '../src/startup/historyGenerator.js';
 if(!process.env.POSTGRES_DB?.endsWith('_test'))throw new Error('Historical integration checks require an isolated _test database.');
+// The Excel import is tested on its own; shared demo data has its own tests.
+const ONLY_HISTORY={demoData:false};
 let admin,pool,schema,server,base,existing,existingBar;
 async function schemaPool(){const name='history_test_'+randomUUID().replaceAll('-','');await admin.query(`CREATE SCHEMA ${name}`);return {name,pool:createPool({options:`-c search_path=${name}`})};}
 async function call(path,method='GET',body){const res=await fetch(base+path,{method,headers:{'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});return {status:res.status,data:await res.json()};}
@@ -28,7 +30,7 @@ after(async()=>{if(server)await new Promise(resolve=>server.close(resolve));awai
 function sourceAmountForSeason(season){return {low:335407700,mid:380938700+Math.round(Number(existing.totalPrice)*100),high:407057000}[season];}
 
 test('imports complete historical workbook, preserves existing records and reconciles annual reports',async()=>{
-  await initialize(pool);
+  await initialize(pool,ONLY_HISTORY);
   assert.deepEqual((await call(`/bookings/${existing.bookingId}`)).data,existing);
   assert.deepEqual((await call('/bar-sales?date=2024-01-01')).data.sales.find(s=>s.drinkId===1),((({salesDate,...row})=>row)(existingBar)));
   const history=(await call('/reports/history')).data;
@@ -74,7 +76,7 @@ test('repeat startup preserves edits/cancellations and source evidence is immuta
   assert.equal(edit.status,200);assert.equal(edit.data.guestCount,null);assert.equal(book.holderEmail,null);assert.equal(edit.data.holderEmail,null);assert.equal(edit.data.pricingMode,'nightly-calculated');
   await call(`/bookings/${book.bookingId}`,'DELETE');
   const before=(await call(`/bookings/${book.bookingId}`)).data;
-  await initialize(pool);assert.deepEqual((await call(`/bookings/${book.bookingId}`)).data,before);
+  await initialize(pool,ONLY_HISTORY);assert.deepEqual((await call(`/bookings/${book.bookingId}`)).data,before);
   const {rows:[raw]}=await pool.query('SELECT original_payload FROM source_records WHERE source_id=$1',[book.sourceId]);assert.equal(raw.original_payload.totalPrice,original.totalPrice);
   await assert.rejects(pool.query('UPDATE source_records SET checksum=$1 WHERE source_id=$2',['changed',book.sourceId]),/immutable/);
   await assert.rejects(pool.query('DELETE FROM historical_imports WHERE version=$1',[IMPORT_VERSION]),/immutable/);
@@ -86,12 +88,12 @@ test('failed placement rolls back all imported records and can be retried after 
   try{
     await initialize(fault.pool,{history:false});
     const removed=(await fault.pool.query("DELETE FROM rooms WHERE room_type='Spa Executive' RETURNING *")).rows;
-    await assert.rejects(initialize(fault.pool),/Cannot place source booking/);
+    await assert.rejects(initialize(fault.pool,ONLY_HISTORY),/Cannot place source booking/);
     assert.equal((await fault.pool.query('SELECT COUNT(*)::integer AS n FROM bookings')).rows[0].n,0);
     assert.equal((await fault.pool.query('SELECT COUNT(*)::integer AS n FROM source_records')).rows[0].n,0);
     assert.equal((await fault.pool.query('SELECT COUNT(*)::integer AS n FROM historical_imports')).rows[0].n,0);
     for(const r of removed)await fault.pool.query('INSERT INTO rooms(room_number,room_type,synthetic) VALUES($1,$2,$3)',[r.room_number,r.room_type,r.synthetic]);
-    await initialize(fault.pool);
+    await initialize(fault.pool,ONLY_HISTORY);
     assert.equal((await fault.pool.query('SELECT COUNT(*)::integer AS n FROM bookings')).rows[0].n,1000);
   }finally{await fault.pool.end();await admin.query(`DROP SCHEMA ${fault.name} CASCADE`);}
 });
@@ -103,7 +105,7 @@ test('a late database failure rolls back imported bookings, sales and evidence t
     await fault.pool.query("INSERT INTO daily_bar_sales(sales_date,drink_id,quantity,unit_price_snapshot,exact_revenue) VALUES('2024-01-01',1,5,72.47,362.35)");
     await fault.pool.query("CREATE FUNCTION reject_import_marker() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'Simulated import completion failure'; END; $$");
     await fault.pool.query('CREATE TRIGGER fail_import_completion BEFORE INSERT ON historical_imports FOR EACH ROW EXECUTE FUNCTION reject_import_marker()');
-    await assert.rejects(initialize(fault.pool),/Simulated import completion failure/);
+    await assert.rejects(initialize(fault.pool,ONLY_HISTORY),/Simulated import completion failure/);
     assert.equal((await fault.pool.query('SELECT COUNT(*)::integer AS n FROM bookings')).rows[0].n,0);
     assert.equal((await fault.pool.query('SELECT COUNT(*)::integer AS n FROM source_records')).rows[0].n,0);
     assert.equal((await fault.pool.query('SELECT COUNT(*)::integer AS n FROM historical_imports')).rows[0].n,0);
@@ -114,7 +116,7 @@ test('a late database failure rolls back imported bookings, sales and evidence t
 
 // Test-only fixture: reconstruct a committed v1 installation without touching live data.
 async function legacyFixture(){
-  const fixture=await schemaPool();await initialize(fixture.pool);
+  const fixture=await schemaPool();await initialize(fixture.pool,ONLY_HISTORY);
   await fixture.pool.query(`UPDATE room_nights n SET night_date=(n.night_date-make_interval(years=>(b.id%3)::integer))::date
     FROM bookings b WHERE b.id=n.booking_id AND b.source_id IS NOT NULL`);
   await fixture.pool.query(`UPDATE bookings SET arrival=(arrival-make_interval(years=>(id%3)::integer))::date,
@@ -148,7 +150,7 @@ test('legacy correction keeps source IDs/statuses/totals, manual rows and immuta
     await fault.pool.query("INSERT INTO daily_bar_sales(sales_date,drink_id,quantity,unit_price_snapshot,exact_revenue) VALUES('2026-01-01',1,5,72.47,362.35)");
     await fault.pool.query("UPDATE daily_bar_sales SET quantity=quantity+1,exact_revenue=exact_revenue+unit_price_snapshot WHERE source_id IS NOT NULL AND sales_date=(SELECT MIN(sales_date) FROM daily_bar_sales WHERE source_id IS NOT NULL) AND drink_id=1");
     const {rows:barBefore}=await fault.pool.query('SELECT source_id,SUM(quantity)::bigint AS units,SUM(exact_revenue)::text AS amount FROM daily_bar_sales WHERE source_id IS NOT NULL GROUP BY source_id ORDER BY source_id');
-    await initialize(fault.pool);
+    await initialize(fault.pool,ONLY_HISTORY);
     const {rows:idsAfter}=await fault.pool.query('SELECT id,source_id,total_price FROM bookings WHERE source_id IS NOT NULL ORDER BY id');
     assert.deepEqual(idsAfter,idsBefore);
     assert.equal((await fault.pool.query('SELECT status FROM bookings WHERE id=$1',[idsBefore[0].id])).rows[0].status,'cancelled');
@@ -162,7 +164,7 @@ test('legacy correction keeps source IDs/statuses/totals, manual rows and immuta
     const correction=(await fault.pool.query("SELECT summary FROM historical_imports WHERE version='hotel-workbook-2026-correction-v2'")).rows[0].summary;
     assert.deepEqual(correction.years,[2026]);assert.equal(correction.bookingsByYear.length,1);assert.equal(correction.barByYear.length,1);
     await fault.pool.query("UPDATE bookings SET holder_first_name='Later edit',version=version+1 WHERE id=$1",[idsBefore[1].id]);
-    const after=await storedState(fault.pool);await initialize(fault.pool);assert.deepEqual(await storedState(fault.pool),after);
+    const after=await storedState(fault.pool);await initialize(fault.pool,ONLY_HISTORY);assert.deepEqual(await storedState(fault.pool),after);
   }finally{await fault.pool.end();await admin.query(`DROP SCHEMA ${fault.name} CASCADE`);}
 });
 
@@ -172,8 +174,8 @@ test('legacy correction rolls back if completion fails and retries safely',async
     await fault.pool.query("CREATE FUNCTION reject_correction() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.version='hotel-workbook-2026-correction-v2' THEN RAISE EXCEPTION 'Correction failure'; END IF; RETURN NEW; END; $$");
     await fault.pool.query('CREATE TRIGGER fail_correction BEFORE INSERT ON historical_imports FOR EACH ROW EXECUTE FUNCTION reject_correction()');
     const before=await storedState(fault.pool);
-    await assert.rejects(initialize(fault.pool),/Correction failure/);assert.deepEqual(await storedState(fault.pool),before);
-    await fault.pool.query('DROP TRIGGER fail_correction ON historical_imports');await initialize(fault.pool);
+    await assert.rejects(initialize(fault.pool,ONLY_HISTORY),/Correction failure/);assert.deepEqual(await storedState(fault.pool),before);
+    await fault.pool.query('DROP TRIGGER fail_correction ON historical_imports');await initialize(fault.pool,ONLY_HISTORY);
     assert.equal((await fault.pool.query("SELECT COUNT(*)::integer AS n FROM historical_imports WHERE version='hotel-workbook-2026-correction-v2'")).rows[0].n,1);
   }finally{await fault.pool.end();await admin.query(`DROP SCHEMA ${fault.name} CASCADE`);}
 });
@@ -183,7 +185,7 @@ test('legacy correction refuses to reset edited source bookings outside 2026',as
   try{
     await fault.pool.query("UPDATE bookings SET pricing_mode='nightly-calculated' WHERE arrival<'2026-01-01'");
     const before=await storedState(fault.pool);
-    await assert.rejects(initialize(fault.pool),/needs an explicit date review/);
+    await assert.rejects(initialize(fault.pool,ONLY_HISTORY),/needs an explicit date review/);
     assert.deepEqual(await storedState(fault.pool),before);
   }finally{await fault.pool.end();await admin.query(`DROP SCHEMA ${fault.name} CASCADE`);}
 });

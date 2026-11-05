@@ -112,3 +112,9 @@ ALTER TABLE satisfaction_invitations ADD COLUMN IF NOT EXISTS overall_rated_at T
 -- Demo reviews from backend/src/startup/demo-reviews.json are marked as synthetic.
 ALTER TABLE satisfaction_invitations ADD COLUMN IF NOT EXISTS synthetic BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE satisfaction_responses ADD COLUMN IF NOT EXISTS synthetic BOOLEAN NOT NULL DEFAULT FALSE;
+-- Every booking gets an ID that is the same on all computers, so bookings made in the
+-- frontend can be shared through backend/src/startup/demo-bookings.json.
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS shared_id UUID NULL DEFAULT gen_random_uuid();
+CREATE UNIQUE INDEX IF NOT EXISTS booking_shared_identity ON bookings (shared_id);
+-- Guest counts filled in from backend/src/startup/demo-guest-counts.json are marked here.
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS synthetic_guest_count BOOLEAN NOT NULL DEFAULT FALSE;
