@@ -329,11 +329,25 @@ Restarts never add anything twice. To share what you have made yourself:
 
 1. `git pull`, then `docker compose up -d --build` so your database has everyone's data.
 2. Create bookings and complete stays and questionnaires as usual.
-3. Run `scripts/export-demo-data.sh`. It rewrites both files from your database.
-   Cancelled bookings are left out. Names and email addresses are included, so use
-   made-up guests.
-4. Commit and push both files. Others see the data after `git pull` and
+3. Run `scripts/export-demo-data.sh`. It adds your bookings and reviews to both files
+   and keeps everything already in them, so it never removes someone else's data.
+   Cancelled bookings are not added; to remove a shared booking, delete its line by hand.
+   Names and email addresses are included, so use made-up guests.
+4. Commit and push both files right away. Others see the data after `git pull` and
    `docker compose up -d --build`. The Tableau snapshot still needs its own refresh.
+
+Watch out when several people create bookings:
+
+- **Merge conflicts.** If two people add bookings without pulling first, Git can report
+  a conflict in the JSON files. Keep both people's lines and check the commas between
+  them. Never resolve it by choosing only your own version, or the other person's
+  bookings are lost.
+- **Same room, same dates.** Two bookings of the same room on overlapping dates cannot
+  both be loaded on one computer, so each computer keeps whichever it had first and the
+  reports differ. The export prints a warning; change one of the bookings. Agree on who
+  books which rooms, or let one person create the demo bookings.
+- **Booking numbers differ.** A shared booking can be #1001 on one computer and #1003 on
+  another. Refer to bookings by guest name.
 
 ## Verification
 
