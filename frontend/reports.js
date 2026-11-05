@@ -40,7 +40,7 @@ export async function refreshReports(year){
       tr.dataset.roomType=row.roomType;tr.style.setProperty('--room-type-color',roomTypeColors[row.roomType]??'#d0c2b2');
     });
     renderRoomChart(rooms,year);
-    table('#inventory-report',inventory,r=>[r.roomType,count(r.roomCount),r.synthetic?'Demonstration inventory':'Hotel inventory']);
+    table('#inventory-report',inventory,r=>[r.roomType,count(r.roomCount)]);
     const {overall,recommendation}=stayFeedback;
     $('#overall-rating').textContent=overall.meanRating===null?'No data':`${overall.meanRating.toFixed(1)} / 5`;
     $('#overall-note').textContent=overall.responseCount?`Average of ${count(overall.responseCount)} ${overall.responseCount===1?'stay':'stays'} · guest questionnaire after check-out · all-time`:'No answers yet. Guests answer in the questionnaire emailed after check-out.';
