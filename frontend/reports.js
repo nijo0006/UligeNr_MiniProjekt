@@ -32,7 +32,7 @@ export async function refreshReports(year){
     $('#sold-nights').textContent=count(summary.soldRoomNights);
     $('#known-guests').textContent=count(summary.guestCount);
     $('#guest-note').textContent=summary.unknownGuestBookingCount?`${count(summary.knownGuestCount)} known guests; ${count(summary.unknownGuestBookingCount)} bookings have unknown guest counts.`:`${count(summary.bookingCount)} bookings · guests counted once per booking.`;
-    $('#report-provenance').textContent=summary.containsSyntheticData?'Includes imported history with demonstration dates and room assignments.':'Based on saved operational records.';
+    $('#report-provenance').textContent=summary.containsSyntheticData?'Includes history imported from Excel.':'Based on saved operational records.';
     renderCountryMap(countries,year);
     renderSeasonChart(seasons,year);
     table('#country-report',countries,r=>[r.country,count(r.bookingCount),count(r.guestCount),count(r.knownGuestCount),count(r.unknownGuestBookingCount),currency(r.roomRevenue)]);
