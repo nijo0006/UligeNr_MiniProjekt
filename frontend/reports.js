@@ -31,7 +31,7 @@ export async function refreshReports(year){
     $('#occupancy-note').textContent=summary.year===null?'All-year totals are not an annual occupancy rate.':`Sold room-nights / ${count(summary.occupancyCapacity)} · fixed agreed capacity`;
     $('#sold-nights').textContent=count(summary.soldRoomNights);
     $('#known-guests').textContent=count(summary.guestCount);
-    $('#guest-note').textContent=summary.unknownGuestBookingCount?`${count(summary.knownGuestCount)} known guests; ${count(summary.unknownGuestBookingCount)} bookings have unknown guest counts.`:`${count(summary.bookingCount)} bookings · guests counted once per booking · Excel bookings use demo guest counts.`;
+    $('#guest-note').textContent=summary.unknownGuestBookingCount?`${count(summary.knownGuestCount)} known guests; ${count(summary.unknownGuestBookingCount)} bookings have unknown guest counts.`:`${count(summary.bookingCount)} bookings · guests counted once per booking.`;
     $('#report-provenance').textContent=summary.containsSyntheticData?'Includes imported history with demonstration dates and room assignments.':'Based on saved operational records.';
     renderCountryMap(countries,year);
     renderSeasonChart(seasons,year);
