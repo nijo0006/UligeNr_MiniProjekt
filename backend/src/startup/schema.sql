@@ -109,3 +109,6 @@ ALTER TABLE satisfaction_invitations ADD COLUMN IF NOT EXISTS recommended_at TIM
 -- Story 24: one overall 1-5 rating of the whole stay.
 ALTER TABLE satisfaction_invitations ADD COLUMN IF NOT EXISTS overall_rating SMALLINT NULL CHECK (overall_rating BETWEEN 1 AND 5);
 ALTER TABLE satisfaction_invitations ADD COLUMN IF NOT EXISTS overall_rated_at TIMESTAMPTZ NULL;
+-- Demo reviews from backend/src/startup/demo-reviews.json are marked as synthetic.
+ALTER TABLE satisfaction_invitations ADD COLUMN IF NOT EXISTS synthetic BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE satisfaction_responses ADD COLUMN IF NOT EXISTS synthetic BOOLEAN NOT NULL DEFAULT FALSE;

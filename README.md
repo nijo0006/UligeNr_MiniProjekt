@@ -307,8 +307,25 @@ keep counting in every report, stay editable and can no longer be cancelled. Sta
 longer enter ratings themselves; the guest questionnaire is the only source.
 Feedback keeps its original room link after booking edits; cancelled bookings are
 excluded from reporting. Questionnaire means are all-time, independent of the financial
-year, and display one decimal. No historical responses are seeded. Normal startup creates
-the empty questionnaire table idempotently; saved responses persist in PostgreSQL.
+year, and display one decimal. Saved responses persist in PostgreSQL.
+
+### Shared demo reviews
+
+Each computer has its own database, so reviews made through Mailpit are only visible
+locally. To share them, they are kept in `backend/src/startup/demo-reviews.json`. On
+startup, each review in the file is added to the matching historical booking (by its
+Excel booking ID): the stay is marked completed and the answers are stored as normal
+questionnaire answers, marked `synthetic`. Stays that already have a questionnaire are
+left alone, so restarts never add a review twice. The file starts with 40 demo reviews.
+
+To share reviews you have made yourself:
+
+1. `git pull`, then `docker compose up -d --build` so your database has everyone's reviews.
+2. Complete stays and answer questionnaires on **historical** bookings (those with a source
+   ID). Bookings created in the frontend get different IDs on each computer and are skipped.
+3. Run `scripts/export-reviews.sh`. It rewrites `demo-reviews.json` from your database.
+4. Commit and push the file. Others see the reviews after `git pull` and
+   `docker compose up -d --build`. The Tableau snapshot still needs its own refresh.
 
 ## Verification
 
