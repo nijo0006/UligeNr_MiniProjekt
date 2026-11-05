@@ -9,7 +9,7 @@
   "scripts": {
     "start": "node src/server.js",
     "test": "node --test tests/pricing.test.js tests/historyGenerator.test.js",
-    "test:integration": "node --test --test-concurrency=1 tests/bookings.integration.test.js tests/history.integration.test.js",
+    "test:integration": "node --test --test-concurrency=1 tests/bookings.integration.test.js tests/history.integration.test.js tests/demoData.integration.test.js",
     "test:browser": "node --test tests/browser.test.js"
   },
   "dependencies": {

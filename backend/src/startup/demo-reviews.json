@@ -1,5 +1,5 @@
 {
-  "about": "Demo reviews loaded into every local database on startup. Each review belongs to a historical booking (sourceBookingId 1-1000). guest and roomType are for reading only. Add more with scripts/export-reviews.sh.",
+  "about": "Demo reviews loaded into every local database on startup. Each review belongs to a historical booking (sourceBookingId 1-1000) or a shared frontend booking (sharedBookingId). guest and roomType are for reading only. Add more with scripts/export-demo-data.sh.",
   "reviews": [
     {"sourceBookingId":73,"guest":"Maria Patel","roomType":"Standard Double","roomRating":4,"overallRating":4,"wouldRecommend":true},
     {"sourceBookingId":107,"guest":"Santiago Khan","roomType":"Standard Single","roomRating":3,"overallRating":3,"wouldRecommend":true},
@@ -40,6 +40,7 @@
     {"sourceBookingId":935,"guest":"Aisha Lee","roomType":"Spa Executive","roomRating":4,"overallRating":3,"wouldRecommend":false},
     {"sourceBookingId":951,"guest":"Liam Ivanov","roomType":"Standard Single","roomRating":4,"overallRating":4,"wouldRecommend":true},
     {"sourceBookingId":982,"guest":"Fatima Kim","roomType":"Superior Double","roomRating":3,"overallRating":4,"wouldRecommend":true},
-    {"sourceBookingId":998,"guest":"Ahmed Kim","roomType":"Superior Double","roomRating":4,"overallRating":4,"wouldRecommend":true}
+    {"sourceBookingId":998,"guest":"Ahmed Kim","roomType":"Superior Double","roomRating":4,"overallRating":4,"wouldRecommend":true},
+    {"sharedBookingId":"f916c3e5-7f14-450d-bbd4-e8aa78f4ccc9","guest":"Dua Lipa","roomType":"Superior Double","roomRatings":{"116":3},"overallRating":4,"wouldRecommend":true}
   ]
 }

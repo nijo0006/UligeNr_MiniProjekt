@@ -1,0 +1,7 @@
+{
+  "about": "Bookings made in the frontend, loaded into every local database on startup. Each booking is added once by its sharedId; later edits are not synced. A booking whose room is already taken on a computer is skipped there. Add more with scripts/export-demo-data.sh.",
+  "bookings": [
+    {"sharedId":"f916c3e5-7f14-450d-bbd4-e8aa78f4ccc9","holderFirstName":"Dua","holderLastName":"Lipa","holderEmail":"DuaLaPip@live.com","holderCountry":"Canada","guestCount":2,"arrival":"2026-11-03","departure":"2026-11-04","nights":1,"status":"completed","completedAt":"2026-11-05T12:57:45.631Z","totalPrice":"1785.00","pricingMode":"nightly-calculated","rooms":[{"roomNumber":"116","total":"1785.00"}],"roomNights":[{"roomNumber":"116","date":"2026-11-03","season":"mid","charge":"1785.00"}],"guests":[]},
+    {"sharedId":"69fbf8d2-fc19-4424-8750-5fa58272d665","holderFirstName":"Stephanie","holderLastName":"S. Rone","holderEmail":"Stephanie.Rone@hotmail.com","holderCountry":"Denmark","guestCount":5,"arrival":"2026-11-04","departure":"2026-11-06","nights":2,"status":"completed","completedAt":"2026-11-05T13:02:58.360Z","totalPrice":"6936.00","pricingMode":"nightly-calculated","rooms":[{"roomNumber":"212","total":"6936.00"}],"roomNights":[{"roomNumber":"212","date":"2026-11-04","season":"mid","charge":"3468.00"},{"roomNumber":"212","date":"2026-11-05","season":"mid","charge":"3468.00"}],"guests":[]}
+  ]
+}

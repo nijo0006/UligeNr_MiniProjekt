@@ -4,8 +4,9 @@ Read `.specify/memory/constitution.md`, the feature specification, plan, and tas
 before changing behavior. Implement one task or a small related group at a time.
 Keep HTTP handling, business logic, and SQL in their respective layers. Do not invent
 undecided business rules or select a Tableau connector while that work is user-deferred.
-We have been told we may add our own demo data. Demo reviews belong in
-`backend/src/startup/demo-reviews.json` and are marked as synthetic in the database.
+We have been told we may add our own demo data. Shared bookings and reviews belong in
+`backend/src/startup/demo-bookings.json` and `demo-reviews.json`; export them with
+`scripts/export-demo-data.sh` (see README).
 
 Use `docker compose up` for the normal local runtime. Host Node/npm is needed only if
 you choose to develop or run pure tests outside containers; application runtime is
