@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { importHistoricalData } from './import.js';
 import { importDemoBookings } from './demoBookings.js';
+import { fillDemoGuestCounts } from './demoGuestCounts.js';
 import { importDemoReviews } from './demoReviews.js';
 
 // history: import the Excel workbook. demoData: then add the shared demo bookings and reviews.
@@ -42,6 +43,7 @@ export async function initialize(pool, { history = true, demoData = true } = {})
     if (history) {
       await importHistoricalData(connection);
       if (demoData) {
+        await fillDemoGuestCounts(connection);
         await importDemoBookings(connection);
         await importDemoReviews(connection);
       }

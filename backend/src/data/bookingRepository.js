@@ -87,7 +87,7 @@ export class BookingRepository {
     return this.get(result.rows[0].id);
   }
   async update(id, data, calculation) {
-    const result = await this.database.query(`UPDATE bookings SET holder_first_name=$1,holder_last_name=$2,holder_country=$3,guest_count=$4,arrival=$5,departure=$6,nights=$7,total_price=$8,version=version+1,pricing_mode='nightly-calculated',synthetic_dates=$11,synthetic_room_assignment=$12,holder_email=$13 WHERE id=$9 AND version=$10 AND status<>'cancelled'`,
+    const result = await this.database.query(`UPDATE bookings SET holder_first_name=$1,holder_last_name=$2,holder_country=$3,guest_count=$4,arrival=$5,departure=$6,nights=$7,total_price=$8,version=version+1,pricing_mode='nightly-calculated',synthetic_guest_count=(synthetic_guest_count AND guest_count IS NOT DISTINCT FROM $4),synthetic_dates=$11,synthetic_room_assignment=$12,holder_email=$13 WHERE id=$9 AND version=$10 AND status<>'cancelled'`,
       [data.holderFirstName,data.holderLastName,data.holderCountry,data.guestCount,data.arrival,calculation.departure,data.nights,calculation.totalPrice,id,data.version,calculation.syntheticDates,calculation.syntheticRoomAssignment,data.holderEmail]);
     if (result.rowCount !== 1) throw new Error('Locked booking version unexpectedly changed.');
     await this.database.query('DELETE FROM room_nights WHERE booking_id=$1', [id]);

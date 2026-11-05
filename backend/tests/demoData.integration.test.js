@@ -5,6 +5,7 @@ import { createPool } from '../src/data/pool.js';
 import { initialize } from '../src/startup/initialize.js';
 import { readDemoBookings } from '../src/startup/demoBookings.js';
 import { readDemoReviews } from '../src/startup/demoReviews.js';
+import { readGuestRanges, demoGuestCount } from '../src/startup/demoGuestCounts.js';
 if (!process.env.POSTGRES_DB?.endsWith('_test')) throw new Error('Demo data checks require an isolated _test database.');
 
 // Each test gets a fresh schema, like a new computer with an empty database.
@@ -47,6 +48,26 @@ test('a new database gets every shared booking and review once, with saved price
   }
   await initialize(pool);
   assert.deepEqual(await counts(pool), first, 'a restart adds nothing twice');
+});
+
+test('every Excel booking gets a demo guest count within its room type range, the same after a restart', async () => {
+  const pool = await freshDatabase();
+  const ranges = await readGuestRanges();
+  await initialize(pool);
+  const query = `SELECT b.source_id AS "sourceId", b.guest_count AS "guestCount", b.synthetic_guest_count AS synthetic, r.room_type AS "roomType"
+    FROM bookings b JOIN booking_rooms br ON br.booking_id=b.id JOIN rooms r ON r.room_number=br.room_number
+    WHERE b.source_id IS NOT NULL ORDER BY b.source_id`;
+  const { rows } = await pool.query(query);
+  assert.equal(rows.length, 1000);
+  for (const row of rows) {
+    const [min, max] = ranges[row.roomType];
+    assert.ok(row.synthetic && row.guestCount >= min && row.guestCount <= max, `${row.sourceId}: ${row.guestCount} guests in ${row.roomType}`);
+    assert.equal(row.guestCount, demoGuestCount(row.sourceId, [min, max]));
+  }
+  await initialize(pool);
+  assert.deepEqual((await pool.query(query)).rows, rows);
+  const { rows: [summary] } = await pool.query("SELECT COUNT(*) FILTER (WHERE guest_count IS NULL)::integer AS unknown FROM bookings WHERE status<>'cancelled'");
+  assert.equal(summary.unknown, 0, 'no booking has an unknown guest count');
 });
 
 test('a shared booking whose room is already taken is skipped instead of double-booked', async () => {
