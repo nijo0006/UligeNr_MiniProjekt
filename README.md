@@ -54,7 +54,7 @@ Git. `backend/scripts/migrate-mysql-snapshot.js <private-snapshot.json>` can imp
 format into an empty, initialized target; it refuses a target containing bookings and
 verifies records before commit. This script is not required on a fresh clone.
 
-Annual hotel revenue is implemented through the API and frontend, with separate room and bar components and their combined total. The remaining operational reports and room questionnaires are also implemented; Tableau remains deferred.
+Annual hotel revenue is implemented through the API and frontend, with separate room and bar components and their combined total. The remaining operational reports and room questionnaires are also implemented, and the Tableau dashboard reads the same report data (see Tableau dashboard below).
 
 ## Implemented booking slice
 
@@ -76,7 +76,7 @@ Normal startup now imports the **1,000 source bookings** and **179,958 bar units
 Generated dates/room assignments within 2026 are labelled demonstration data.
 Source prices and immutable Excel evidence are retained. Operational edits/cancellations
 affect current reporting without rewriting source reference totals. Country/type/season and room reports, occupancy, inventory and questionnaire means are implemented.
-Tableau remains deferred. The served OpenAPI lists implemented endpoints.
+The Tableau dashboard is built from the same report API. The served OpenAPI lists implemented endpoints.
 Clearly named browser test bookings remain cancelled, not active stays.
 
 ## Historical Excel data
@@ -98,7 +98,8 @@ source IDs. The 25-row display page size does not limit stored bookings.
 The user confirmed that the complete workbook belongs to 2026; these are its original annual reference totals.
 Excel lacks actual stay/sales dates and numbered room assignments. The authorized
 demonstration allocation within that source year uses 2026, source seasons and available same-type rooms.
-Guest counts remain null; no satisfaction responses or additional people are generated.
+The workbook itself has no guest counts or satisfaction responses. For the demo, labelled
+synthetic guest counts and 40 demo reviews are loaded at startup (see Shared demo bookings and reviews).
 Original per-night prices exist in every source booking and sum exactly to its original
 total; these saved charges are retained, without applying the current booking tariff.
 
@@ -263,7 +264,7 @@ Request failures show **Unavailable**, separately from missing data.
 `containsSyntheticData` is true if either included component contains imported history
 with demonstration dates/room assignments; Overview explicitly labels those results.
 The existing `roomRevenue` field remains available to API consumers. Swagger documents
-the extended response, input validation and errors. Other operational reports and questionnaire entry are described below; Tableau remains deferred.
+the extended response, input validation and errors. Other operational reports, questionnaire entry and the Tableau dashboard are described below.
 
 ## Operational reports and questionnaires
 
@@ -401,7 +402,22 @@ and outstanding feature work.
 - [Implemented API contract](backend/openapi.json)
 - [Full future API draft](specs/001-hotel-operations/contracts/openapi.json)
 
-Tableau Public Edition's connection and refresh approach is deferred to the user.
+## Tableau dashboard
+
+Open `Tableau_Dashboard.twbx` in the repository root (Tableau Desktop Public Edition).
+It has two dashboards, **Hotel Overview · 2026** and **Helene Christine’s Bar · 2026**,
+with 23 worksheets covering every assignment KPI: guest countries, revenue per room type
+and season, revenue per country, highest-earning rooms and countries, annual hotel revenue,
+occupancy, inventory, satisfaction, Helene's annual sales, revenue per drink and the
+cocktail/coffee split.
+
+The data comes from the same `GET /api/reports/*` endpoints as the frontend.
+`scripts/tableau/build_dashboard.py --extracts` fetches them from the running app and
+writes Hyper extracts to `exports/tableau/data/`. The extracts are a **snapshot**: Tableau's
+Refresh does not call the API, so run the script again to get current data. A direct REST
+connector was tried, but the installed plugin failed Tableau's signature check. In
+production we would use a Web Data Connector or a scheduled extract refresh against the
+API. Details: [exports/tableau/DASHBOARD.md](exports/tableau/DASHBOARD.md).
 
 
 ## Room photographs and hotel appearance
@@ -445,12 +461,13 @@ On small screens scroll the plot horizontally; the data table remains permanentl
 
 ## Simple satisfaction table
 
-Overview shows only Room type and Rating, one row for each of the eight types. Until
-actual questionnaires exist, the rating is No data. Once responses arrive, the backend
+Overview shows only Room type and Rating, one row for each of the eight types. A type
+without questionnaire responses shows No data. Once responses arrive, the backend
 averages the actual ratings per type and the UI displays one decimal out of 5; room
 averages are not averaged again. `/api/reports/satisfaction?groupBy=roomType` supplies
-this table. The default endpoint still supplies per-room results. No data is generated,
-the default per-room report remains available, and ratings are collected through the guest questionnaire after check-out.
+this table. The default endpoint still supplies per-room results. Ratings are collected
+through the guest questionnaire after check-out; the shared demo reviews are stored as
+ordinary questionnaire answers marked `synthetic`.
 
 
 ## Workbook period corrected to 2026

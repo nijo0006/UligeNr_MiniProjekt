@@ -471,3 +471,27 @@ and 10 Chrome browser scenarios passed on the merged main (see entry above).
 
 The hotel feature is therefore complete except Tableau delivery and the explicitly
 open business choices above.
+
+
+## Final convergence check — 2026-11-06
+
+Update of the 2026-11-04 check after the Tableau dashboard and shared demo data were merged.
+
+### Changes since 2026-11-04
+
+| Item | Status | Where |
+| --- | --- | --- |
+| Interactive Tableau dashboard on the API's report data (US18, FR-020, T033) | Done | `Tableau_Dashboard.twbx`: dashboards *Hotel Overview · 2026* and *Helene Christine’s Bar · 2026*, 23 worksheets covering every assignment KPI |
+| Tableau values match the API | Done | `exports/tableau/dashboard-data-manifest.json`: countries, rooms and seasons reconcile to room revenue; drinks to bar revenue; components to total revenue |
+| Shared demo bookings, reviews and guest counts | Done | `backend/src/startup/demo-*.json`, loaded once at startup, marked synthetic; `scripts/export-demo-data.sh` only adds data |
+
+### Still missing / open
+
+| Item | Task | Status |
+| --- | --- | --- |
+| Tableau live refresh | T046 | Not implemented. The Hyper extracts are a snapshot; rerun `scripts/tableau/build_dashboard.py --extracts` to fetch current API data. The REST plugin failed Tableau's signature check. Production option: Web Data Connector or scheduled extract refresh. |
+| Business choices R3, R4, R7, R8, R10 | T037, T044 | Open by decision; prototype defaults documented in plan.md. |
+| Login, roles and access control | — | Out of scope for the prototype; required before production. |
+
+All assignment and week-2 requirements are implemented. The open items are Tableau live
+refresh and the business choices above.
