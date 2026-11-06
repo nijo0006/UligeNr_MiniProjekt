@@ -73,7 +73,7 @@ if args.extracts:
     hyper = HyperProcess(Telemetry.DO_NOT_SEND_USAGE_DATA_TO_TABLEAU, parameters={'log_config': ''})
 
 
-def attach_extract(ds, con, fields, key, endpoint, path, oid, obj):
+def attach_extract(ds, con, fields, key, endpoint, path, oid, obj, limit=None, labels=None):
     if not args.extracts:
         return
     url = API + endpoint
@@ -86,6 +86,11 @@ def attach_extract(ds, con, fields, key, endpoint, path, oid, obj):
             rows = rows[part]
     if isinstance(rows, dict):
         rows = [rows]
+    # Reports arrive sorted, so a limit keeps the top rows (e.g. the 10 highest-earning rooms).
+    if limit:
+        rows = [row for row in rows if row.get('roomRevenue') is not None][:limit]
+    # Display texts such as "4.6/5" and "78%" are made here, so Tableau shows them as written.
+    rows = [{**row, **{field: make(row) for field, make in (labels or {}).items()}} for row in rows]
     relative = Path('exports/tableau/data') / (key + '.hyper')
     output = ROOT / relative
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -120,7 +125,9 @@ def attach_extract(ds, con, fields, key, endpoint, path, oid, obj):
     evidence[key] = {'url': url, 'jsonPath': path, 'rows': len(rows), 'extract': relative.as_posix()}
 
 
-def datasource(key, caption, endpoint, fields, path='$', calculations=None):
+def datasource(key, caption, endpoint, fields, path='$', calculations=None, limit=None, labels=None):
+    # labels: {field: (function(row) -> text, caption)} adds ready-made display texts.
+    fields = list(fields) + [(field, 'string', label) for field, (_, label) in (labels or {}).items()]
     name = 'federated.hotel_' + key
     ncname = 'tableau_rest.hotel_' + key
     oid = 'rest_table_' + ident(key).replace('-', '')
@@ -170,8 +177,18 @@ def datasource(key, caption, endpoint, fields, path='$', calculations=None):
     sub(ds, 'layout', dim_ordering='alphabetic', measure_ordering='alphabetic', show_structure='true')
     obj = sub(sub(sub(ds, 'object-graph'), 'objects'), 'object', caption=caption, id=oid)
     sub(obj, 'properties', context='').append(deepcopy(relation))
-    attach_extract(ds, con, fields, key, endpoint, path, oid, obj)
+    attach_extract(ds, con, fields, key, endpoint, path, oid, obj, limit, {f: make for f, (make, _) in (labels or {}).items()})
     registry[key] = (name, caption, columns)
+
+
+def rating_text(value):
+    """4.0 -> "4/5", 4.6 -> "4.6/5", no answers -> "No data"."""
+    return 'No data' if value is None else f'{value:.1f}'.removesuffix('.0') + '/5'
+
+
+def percent_text(value):
+    """78.05 -> "78%"."""
+    return 'No data' if value is None else f'{round(value)}%'
 
 
 datasource('countries', 'Guest markets · 2026', 'reports/countries?year=2026', [
@@ -191,11 +208,13 @@ datasource('rooms', 'Room performance · 2026', 'reports/rooms?year=2026', [
     ('roomRevenue', 'string', 'Room revenue (API)'), ('soldRoomNights', 'integer', 'Sold room-nights'),
     ('containsSyntheticData', 'boolean', 'Contains demonstration allocations')], calculations={
         'RevenueDKK': ('FLOAT([roomRevenue])', 'real', 'Room revenue · DKK')})
-datasource('inventory', 'Room inventory · 214 rooms', 'reports/inventory', [
-    ('roomType', 'string', 'Room type'), ('roomCount', 'integer', 'Rooms'), ('synthetic', 'boolean', 'Demonstration inventory')])
+datasource('topRooms', 'Top 10 rooms · 2026', 'reports/rooms?year=2026', [
+    ('roomNumber', 'string', 'Room'), ('roomType', 'string', 'Room type'),
+    ('roomRevenue', 'string', 'Room revenue (API)'), ('soldRoomNights', 'integer', 'Sold room-nights')], calculations={
+        'RevenueDKK': ('FLOAT([roomRevenue])', 'real', 'Room revenue · DKK')}, limit=10)
 datasource('satisfaction', 'Guest satisfaction · all time', 'reports/satisfaction?groupBy=roomType', [
-    ('roomType', 'string', 'Room type'), ('responseCount', 'integer', 'Responses'), ('meanRating', 'real', 'Mean rating')], calculations={
-        'RatingLabel': ('IF ISNULL([meanRating]) THEN "No data" ELSE STR(ROUND([meanRating], 1)) + " / 5" END', 'string', 'Rating')})
+    ('roomType', 'string', 'Room type'), ('responseCount', 'integer', 'Responses'), ('meanRating', 'real', 'Mean rating')],
+    labels={'ratingText': (lambda row: rating_text(row['meanRating']), 'Rating')})
 datasource('summary', 'Hotel overview · 2026', 'reports/summary?year=2026', [
     ('year', 'integer', 'Year'), ('bookingCount', 'integer', 'Bookings'),
     ('soldRoomNights', 'integer', 'Sold room-nights'), ('knownGuestCount', 'integer', 'Known guests'),
@@ -218,9 +237,11 @@ datasource('mix', 'Cocktails and coffee · 2026', 'reports/bar?year=2026', [
     ('category', 'string', 'Category'), ('units', 'integer', 'Units sold'), ('revenue', 'string', 'Revenue (API)')], path='$.categories', calculations={
         'RevenueDKK': ('FLOAT([revenue])', 'real', 'Revenue · DKK')})
 datasource('overall', 'Whole-stay satisfaction · all time', 'reports/stay-feedback', [
-    ('meanRating', 'real', 'Overall stay rating'), ('responseCount', 'integer', 'Responses')], path='$.overall')
+    ('meanRating', 'real', 'Overall stay rating'), ('responseCount', 'integer', 'Responses')], path='$.overall',
+    labels={'ratingText': (lambda row: rating_text(row['meanRating']), 'Overall stay rating')})
 datasource('recommend', 'Guest recommendations · all time', 'reports/stay-feedback', [
-    ('recommendPercent', 'real', 'Would recommend · %'), ('responseCount', 'integer', 'Responses')], path='$.recommendation')
+    ('recommendPercent', 'real', 'Would recommend · %'), ('responseCount', 'integer', 'Responses')], path='$.recommendation',
+    labels={'percentText': (lambda row: percent_text(row['recommendPercent']), 'Would recommend')})
 
 
 def sheet(title, key, rows=(), cols=(), mark='Bar', color=None, text=None,
@@ -343,16 +364,15 @@ sheet('Room revenue by type & season', 'seasons', rows=[S('RevenueDKK')], cols=[
       color=D('roomType'), details=[S('soldRoomNights')])
 sheet('Seasonal data · revenue DKK', 'seasons', rows=[D('roomType')], cols=[D('SeasonLabel')],
       mark='Text', color=D('roomType'), text=S('RevenueDKK'), details=[S('soldRoomNights')])
-sheet('Highest-earning rooms · Top 10', 'rooms', rows=[D('roomNumber')], cols=[S('RevenueDKK')],
+sheet('Highest-earning rooms · Top 10', 'topRooms', rows=[D('roomNumber')], cols=[S('RevenueDKK')],
       color=D('roomType'), text=S('RevenueDKK'), details=[S('soldRoomNights')],
-      sort=(D('roomNumber'), S('RevenueDKK')), top=(D('roomNumber'), S('RevenueDKK'), 10))
+      sort=(D('roomNumber'), S('RevenueDKK')))
 sheet('Highest-earning rooms · all rooms', 'rooms', rows=[D('roomNumber')], cols=[S('RevenueDKK')],
       color=D('roomType'), details=[S('soldRoomNights')], sort=(D('roomNumber'), S('RevenueDKK')))
-sheet('Room overview', 'inventory', rows=[D('roomType')], mark='Text', text=S('roomCount'), color=D('roomType'))
 sheet('Rating by room type · 1–5', 'satisfaction', rows=[D('roomType')], cols=[A('meanRating')], color=D('roomType'),
-      text=A('meanRating'), details=[S('responseCount')], sort=(D('roomType'), A('meanRating')))
-sheet('Overall stay rating · 1–5', 'overall', mark='Text', text=A('meanRating'), kpi=True)
-sheet('Would recommend the hotel · %', 'recommend', mark='Text', text=A('recommendPercent'), kpi=True)
+      text=D('ratingText'), details=[S('responseCount')], sort=(D('roomType'), A('meanRating')))
+sheet('Overall stay rating · 1–5', 'overall', mark='Text', text=D('ratingText'), kpi=True)
+sheet('Would recommend the hotel · %', 'recommend', mark='Text', text=D('percentText'), kpi=True)
 sheet('Helene Christine · annual revenue DKK', 'bar', mark='Text', text=S('RevenueDKK'), kpi=True)
 sheet('Helene Christine · annual units sold', 'bar', mark='Text', text=S('units'), kpi=True)
 sheet('Cocktails · revenue share %', 'bar', mark='Text', text=A('cocktailPercent'), kpi=True)
@@ -402,7 +422,7 @@ dashboard('Hotel Overview · 2026', 1600, 2200, [
     ('Annual occupancy · %', 24, 252, 500, 130), ('Bookings · 2026', 536, 252, 500, 130), ('Sold room-nights', 1048, 252, 528, 130),
     ('Guest markets & highest-earning countries', 24, 394, 1000, 440), ('Country revenue · DKK', 1036, 394, 540, 440),
     ('Room revenue by type & season', 24, 846, 1000, 430), ('Highest-earning rooms · Top 10', 1036, 846, 540, 430),
-    ('Seasonal data · revenue DKK', 24, 1288, 1000, 400), ('Room overview', 1036, 1288, 540, 400),
+    ('Seasonal data · revenue DKK', 24, 1288, 1552, 400),
     ('Guests by country', 24, 1700, 740, 420), ('Rating by room type · 1–5', 776, 1742, 800, 236),
     ('Overall stay rating · 1–5', 776, 1990, 394, 130), ('Would recommend the hotel · %', 1182, 1990, 394, 130),
 ], 'Hotel operations and performance · annual occupancy is the additional KPI · use worksheets to explore all rooms',

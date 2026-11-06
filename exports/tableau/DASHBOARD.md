@@ -13,11 +13,10 @@ the extracts under `exports/tableau/data/`.
 | Guests by country | Guests per country, sorted from most to fewest |
 | Revenue per room type and season | Grouped vertical bars, Low / Mid / High; eight frontend room colors |
 | Seasonal figures | Room type × season revenue table, using the same colors |
-| Highest-earning rooms | Ten highest-revenue rooms as horizontal bars; separate all-rooms worksheet |
+| Highest-earning rooms | Ten highest-revenue rooms as horizontal bars (the extract holds only these ten); separate all-rooms worksheet |
 | Annual hotel revenue | Hotel, room and bar revenue KPI cards |
 | Additional interesting KPI | Annual occupancy, with booking and sold room-night cards |
-| Room overview | Room counts per type; 214 rooms |
-| Guest satisfaction | Like the frontend: rating per room type as bars in the room colors, overall stay rating and would-recommend percentage; all-time |
+| Guest satisfaction | Like the frontend: rating per room type as bars in the room colors, overall stay rating and would-recommend percentage, shown as e.g. 4.6/5 and 78%; all-time |
 | Helene Christine's annual sales | Annual bar revenue and units sold |
 | Revenue per drink | Horizontal bars for all supplied drinks |
 | Cocktail / coffee split | API-calculated percentage cards and category revenue bars |

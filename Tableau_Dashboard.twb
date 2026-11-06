@@ -317,59 +317,75 @@
         </objects>
       </object-graph>
     </datasource>
-    <datasource caption="Room inventory · 214 rooms" inline="true" name="federated.hotel_inventory" version="18.1">
-      <connection access-mode="readonly" authentication="auth-none" author-locale="en_US" class="hyper" dbname="exports/tableau/data/inventory.hyper" default-settings="yes" schema="Extract" sslmode="" tablename="Extract" username="tableau_internal_user">
+    <datasource caption="Top 10 rooms · 2026" inline="true" name="federated.hotel_topRooms" version="18.1">
+      <connection access-mode="readonly" authentication="auth-none" author-locale="en_US" class="hyper" dbname="exports/tableau/data/topRooms.hyper" default-settings="yes" schema="Extract" sslmode="" tablename="Extract" username="tableau_internal_user">
         <relation name="Extract" table="[Extract].[Extract]" type="table" />
         <metadata-records>
+          <metadata-record class="column">
+            <remote-name>roomNumber</remote-name>
+            <remote-type>129</remote-type>
+            <local-name>[roomNumber]</local-name>
+            <parent-name>[Extract]</parent-name>
+            <remote-alias>roomNumber</remote-alias>
+            <ordinal>0</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+            <object-id>[rest_table_9EBDA04B09C65E4881524CCC9BBBF67C]</object-id>
+          </metadata-record>
           <metadata-record class="column">
             <remote-name>roomType</remote-name>
             <remote-type>129</remote-type>
             <local-name>[roomType]</local-name>
             <parent-name>[Extract]</parent-name>
             <remote-alias>roomType</remote-alias>
-            <ordinal>0</ordinal>
+            <ordinal>1</ordinal>
             <local-type>string</local-type>
             <aggregation>Count</aggregation>
             <contains-null>true</contains-null>
-            <object-id>[rest_table_278606271A3E5CF6AE8A0427C89835E6]</object-id>
+            <object-id>[rest_table_9EBDA04B09C65E4881524CCC9BBBF67C]</object-id>
           </metadata-record>
           <metadata-record class="column">
-            <remote-name>roomCount</remote-name>
-            <remote-type>20</remote-type>
-            <local-name>[roomCount]</local-name>
+            <remote-name>roomRevenue</remote-name>
+            <remote-type>129</remote-type>
+            <local-name>[roomRevenue]</local-name>
             <parent-name>[Extract]</parent-name>
-            <remote-alias>roomCount</remote-alias>
-            <ordinal>1</ordinal>
+            <remote-alias>roomRevenue</remote-alias>
+            <ordinal>2</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+            <object-id>[rest_table_9EBDA04B09C65E4881524CCC9BBBF67C]</object-id>
+          </metadata-record>
+          <metadata-record class="column">
+            <remote-name>soldRoomNights</remote-name>
+            <remote-type>20</remote-type>
+            <local-name>[soldRoomNights]</local-name>
+            <parent-name>[Extract]</parent-name>
+            <remote-alias>soldRoomNights</remote-alias>
+            <ordinal>3</ordinal>
             <local-type>integer</local-type>
             <aggregation>Sum</aggregation>
             <contains-null>true</contains-null>
-            <object-id>[rest_table_278606271A3E5CF6AE8A0427C89835E6]</object-id>
-          </metadata-record>
-          <metadata-record class="column">
-            <remote-name>synthetic</remote-name>
-            <remote-type>11</remote-type>
-            <local-name>[synthetic]</local-name>
-            <parent-name>[Extract]</parent-name>
-            <remote-alias>synthetic</remote-alias>
-            <ordinal>2</ordinal>
-            <local-type>boolean</local-type>
-            <aggregation>Count</aggregation>
-            <contains-null>true</contains-null>
-            <object-id>[rest_table_278606271A3E5CF6AE8A0427C89835E6]</object-id>
+            <object-id>[rest_table_9EBDA04B09C65E4881524CCC9BBBF67C]</object-id>
           </metadata-record>
         </metadata-records>
       </connection>
       <aliases enabled="yes" />
       <column caption="Measure Names" datatype="string" name="[:Measure Names]" role="dimension" type="nominal" />
       <column caption="Measure Values" datatype="real" name="[Multiple Values]" role="measure" type="quantitative" />
-      <column caption="rest_table" datatype="table" name="[__tableau_internal_object_id__].[rest_table_278606271A3E5CF6AE8A0427C89835E6]" role="measure" type="quantitative" />
+      <column caption="rest_table" datatype="table" name="[__tableau_internal_object_id__].[rest_table_9EBDA04B09C65E4881524CCC9BBBF67C]" role="measure" type="quantitative" />
+      <column caption="Room" datatype="string" name="[roomNumber]" role="dimension" type="nominal" />
       <column caption="Room type" datatype="string" name="[roomType]" role="dimension" type="nominal" />
-      <column caption="Rooms" datatype="integer" name="[roomCount]" role="measure" type="quantitative" default-format="#,##0" />
-      <column caption="Demonstration inventory" datatype="boolean" name="[synthetic]" role="dimension" type="nominal" />
+      <column caption="Room revenue (API)" datatype="string" name="[roomRevenue]" role="dimension" type="nominal" />
+      <column caption="Sold room-nights" datatype="integer" name="[soldRoomNights]" role="measure" type="quantitative" default-format="#,##0" />
+      <column caption="Room revenue · DKK" datatype="real" name="[RevenueDKK]" role="measure" type="quantitative" default-format="#,##0.0">
+        <calculation class="tableau" formula="FLOAT([roomRevenue])" />
+      </column>
       <layout dim-ordering="alphabetic" measure-ordering="alphabetic" show-structure="true" />
       <object-graph>
         <objects>
-          <object caption="Room inventory · 214 rooms" id="rest_table_278606271A3E5CF6AE8A0427C89835E6">
+          <object caption="Top 10 rooms · 2026" id="rest_table_9EBDA04B09C65E4881524CCC9BBBF67C">
             <properties context="">
               <relation name="Extract" table="[Extract].[Extract]" type="table" />
             </properties>
@@ -417,6 +433,18 @@
             <contains-null>true</contains-null>
             <object-id>[rest_table_C47645D45BB25F63AD0CE80C9F4ED90E]</object-id>
           </metadata-record>
+          <metadata-record class="column">
+            <remote-name>ratingText</remote-name>
+            <remote-type>129</remote-type>
+            <local-name>[ratingText]</local-name>
+            <parent-name>[Extract]</parent-name>
+            <remote-alias>ratingText</remote-alias>
+            <ordinal>3</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+            <object-id>[rest_table_C47645D45BB25F63AD0CE80C9F4ED90E]</object-id>
+          </metadata-record>
         </metadata-records>
       </connection>
       <aliases enabled="yes" />
@@ -426,9 +454,7 @@
       <column caption="Room type" datatype="string" name="[roomType]" role="dimension" type="nominal" />
       <column caption="Responses" datatype="integer" name="[responseCount]" role="measure" type="quantitative" default-format="#,##0" />
       <column caption="Mean rating" datatype="real" name="[meanRating]" role="measure" type="quantitative" default-format="#,##0.0" />
-      <column caption="Rating" datatype="string" name="[RatingLabel]" role="dimension" type="nominal">
-        <calculation class="tableau" formula="IF ISNULL([meanRating]) THEN &quot;No data&quot; ELSE STR(ROUND([meanRating], 1)) + &quot; / 5&quot; END" />
-      </column>
+      <column caption="Rating" datatype="string" name="[ratingText]" role="dimension" type="nominal" />
       <layout dim-ordering="alphabetic" measure-ordering="alphabetic" show-structure="true" />
       <object-graph>
         <objects>
@@ -869,6 +895,18 @@
             <contains-null>true</contains-null>
             <object-id>[rest_table_07ADA33FA0825DB5BEC33F78B05AC1A1]</object-id>
           </metadata-record>
+          <metadata-record class="column">
+            <remote-name>ratingText</remote-name>
+            <remote-type>129</remote-type>
+            <local-name>[ratingText]</local-name>
+            <parent-name>[Extract]</parent-name>
+            <remote-alias>ratingText</remote-alias>
+            <ordinal>2</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+            <object-id>[rest_table_07ADA33FA0825DB5BEC33F78B05AC1A1]</object-id>
+          </metadata-record>
         </metadata-records>
       </connection>
       <aliases enabled="yes" />
@@ -877,6 +915,7 @@
       <column caption="rest_table" datatype="table" name="[__tableau_internal_object_id__].[rest_table_07ADA33FA0825DB5BEC33F78B05AC1A1]" role="measure" type="quantitative" />
       <column caption="Overall stay rating" datatype="real" name="[meanRating]" role="measure" type="quantitative" default-format="#,##0.0" />
       <column caption="Responses" datatype="integer" name="[responseCount]" role="measure" type="quantitative" default-format="#,##0" />
+      <column caption="Overall stay rating" datatype="string" name="[ratingText]" role="dimension" type="nominal" />
       <layout dim-ordering="alphabetic" measure-ordering="alphabetic" show-structure="true" />
       <object-graph>
         <objects>
@@ -916,6 +955,18 @@
             <contains-null>true</contains-null>
             <object-id>[rest_table_F30EA4B1A9D85D7B98EB583CFE30E35A]</object-id>
           </metadata-record>
+          <metadata-record class="column">
+            <remote-name>percentText</remote-name>
+            <remote-type>129</remote-type>
+            <local-name>[percentText]</local-name>
+            <parent-name>[Extract]</parent-name>
+            <remote-alias>percentText</remote-alias>
+            <ordinal>2</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+            <object-id>[rest_table_F30EA4B1A9D85D7B98EB583CFE30E35A]</object-id>
+          </metadata-record>
         </metadata-records>
       </connection>
       <aliases enabled="yes" />
@@ -924,6 +975,7 @@
       <column caption="rest_table" datatype="table" name="[__tableau_internal_object_id__].[rest_table_F30EA4B1A9D85D7B98EB583CFE30E35A]" role="measure" type="quantitative" />
       <column caption="Would recommend · %" datatype="real" name="[recommendPercent]" role="measure" type="quantitative" default-format="#,##0.0" />
       <column caption="Responses" datatype="integer" name="[responseCount]" role="measure" type="quantitative" default-format="#,##0" />
+      <column caption="Would recommend" datatype="string" name="[percentText]" role="dimension" type="nominal" />
       <layout dim-ordering="alphabetic" measure-ordering="alphabetic" show-structure="true" />
       <object-graph>
         <objects>
@@ -1738,14 +1790,13 @@
       <table>
         <view>
           <datasources>
-            <datasource caption="Room performance · 2026" name="federated.hotel_rooms" />
+            <datasource caption="Top 10 rooms · 2026" name="federated.hotel_topRooms" />
           </datasources>
-          <datasource-dependencies datasource="federated.hotel_rooms">
+          <datasource-dependencies datasource="federated.hotel_topRooms">
             <column caption="Room" datatype="string" name="[roomNumber]" role="dimension" type="nominal" />
             <column caption="Room type" datatype="string" name="[roomType]" role="dimension" type="nominal" />
             <column caption="Room revenue (API)" datatype="string" name="[roomRevenue]" role="dimension" type="nominal" />
             <column caption="Sold room-nights" datatype="integer" name="[soldRoomNights]" role="measure" type="quantitative" default-format="#,##0" />
-            <column caption="Contains demonstration allocations" datatype="boolean" name="[containsSyntheticData]" role="dimension" type="nominal" />
             <column caption="Room revenue · DKK" datatype="real" name="[RevenueDKK]" role="measure" type="quantitative" default-format="#,##0.0">
               <calculation class="tableau" formula="FLOAT([roomRevenue])" />
             </column>
@@ -1754,14 +1805,7 @@
             <column-instance column="[soldRoomNights]" derivation="Sum" name="[sum:soldRoomNights:qk]" pivot="key" type="quantitative" />
             <column-instance column="[roomType]" derivation="None" name="[none:roomType:nk]" pivot="key" type="nominal" />
           </datasource-dependencies>
-          <filter class="categorical" column="[federated.hotel_rooms].[none:roomNumber:nk]">
-            <groupfilter function="end" count="10" end="top" units="records">
-              <groupfilter function="order" direction="DESC" expression="[federated.hotel_rooms].[sum:RevenueDKK:qk]">
-                <groupfilter function="level-members" level="[federated.hotel_rooms].[none:roomNumber:nk]" />
-              </groupfilter>
-            </groupfilter>
-          </filter>
-          <sort class="computed" column="[federated.hotel_rooms].[none:roomNumber:nk]" direction="DESC" using="[federated.hotel_rooms].[sum:RevenueDKK:qk]" />
+          <sort class="computed" column="[federated.hotel_topRooms].[none:roomNumber:nk]" direction="DESC" using="[federated.hotel_topRooms].[sum:RevenueDKK:qk]" />
           <aggregation value="true" />
         </view>
         <style>
@@ -1786,16 +1830,16 @@
             </view>
             <mark class="Bar" />
             <encodings>
-              <color column="[federated.hotel_rooms].[none:roomType:nk]" />
-              <text column="[federated.hotel_rooms].[sum:RevenueDKK:qk]" />
-              <lod column="[federated.hotel_rooms].[sum:soldRoomNights:qk]" />
+              <color column="[federated.hotel_topRooms].[none:roomType:nk]" />
+              <text column="[federated.hotel_topRooms].[sum:RevenueDKK:qk]" />
+              <lod column="[federated.hotel_topRooms].[sum:soldRoomNights:qk]" />
             </encodings>
             <style>
               <style-rule element="mark">
                 <format attr="color" value="#153f6c" />
                 <format attr="mark-labels-show" value="true" />
                 <format attr="font-size" value="12" />
-                <encoding attr="color" field="[federated.hotel_rooms].[none:roomType:nk]" type="palette">
+                <encoding attr="color" field="[federated.hotel_topRooms].[none:roomType:nk]" type="palette">
                   <map to="#6f8e85">
                     <bucket>"Standard Single"</bucket>
                   </map>
@@ -1825,8 +1869,8 @@
             </style>
           </pane>
         </panes>
-        <rows>[federated.hotel_rooms].[none:roomNumber:nk]</rows>
-        <cols>[federated.hotel_rooms].[sum:RevenueDKK:qk]</cols>
+        <rows>[federated.hotel_topRooms].[none:roomNumber:nk]</rows>
+        <cols>[federated.hotel_topRooms].[sum:RevenueDKK:qk]</cols>
       </table>
       <simple-id uuid="{0B4EF4B8-420B-5969-85E8-3DADF742E317}" />
     </worksheet>
@@ -1918,86 +1962,6 @@
       </table>
       <simple-id uuid="{18B5E256-4976-571B-B2AD-3DA9E54DC255}" />
     </worksheet>
-    <worksheet name="Room overview">
-      <table>
-        <view>
-          <datasources>
-            <datasource caption="Room inventory · 214 rooms" name="federated.hotel_inventory" />
-          </datasources>
-          <datasource-dependencies datasource="federated.hotel_inventory">
-            <column caption="Room type" datatype="string" name="[roomType]" role="dimension" type="nominal" />
-            <column caption="Rooms" datatype="integer" name="[roomCount]" role="measure" type="quantitative" default-format="#,##0" />
-            <column caption="Demonstration inventory" datatype="boolean" name="[synthetic]" role="dimension" type="nominal" />
-            <column-instance column="[roomType]" derivation="None" name="[none:roomType:nk]" pivot="key" type="nominal" />
-            <column-instance column="[roomCount]" derivation="Sum" name="[sum:roomCount:qk]" pivot="key" type="quantitative" />
-          </datasource-dependencies>
-          <aggregation value="true" />
-        </view>
-        <style>
-          <style-rule element="worksheet">
-            <format attr="font-family" value="Barlow" />
-            <format attr="font-size" value="11" />
-            <format attr="color" value="#263e56" />
-            <format attr="background-color" value="#ffffff" />
-          </style-rule>
-          <style-rule element="cell">
-            <format attr="font-size" value="12" />
-            <format attr="color" value="#153f6c" />
-          </style-rule>
-          <style-rule element="gridline">
-            <format attr="line-visibility" value="off" />
-          </style-rule>
-        </style>
-        <panes>
-          <pane selection-relaxation-option="selection-relaxation-allow">
-            <view>
-              <breakdown value="auto" />
-            </view>
-            <mark class="Text" />
-            <encodings>
-              <color column="[federated.hotel_inventory].[none:roomType:nk]" />
-              <text column="[federated.hotel_inventory].[sum:roomCount:qk]" />
-            </encodings>
-            <style>
-              <style-rule element="mark">
-                <format attr="color" value="#153f6c" />
-                <format attr="mark-labels-show" value="true" />
-                <format attr="font-size" value="12" />
-                <encoding attr="color" field="[federated.hotel_inventory].[none:roomType:nk]" type="palette">
-                  <map to="#6f8e85">
-                    <bucket>"Standard Single"</bucket>
-                  </map>
-                  <map to="#496b60">
-                    <bucket>"Grand Lit"</bucket>
-                  </map>
-                  <map to="#789ba0">
-                    <bucket>"Standard Double"</bucket>
-                  </map>
-                  <map to="#657f98">
-                    <bucket>"Superior Double"</bucket>
-                  </map>
-                  <map to="#918296">
-                    <bucket>"Junior Suite"</bucket>
-                  </map>
-                  <map to="#b28b87">
-                    <bucket>"Spa Executive"</bucket>
-                  </map>
-                  <map to="#b28768">
-                    <bucket>"Suite"</bucket>
-                  </map>
-                  <map to="#b5a078">
-                    <bucket>"LOFT Suite"</bucket>
-                  </map>
-                </encoding>
-              </style-rule>
-            </style>
-          </pane>
-        </panes>
-        <rows>[federated.hotel_inventory].[none:roomType:nk]</rows>
-        <cols />
-      </table>
-      <simple-id uuid="{FA89FF8C-F15D-5441-B67E-587CC69DB84D}" />
-    </worksheet>
     <worksheet name="Rating by room type · 1–5">
       <table>
         <view>
@@ -2008,12 +1972,11 @@
             <column caption="Room type" datatype="string" name="[roomType]" role="dimension" type="nominal" />
             <column caption="Responses" datatype="integer" name="[responseCount]" role="measure" type="quantitative" default-format="#,##0" />
             <column caption="Mean rating" datatype="real" name="[meanRating]" role="measure" type="quantitative" default-format="#,##0.0" />
-            <column caption="Rating" datatype="string" name="[RatingLabel]" role="dimension" type="nominal">
-              <calculation class="tableau" formula="IF ISNULL([meanRating]) THEN &quot;No data&quot; ELSE STR(ROUND([meanRating], 1)) + &quot; / 5&quot; END" />
-            </column>
+            <column caption="Rating" datatype="string" name="[ratingText]" role="dimension" type="nominal" />
             <column-instance column="[roomType]" derivation="None" name="[none:roomType:nk]" pivot="key" type="nominal" />
             <column-instance column="[meanRating]" derivation="Avg" name="[avg:meanRating:qk]" pivot="key" type="quantitative" />
             <column-instance column="[responseCount]" derivation="Sum" name="[sum:responseCount:qk]" pivot="key" type="quantitative" />
+            <column-instance column="[ratingText]" derivation="None" name="[none:ratingText:nk]" pivot="key" type="nominal" />
           </datasource-dependencies>
           <sort class="computed" column="[federated.hotel_satisfaction].[none:roomType:nk]" direction="DESC" using="[federated.hotel_satisfaction].[avg:meanRating:qk]" />
           <aggregation value="true" />
@@ -2041,7 +2004,7 @@
             <mark class="Bar" />
             <encodings>
               <color column="[federated.hotel_satisfaction].[none:roomType:nk]" />
-              <text column="[federated.hotel_satisfaction].[avg:meanRating:qk]" />
+              <text column="[federated.hotel_satisfaction].[none:ratingText:nk]" />
               <lod column="[federated.hotel_satisfaction].[sum:responseCount:qk]" />
             </encodings>
             <style>
@@ -2093,7 +2056,8 @@
           <datasource-dependencies datasource="federated.hotel_overall">
             <column caption="Overall stay rating" datatype="real" name="[meanRating]" role="measure" type="quantitative" default-format="#,##0.0" />
             <column caption="Responses" datatype="integer" name="[responseCount]" role="measure" type="quantitative" default-format="#,##0" />
-            <column-instance column="[meanRating]" derivation="Avg" name="[avg:meanRating:qk]" pivot="key" type="quantitative" />
+            <column caption="Overall stay rating" datatype="string" name="[ratingText]" role="dimension" type="nominal" />
+            <column-instance column="[ratingText]" derivation="None" name="[none:ratingText:nk]" pivot="key" type="nominal" />
           </datasource-dependencies>
           <aggregation value="true" />
         </view>
@@ -2119,7 +2083,7 @@
             </view>
             <mark class="Text" />
             <encodings>
-              <text column="[federated.hotel_overall].[avg:meanRating:qk]" />
+              <text column="[federated.hotel_overall].[none:ratingText:nk]" />
             </encodings>
             <style>
               <style-rule element="mark">
@@ -2144,7 +2108,8 @@
           <datasource-dependencies datasource="federated.hotel_recommend">
             <column caption="Would recommend · %" datatype="real" name="[recommendPercent]" role="measure" type="quantitative" default-format="#,##0.0" />
             <column caption="Responses" datatype="integer" name="[responseCount]" role="measure" type="quantitative" default-format="#,##0" />
-            <column-instance column="[recommendPercent]" derivation="Avg" name="[avg:recommendPercent:qk]" pivot="key" type="quantitative" />
+            <column caption="Would recommend" datatype="string" name="[percentText]" role="dimension" type="nominal" />
+            <column-instance column="[percentText]" derivation="None" name="[none:percentText:nk]" pivot="key" type="nominal" />
           </datasource-dependencies>
           <aggregation value="true" />
         </view>
@@ -2170,7 +2135,7 @@
             </view>
             <mark class="Text" />
             <encodings>
-              <text column="[federated.hotel_recommend].[avg:recommendPercent:qk]" />
+              <text column="[federated.hotel_recommend].[none:percentText:nk]" />
             </encodings>
             <style>
               <style-rule element="mark">
@@ -2680,7 +2645,7 @@
               <format attr="padding" value="12" />
             </zone-style>
           </zone>
-          <zone id="13" x="1500" y="58545" w="62500" h="18182" name="Seasonal data · revenue DKK" show-title="true">
+          <zone id="13" x="1500" y="58545" w="97000" h="18182" name="Seasonal data · revenue DKK" show-title="true">
             <zone-style>
               <format attr="background-color" value="#ffffff" />
               <format attr="border-color" value="#ddd2c5" />
@@ -2690,7 +2655,7 @@
               <format attr="padding" value="12" />
             </zone-style>
           </zone>
-          <zone id="14" x="64750" y="58545" w="33750" h="18182" name="Room overview" show-title="true">
+          <zone id="14" x="1500" y="77273" w="46250" h="19091" name="Guests by country" show-title="true">
             <zone-style>
               <format attr="background-color" value="#ffffff" />
               <format attr="border-color" value="#ddd2c5" />
@@ -2700,7 +2665,7 @@
               <format attr="padding" value="12" />
             </zone-style>
           </zone>
-          <zone id="15" x="1500" y="77273" w="46250" h="19091" name="Guests by country" show-title="true">
+          <zone id="15" x="48500" y="79182" w="50000" h="10727" name="Rating by room type · 1–5" show-title="true">
             <zone-style>
               <format attr="background-color" value="#ffffff" />
               <format attr="border-color" value="#ddd2c5" />
@@ -2710,7 +2675,7 @@
               <format attr="padding" value="12" />
             </zone-style>
           </zone>
-          <zone id="16" x="48500" y="79182" w="50000" h="10727" name="Rating by room type · 1–5" show-title="true">
+          <zone id="16" x="48500" y="90455" w="24625" h="5909" name="Overall stay rating · 1–5" show-title="true">
             <zone-style>
               <format attr="background-color" value="#ffffff" />
               <format attr="border-color" value="#ddd2c5" />
@@ -2720,7 +2685,7 @@
               <format attr="padding" value="12" />
             </zone-style>
           </zone>
-          <zone id="17" x="48500" y="90455" w="24625" h="5909" name="Overall stay rating · 1–5" show-title="true">
+          <zone id="17" x="73875" y="90455" w="24625" h="5909" name="Would recommend the hotel · %" show-title="true">
             <zone-style>
               <format attr="background-color" value="#ffffff" />
               <format attr="border-color" value="#ddd2c5" />
@@ -2730,22 +2695,12 @@
               <format attr="padding" value="12" />
             </zone-style>
           </zone>
-          <zone id="18" x="73875" y="90455" w="24625" h="5909" name="Would recommend the hotel · %" show-title="true">
-            <zone-style>
-              <format attr="background-color" value="#ffffff" />
-              <format attr="border-color" value="#ddd2c5" />
-              <format attr="border-style" value="solid" />
-              <format attr="border-width" value="1" />
-              <format attr="margin" value="6" />
-              <format attr="padding" value="12" />
-            </zone-style>
-          </zone>
-          <zone id="19" x="48875" y="77273" w="49250" h="1727" type-v2="text">
+          <zone id="18" x="48875" y="77273" w="49250" h="1727" type-v2="text">
             <formatted-text>
               <run fontsize="17" fontname="Barlow" fontcolor="#153f6c">Guest satisfaction</run>
             </formatted-text>
           </zone>
-          <zone id="20" x="1500" y="96909" w="97000" h="2364" type-v2="text">
+          <zone id="19" x="1500" y="96909" w="97000" h="2364" type-v2="text">
             <formatted-text>
               <run fontsize="10" fontname="Barlow" fontcolor="#596e7f">Source: local REST API / PostgreSQL. 2026 financial data; satisfaction is all-time.</run>
             </formatted-text>
@@ -3079,27 +3034,6 @@
       </cards>
       <simple-id uuid="{992326E3-33EE-5D57-B55F-0C35540C858C}" />
     </window>
-    <window class="worksheet" name="Room overview">
-      <cards>
-        <edge name="top">
-          <strip size="2147483647">
-            <card type="columns" />
-          </strip>
-          <strip size="2147483647">
-            <card type="rows" />
-          </strip>
-          <strip size="31">
-            <card type="title" />
-          </strip>
-        </edge>
-        <edge name="right">
-          <strip size="160">
-            <card type="color" pane-specification-id="0" />
-          </strip>
-        </edge>
-      </cards>
-      <simple-id uuid="{10BC6985-3DBB-503C-BF93-9439BCA0D59B}" />
-    </window>
     <window class="worksheet" name="Rating by room type · 1–5">
       <cards>
         <edge name="top">
@@ -3292,9 +3226,6 @@
           <zoom type="entire-view" />
         </viewpoint>
         <viewpoint name="Seasonal data · revenue DKK">
-          <zoom type="entire-view" />
-        </viewpoint>
-        <viewpoint name="Room overview">
           <zoom type="entire-view" />
         </viewpoint>
         <viewpoint name="Guests by country">
