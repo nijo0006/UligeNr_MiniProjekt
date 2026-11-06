@@ -33,7 +33,7 @@ function showTooltip(row,shape,event){
   tooltip.hidden=false;positionTooltip(shape,event);
 }
 function showValue(row){
-  $('#season-chart-value').textContent=`${row.roomType} · ${seasons.find(([key])=>key===row.season)[1]} · ${currency(row.roomRevenue)} · ${new Intl.NumberFormat('en-DK').format(row.soldRoomNights)} room-nights${row.containsSyntheticData?' · includes demonstration history':''}`;
+  $('#season-chart-value').textContent=`${row.roomType} · ${seasons.find(([key])=>key===row.season)[1]} · ${currency(row.roomRevenue)} · ${new Intl.NumberFormat('en-DK').format(row.soldRoomNights)} room-nights`;
 }
 function draw(){
   hideTooltip();svg.replaceChildren();$('#season-chart-value').textContent='Hover, focus or select a bar for details.';

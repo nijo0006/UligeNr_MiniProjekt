@@ -31,7 +31,7 @@ export async function refreshRevenue() {
     }
     status.textContent = report.totalRevenue === null
       ? `No room-nights or bar sales recorded in ${year}.`
-      : `DKK · Calendar year ${report.year}${report.containsSyntheticData ? ' · Includes history with demonstration dates' : ''}`;
+      : `DKK · Calendar year ${report.year}`;
   } catch (error) {
     if (request !== requestNumber) return;
     for (const amount of Object.values(amounts)) amount.textContent = 'Unavailable';

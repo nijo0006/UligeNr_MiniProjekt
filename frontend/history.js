@@ -4,7 +4,7 @@ try{
   const history=await api('/reports/history');
   if(history.state!=='imported')status.textContent='Excel history has not been imported.';
   else{
-    status.textContent=`${history.sourceTotals.bookings.toLocaleString('en-DK')} Excel bookings and ${history.sourceTotals.barUnits.toLocaleString('en-DK')} bar units imported. The workbook belongs to 2026. Exact dates and room assignments within 2026 are generated, not observed. Missing guest counts remain unknown.`;
+    status.textContent=`${history.sourceTotals.bookings.toLocaleString('en-DK')} Excel bookings and ${history.sourceTotals.barUnits.toLocaleString('en-DK')} bar units imported. The workbook belongs to 2026.`;
     const controls=document.querySelector('#history-controls');controls.hidden=false;
     const title=document.createElement('p');title.className='hint';title.textContent='Original Excel reference totals · 2026 · unchanged source values';controls.append(title);
     const grid=document.createElement('div');grid.className='history-totals';

@@ -159,7 +159,7 @@ test('staff browses historical bookings and reporting across the separate pages'
     await expect(page.locator('#annual-room-revenue')).toHaveText(format(room.roomRevenue));assert.equal(room.containsSyntheticData,true);
     await expect(page.locator('#annual-bar-revenue')).toHaveText(format(room.barRevenue));
     await expect(page.locator('#annual-hotel-revenue')).toHaveText(format(room.totalRevenue));
-    await expect(page.locator('#revenue-status')).toContainText('demonstration dates');
+    await expect(page.locator('#revenue-status')).toContainText('Calendar year 2026');
     await page.screenshot({path:'/tmp/hotel-staff-overview.png'});
     await page.route('**/api/reports/revenue?year=*',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({message:'Verification outage'})}));
     await page.getByRole('button',{name:'Refresh revenue',exact:true}).click();
@@ -172,7 +172,7 @@ test('staff browses historical bookings and reporting across the separate pages'
     await page.getByRole('link',{name:'Bookings',exact:true}).click();
     await page.getByLabel('Booking year',{exact:true}).selectOption('2026');
     await expect(page.locator('#bookings .reservation')).toHaveCount(25);
-    await expect(page.locator('#bookings .source-label').first()).toContainText('demonstration dates');
+    await expect(page.locator('#bookings .source-label').first()).toContainText('Excel booking');
     await page.getByRole('button',{name:'Next bookings',exact:true}).click();
     await expect(page.locator('#booking-page-status')).toContainText('Showing 26–50');
     const books=await(await fetch(`${origin}/api/bookings`)).json();

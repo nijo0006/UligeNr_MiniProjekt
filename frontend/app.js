@@ -44,7 +44,7 @@ function renderBookings() {
     }
     article.append(top,stay,rooms);
     if (booking.status === 'completed') { const done = document.createElement('p'); done.className = 'completed-label'; done.textContent = `Checked out ${booking.completedAt ? new Date(booking.completedAt).toLocaleString('en-GB',{timeZone:'Europe/Copenhagen',dateStyle:'medium',timeStyle:'short'}) : ''} · can still be edited, but not cancelled`; article.append(done); }
-    if(booking.sourceId){const provenance=document.createElement('p');provenance.className='source-label';provenance.textContent=`Excel booking ${booking.sourceId.split(':').at(-1)} · ${booking.syntheticDates?'demonstration dates':'updated dates'} · ${booking.pricingMode==='source-preserved'?'original Excel price':'recalculated tariff'}`;article.append(provenance);}
+    if(booking.sourceId){const provenance=document.createElement('p');provenance.className='source-label';provenance.textContent=`Excel booking ${booking.sourceId.split(':').at(-1)} · ${booking.pricingMode==='source-preserved'?'original Excel price':'recalculated tariff'}`;article.append(provenance);}
     article.append(actions); container.append(article);
   }
 }
