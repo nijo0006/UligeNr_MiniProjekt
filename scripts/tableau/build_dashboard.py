@@ -224,7 +224,8 @@ datasource('summary', 'Hotel overview · 2026', 'reports/summary?year=2026', [
     ('containsSyntheticData', 'boolean', 'Contains demonstration allocations')], calculations={
         'RevenueDKK': ('FLOAT([totalRevenue])', 'real', 'Hotel revenue · DKK'),
         'RoomRevenueDKK': ('FLOAT([roomRevenue])', 'real', 'Room revenue · DKK'),
-        'BarRevenueDKK': ('FLOAT([barRevenue])', 'real', 'Bar revenue · DKK')})
+        'BarRevenueDKK': ('FLOAT([barRevenue])', 'real', 'Bar revenue · DKK')},
+    labels={'occupancyText': (lambda row: 'No data' if row['occupancyPercent'] is None else f"{row['occupancyPercent']:.1f}%", 'Annual occupancy')})
 datasource('drinks', 'Drink performance · 2026', 'reports/drinks?year=2026', [
     ('drinkId', 'integer', 'Drink ID'), ('name', 'string', 'Drink'), ('category', 'string', 'Category'),
     ('units', 'integer', 'Units sold'), ('revenue', 'string', 'Revenue (API)')], calculations={
@@ -350,7 +351,7 @@ A = lambda name: (name, 'Avg')
 sheet('Hotel revenue · DKK', 'summary', mark='Text', text=S('RevenueDKK'), kpi=True)
 sheet('Room revenue · DKK', 'summary', mark='Text', text=S('RoomRevenueDKK'), kpi=True)
 sheet('Bar revenue · DKK', 'summary', mark='Text', text=S('BarRevenueDKK'), kpi=True)
-sheet('Annual occupancy · %', 'summary', mark='Text', text=A('occupancyPercent'), kpi=True)
+sheet('Annual occupancy · %', 'summary', mark='Text', text=D('occupancyText'), kpi=True)
 sheet('Sold room-nights', 'summary', mark='Text', text=S('soldRoomNights'), kpi=True)
 sheet('Bookings · 2026', 'summary', mark='Text', text=S('bookingCount'), kpi=True)
 sheet('Guest markets & highest-earning countries', 'countries',
