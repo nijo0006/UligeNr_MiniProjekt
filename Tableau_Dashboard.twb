@@ -1370,8 +1370,7 @@
             </column>
             <column-instance column="[country]" derivation="None" name="[none:country:nk]" pivot="key" type="nominal" />
             <column-instance column="[bookingCount]" derivation="Sum" name="[sum:bookingCount:qk]" pivot="key" type="quantitative" />
-            <column-instance column="[knownGuestCount]" derivation="Sum" name="[sum:knownGuestCount:qk]" pivot="key" type="quantitative" />
-            <column-instance column="[unknownGuestBookingCount]" derivation="Sum" name="[sum:unknownGuestBookingCount:qk]" pivot="key" type="quantitative" />
+            <column-instance column="[guestCount]" derivation="Sum" name="[sum:guestCount:qk]" pivot="key" type="quantitative" />
             <column-instance column="[RevenueDKK]" derivation="Sum" name="[sum:RevenueDKK:qk]" pivot="key" type="quantitative" />
           </datasource-dependencies>
           <aggregation value="true" />
@@ -1401,8 +1400,7 @@
               <color column="[federated.hotel_countries].[sum:RevenueDKK:qk]" />
               <lod column="[federated.hotel_countries].[none:country:nk]" />
               <lod column="[federated.hotel_countries].[sum:bookingCount:qk]" />
-              <lod column="[federated.hotel_countries].[sum:knownGuestCount:qk]" />
-              <lod column="[federated.hotel_countries].[sum:unknownGuestBookingCount:qk]" />
+              <lod column="[federated.hotel_countries].[sum:guestCount:qk]" />
               <geometry column="[federated.hotel_countries].[Geometry (generated)]" />
             </encodings>
             <style>
@@ -1425,7 +1423,7 @@
       </table>
       <simple-id uuid="{C7C7177F-A070-5602-957F-A294E7886156}" />
     </worksheet>
-    <worksheet name="Guests by country · known counts only">
+    <worksheet name="Guests by country">
       <table>
         <view>
           <datasources>
@@ -1443,11 +1441,10 @@
               <calculation class="tableau" formula="FLOAT([roomRevenue])" />
             </column>
             <column-instance column="[country]" derivation="None" name="[none:country:nk]" pivot="key" type="nominal" />
-            <column-instance column="[knownGuestCount]" derivation="Sum" name="[sum:knownGuestCount:qk]" pivot="key" type="quantitative" />
-            <column-instance column="[unknownGuestBookingCount]" derivation="Sum" name="[sum:unknownGuestBookingCount:qk]" pivot="key" type="quantitative" />
+            <column-instance column="[guestCount]" derivation="Sum" name="[sum:guestCount:qk]" pivot="key" type="quantitative" />
             <column-instance column="[bookingCount]" derivation="Sum" name="[sum:bookingCount:qk]" pivot="key" type="quantitative" />
           </datasource-dependencies>
-          <sort class="computed" column="[federated.hotel_countries].[none:country:nk]" direction="DESC" using="[federated.hotel_countries].[sum:knownGuestCount:qk]" />
+          <sort class="computed" column="[federated.hotel_countries].[none:country:nk]" direction="DESC" using="[federated.hotel_countries].[sum:guestCount:qk]" />
           <aggregation value="true" />
         </view>
         <style>
@@ -1472,8 +1469,7 @@
             </view>
             <mark class="Bar" />
             <encodings>
-              <text column="[federated.hotel_countries].[sum:knownGuestCount:qk]" />
-              <lod column="[federated.hotel_countries].[sum:unknownGuestBookingCount:qk]" />
+              <text column="[federated.hotel_countries].[sum:guestCount:qk]" />
               <lod column="[federated.hotel_countries].[sum:bookingCount:qk]" />
             </encodings>
             <style>
@@ -1486,9 +1482,9 @@
           </pane>
         </panes>
         <rows>[federated.hotel_countries].[none:country:nk]</rows>
-        <cols>[federated.hotel_countries].[sum:knownGuestCount:qk]</cols>
+        <cols>[federated.hotel_countries].[sum:guestCount:qk]</cols>
       </table>
-      <simple-id uuid="{C5FB041E-C5F4-51B0-8401-FB46743D9FAF}" />
+      <simple-id uuid="{D44074BB-5E91-5003-87D6-8B2AF37801BE}" />
     </worksheet>
     <worksheet name="Country revenue · DKK">
       <table>
@@ -1922,7 +1918,7 @@
       </table>
       <simple-id uuid="{18B5E256-4976-571B-B2AD-3DA9E54DC255}" />
     </worksheet>
-    <worksheet name="Room inventory by type">
+    <worksheet name="Room overview">
       <table>
         <view>
           <datasources>
@@ -2000,9 +1996,9 @@
         <rows>[federated.hotel_inventory].[none:roomType:nk]</rows>
         <cols />
       </table>
-      <simple-id uuid="{F80173C6-D064-5E47-9763-F0633FB3D1BA}" />
+      <simple-id uuid="{FA89FF8C-F15D-5441-B67E-587CC69DB84D}" />
     </worksheet>
-    <worksheet name="Guest satisfaction by room type · all time">
+    <worksheet name="Rating by room type · 1–5">
       <table>
         <view>
           <datasources>
@@ -2016,9 +2012,10 @@
               <calculation class="tableau" formula="IF ISNULL([meanRating]) THEN &quot;No data&quot; ELSE STR(ROUND([meanRating], 1)) + &quot; / 5&quot; END" />
             </column>
             <column-instance column="[roomType]" derivation="None" name="[none:roomType:nk]" pivot="key" type="nominal" />
+            <column-instance column="[meanRating]" derivation="Avg" name="[avg:meanRating:qk]" pivot="key" type="quantitative" />
             <column-instance column="[responseCount]" derivation="Sum" name="[sum:responseCount:qk]" pivot="key" type="quantitative" />
-            <column-instance column="[RatingLabel]" derivation="None" name="[none:RatingLabel:nk]" pivot="key" type="nominal" />
           </datasource-dependencies>
+          <sort class="computed" column="[federated.hotel_satisfaction].[none:roomType:nk]" direction="DESC" using="[federated.hotel_satisfaction].[avg:meanRating:qk]" />
           <aggregation value="true" />
         </view>
         <style>
@@ -2041,9 +2038,10 @@
             <view>
               <breakdown value="auto" />
             </view>
-            <mark class="Text" />
+            <mark class="Bar" />
             <encodings>
-              <text column="[federated.hotel_satisfaction].[none:RatingLabel:nk]" />
+              <color column="[federated.hotel_satisfaction].[none:roomType:nk]" />
+              <text column="[federated.hotel_satisfaction].[avg:meanRating:qk]" />
               <lod column="[federated.hotel_satisfaction].[sum:responseCount:qk]" />
             </encodings>
             <style>
@@ -2051,16 +2049,42 @@
                 <format attr="color" value="#153f6c" />
                 <format attr="mark-labels-show" value="true" />
                 <format attr="font-size" value="12" />
+                <encoding attr="color" field="[federated.hotel_satisfaction].[none:roomType:nk]" type="palette">
+                  <map to="#6f8e85">
+                    <bucket>"Standard Single"</bucket>
+                  </map>
+                  <map to="#496b60">
+                    <bucket>"Grand Lit"</bucket>
+                  </map>
+                  <map to="#789ba0">
+                    <bucket>"Standard Double"</bucket>
+                  </map>
+                  <map to="#657f98">
+                    <bucket>"Superior Double"</bucket>
+                  </map>
+                  <map to="#918296">
+                    <bucket>"Junior Suite"</bucket>
+                  </map>
+                  <map to="#b28b87">
+                    <bucket>"Spa Executive"</bucket>
+                  </map>
+                  <map to="#b28768">
+                    <bucket>"Suite"</bucket>
+                  </map>
+                  <map to="#b5a078">
+                    <bucket>"LOFT Suite"</bucket>
+                  </map>
+                </encoding>
               </style-rule>
             </style>
           </pane>
         </panes>
         <rows>[federated.hotel_satisfaction].[none:roomType:nk]</rows>
-        <cols />
+        <cols>[federated.hotel_satisfaction].[avg:meanRating:qk]</cols>
       </table>
-      <simple-id uuid="{228DEB70-03F5-5DFD-8E44-A0ED1028C990}" />
+      <simple-id uuid="{FDCF2182-66EC-5AB1-8D48-88339A1C8579}" />
     </worksheet>
-    <worksheet name="Overall stay rating · all time">
+    <worksheet name="Overall stay rating · 1–5">
       <table>
         <view>
           <datasources>
@@ -2109,9 +2133,9 @@
         <rows />
         <cols />
       </table>
-      <simple-id uuid="{BD6A607F-5880-533C-8E78-277DABE8CB71}" />
+      <simple-id uuid="{2B3726E9-BAD5-547F-A04E-46156E12BED1}" />
     </worksheet>
-    <worksheet name="Would recommend · % · all time">
+    <worksheet name="Would recommend the hotel · %">
       <table>
         <view>
           <datasources>
@@ -2160,7 +2184,7 @@
         <rows />
         <cols />
       </table>
-      <simple-id uuid="{DEF3B7EC-309C-5CC3-AA93-53E0786F3DD6}" />
+      <simple-id uuid="{3A4B016A-9958-5FF0-9367-725023A5BF46}" />
     </worksheet>
     <worksheet name="Helene Christine · annual revenue DKK">
       <table>
@@ -2666,7 +2690,7 @@
               <format attr="padding" value="12" />
             </zone-style>
           </zone>
-          <zone id="14" x="64750" y="58545" w="33750" h="18182" name="Room inventory by type" show-title="true">
+          <zone id="14" x="64750" y="58545" w="33750" h="18182" name="Room overview" show-title="true">
             <zone-style>
               <format attr="background-color" value="#ffffff" />
               <format attr="border-color" value="#ddd2c5" />
@@ -2676,7 +2700,7 @@
               <format attr="padding" value="12" />
             </zone-style>
           </zone>
-          <zone id="15" x="1500" y="77273" w="46250" h="19091" name="Guests by country · known counts only" show-title="true">
+          <zone id="15" x="1500" y="77273" w="46250" h="19091" name="Guests by country" show-title="true">
             <zone-style>
               <format attr="background-color" value="#ffffff" />
               <format attr="border-color" value="#ddd2c5" />
@@ -2686,7 +2710,7 @@
               <format attr="padding" value="12" />
             </zone-style>
           </zone>
-          <zone id="16" x="48500" y="77273" w="50000" h="12273" name="Guest satisfaction by room type · all time" show-title="true">
+          <zone id="16" x="48500" y="79182" w="50000" h="10727" name="Rating by room type · 1–5" show-title="true">
             <zone-style>
               <format attr="background-color" value="#ffffff" />
               <format attr="border-color" value="#ddd2c5" />
@@ -2696,7 +2720,7 @@
               <format attr="padding" value="12" />
             </zone-style>
           </zone>
-          <zone id="17" x="48500" y="90091" w="24625" h="6273" name="Overall stay rating · all time" show-title="true">
+          <zone id="17" x="48500" y="90455" w="24625" h="5909" name="Overall stay rating · 1–5" show-title="true">
             <zone-style>
               <format attr="background-color" value="#ffffff" />
               <format attr="border-color" value="#ddd2c5" />
@@ -2706,7 +2730,7 @@
               <format attr="padding" value="12" />
             </zone-style>
           </zone>
-          <zone id="18" x="73875" y="90091" w="24625" h="6273" name="Would recommend · % · all time" show-title="true">
+          <zone id="18" x="73875" y="90455" w="24625" h="5909" name="Would recommend the hotel · %" show-title="true">
             <zone-style>
               <format attr="background-color" value="#ffffff" />
               <format attr="border-color" value="#ddd2c5" />
@@ -2716,10 +2740,14 @@
               <format attr="padding" value="12" />
             </zone-style>
           </zone>
-          <zone id="19" x="1500" y="96909" w="97000" h="2364" type-v2="text">
+          <zone id="19" x="48875" y="77273" w="49250" h="1727" type-v2="text">
             <formatted-text>
-              <run fontsize="10" fontname="Barlow" fontcolor="#596e7f">Source: local REST API / PostgreSQL. 2026 financial data; satisfaction is all-time.
-Historical dates and numbered rooms are demonstration allocations. Missing historical guest counts are unknown; no ratings are generated.</run>
+              <run fontsize="17" fontname="Barlow" fontcolor="#153f6c">Guest satisfaction</run>
+            </formatted-text>
+          </zone>
+          <zone id="20" x="1500" y="96909" w="97000" h="2364" type-v2="text">
+            <formatted-text>
+              <run fontsize="10" fontname="Barlow" fontcolor="#596e7f">Source: local REST API / PostgreSQL. 2026 financial data; satisfaction is all-time.</run>
             </formatted-text>
           </zone>
         </zone>
@@ -2804,8 +2832,7 @@ Historical dates and numbered rooms are demonstration allocations. Missing histo
           </zone>
           <zone id="9" x="1500" y="94688" w="97000" h="4062" type-v2="text">
             <formatted-text>
-              <run fontsize="10" fontname="Barlow" fontcolor="#596e7f">Source: local REST API / PostgreSQL. 2026 financial data; satisfaction is all-time.
-Historical dates and numbered rooms are demonstration allocations. Missing historical guest counts are unknown; no ratings are generated.</run>
+              <run fontsize="10" fontname="Barlow" fontcolor="#596e7f">Source: local REST API / PostgreSQL. 2026 financial data; satisfaction is all-time.</run>
             </formatted-text>
           </zone>
         </zone>
@@ -2931,7 +2958,7 @@ Historical dates and numbered rooms are demonstration allocations. Missing histo
       </cards>
       <simple-id uuid="{8D65A5B0-49E4-5727-8F2B-B636CE0AF284}" />
     </window>
-    <window class="worksheet" name="Guests by country · known counts only">
+    <window class="worksheet" name="Guests by country">
       <cards>
         <edge name="top">
           <strip size="2147483647">
@@ -2945,7 +2972,7 @@ Historical dates and numbered rooms are demonstration allocations. Missing histo
           </strip>
         </edge>
       </cards>
-      <simple-id uuid="{10634F70-A3FF-579C-94E4-9EE77B161E78}" />
+      <simple-id uuid="{B63E8B93-F05D-581F-9641-A6E5545C534B}" />
     </window>
     <window class="worksheet" name="Country revenue · DKK">
       <cards>
@@ -3052,7 +3079,7 @@ Historical dates and numbered rooms are demonstration allocations. Missing histo
       </cards>
       <simple-id uuid="{992326E3-33EE-5D57-B55F-0C35540C858C}" />
     </window>
-    <window class="worksheet" name="Room inventory by type">
+    <window class="worksheet" name="Room overview">
       <cards>
         <edge name="top">
           <strip size="2147483647">
@@ -3071,9 +3098,30 @@ Historical dates and numbered rooms are demonstration allocations. Missing histo
           </strip>
         </edge>
       </cards>
-      <simple-id uuid="{87183C2D-6D7B-54EA-B1A2-A156EEFF12FE}" />
+      <simple-id uuid="{10BC6985-3DBB-503C-BF93-9439BCA0D59B}" />
     </window>
-    <window class="worksheet" name="Guest satisfaction by room type · all time">
+    <window class="worksheet" name="Rating by room type · 1–5">
+      <cards>
+        <edge name="top">
+          <strip size="2147483647">
+            <card type="columns" />
+          </strip>
+          <strip size="2147483647">
+            <card type="rows" />
+          </strip>
+          <strip size="31">
+            <card type="title" />
+          </strip>
+        </edge>
+        <edge name="right">
+          <strip size="160">
+            <card type="color" pane-specification-id="0" />
+          </strip>
+        </edge>
+      </cards>
+      <simple-id uuid="{27B1EA4A-3216-55A3-97D7-10316B903AB1}" />
+    </window>
+    <window class="worksheet" name="Overall stay rating · 1–5">
       <cards>
         <edge name="top">
           <strip size="2147483647">
@@ -3087,9 +3135,9 @@ Historical dates and numbered rooms are demonstration allocations. Missing histo
           </strip>
         </edge>
       </cards>
-      <simple-id uuid="{D3C3918C-CB09-52D6-819F-223AEE0DCD7C}" />
+      <simple-id uuid="{366419CA-1A45-5D7C-B2BA-882352E18842}" />
     </window>
-    <window class="worksheet" name="Overall stay rating · all time">
+    <window class="worksheet" name="Would recommend the hotel · %">
       <cards>
         <edge name="top">
           <strip size="2147483647">
@@ -3103,23 +3151,7 @@ Historical dates and numbered rooms are demonstration allocations. Missing histo
           </strip>
         </edge>
       </cards>
-      <simple-id uuid="{1D9D6B5F-85B8-5143-B6F6-71FCF38E6932}" />
-    </window>
-    <window class="worksheet" name="Would recommend · % · all time">
-      <cards>
-        <edge name="top">
-          <strip size="2147483647">
-            <card type="columns" />
-          </strip>
-          <strip size="2147483647">
-            <card type="rows" />
-          </strip>
-          <strip size="31">
-            <card type="title" />
-          </strip>
-        </edge>
-      </cards>
-      <simple-id uuid="{B50AAEEE-0A60-529D-8762-6F1598ACE94A}" />
+      <simple-id uuid="{546E8FB0-0710-5E47-AE7D-54C07D3660BF}" />
     </window>
     <window class="worksheet" name="Helene Christine · annual revenue DKK">
       <cards>
@@ -3262,19 +3294,19 @@ Historical dates and numbered rooms are demonstration allocations. Missing histo
         <viewpoint name="Seasonal data · revenue DKK">
           <zoom type="entire-view" />
         </viewpoint>
-        <viewpoint name="Room inventory by type">
+        <viewpoint name="Room overview">
           <zoom type="entire-view" />
         </viewpoint>
-        <viewpoint name="Guests by country · known counts only">
+        <viewpoint name="Guests by country">
           <zoom type="entire-view" />
         </viewpoint>
-        <viewpoint name="Guest satisfaction by room type · all time">
+        <viewpoint name="Rating by room type · 1–5">
           <zoom type="entire-view" />
         </viewpoint>
-        <viewpoint name="Overall stay rating · all time">
+        <viewpoint name="Overall stay rating · 1–5">
           <zoom type="entire-view" />
         </viewpoint>
-        <viewpoint name="Would recommend · % · all time">
+        <viewpoint name="Would recommend the hotel · %">
           <zoom type="entire-view" />
         </viewpoint>
       </viewpoints>

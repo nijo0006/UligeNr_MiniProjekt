@@ -63,7 +63,9 @@ api_cache = {}
 evidence = {}
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--extracts', action='store_true', help='Fetch REST reports and create portable Hyper extracts and TWBX (requires tableauhyperapi).')
+parser.add_argument('--api', default='http://localhost:3000/api', help='Base URL of the running app\'s API, e.g. http://localhost:3001/api if APP_PORT=3001.')
 args = parser.parse_args()
+API = args.api.rstrip('/') + '/'
 if not args.extracts:
     parser.error('Use --extracts to refresh API data and build the portable Hyper workbook.')
 if args.extracts:
@@ -74,7 +76,7 @@ if args.extracts:
 def attach_extract(ds, con, fields, key, endpoint, path, oid, obj):
     if not args.extracts:
         return
-    url = 'http://localhost:3000/api/' + endpoint
+    url = API + endpoint
     if url not in api_cache:
         with urlopen(url, timeout=30) as response:
             api_cache[url] = json.load(response)
@@ -126,7 +128,7 @@ def datasource(key, caption, endpoint, fields, path='$', calculations=None):
     con = sub(ds, 'connection', **{'class': 'federated'})
     nc = sub(sub(con, 'named-connections'), 'named-connection', caption=endpoint, name=ncname)
     sub(nc, 'connection', authentication='auth-none', **{
-        'class': 'tableau_rest', 'one-time-sql': '', 'server': 'http://localhost:3000/api/' + endpoint,
+        'class': 'tableau_rest', 'one-time-sql': '', 'server': API + endpoint,
         'username': '', 'v-connectTimeout': '30', 'v-csvDelimiter': '', 'v-format': 'JSON',
         'v-headers': '', 'v-jsonPath': path, 'v-limit': '', 'v-limitName': '',
         'v-offsetName': '', 'v-recordPageProcessor': 'NONE', 'v-tableName': 'rest_table',
@@ -332,9 +334,9 @@ sheet('Sold room-nights', 'summary', mark='Text', text=S('soldRoomNights'), kpi=
 sheet('Bookings · 2026', 'summary', mark='Text', text=S('bookingCount'), kpi=True)
 sheet('Guest markets & highest-earning countries', 'countries',
       rows=[D('Latitude (generated)')], cols=[D('Longitude (generated)')], mark='Multipolygon',
-      color=S('RevenueDKK'), details=[D('country'), S('bookingCount'), S('knownGuestCount'), S('unknownGuestBookingCount')], blue_scale=True)
-sheet('Guests by country · known counts only', 'countries', rows=[D('country')], cols=[S('knownGuestCount')],
-      text=S('knownGuestCount'), details=[S('unknownGuestBookingCount'), S('bookingCount')], sort=(D('country'), S('knownGuestCount')))
+      color=S('RevenueDKK'), details=[D('country'), S('bookingCount'), S('guestCount')], blue_scale=True)
+sheet('Guests by country', 'countries', rows=[D('country')], cols=[S('guestCount')],
+      text=S('guestCount'), details=[S('bookingCount')], sort=(D('country'), S('guestCount')))
 sheet('Country revenue · DKK', 'countries', rows=[D('country')], cols=[S('RevenueDKK')],
       color=S('RevenueDKK'), sort=(D('country'), S('RevenueDKK')), blue_scale=True)
 sheet('Room revenue by type & season', 'seasons', rows=[S('RevenueDKK')], cols=[D('SeasonLabel'), D('roomType')],
@@ -346,11 +348,11 @@ sheet('Highest-earning rooms · Top 10', 'rooms', rows=[D('roomNumber')], cols=[
       sort=(D('roomNumber'), S('RevenueDKK')), top=(D('roomNumber'), S('RevenueDKK'), 10))
 sheet('Highest-earning rooms · all rooms', 'rooms', rows=[D('roomNumber')], cols=[S('RevenueDKK')],
       color=D('roomType'), details=[S('soldRoomNights')], sort=(D('roomNumber'), S('RevenueDKK')))
-sheet('Room inventory by type', 'inventory', rows=[D('roomType')], mark='Text', text=S('roomCount'), color=D('roomType'))
-sheet('Guest satisfaction by room type · all time', 'satisfaction', rows=[D('roomType')], mark='Text', text=D('RatingLabel'),
-      details=[S('responseCount')])
-sheet('Overall stay rating · all time', 'overall', mark='Text', text=A('meanRating'), kpi=True)
-sheet('Would recommend · % · all time', 'recommend', mark='Text', text=A('recommendPercent'), kpi=True)
+sheet('Room overview', 'inventory', rows=[D('roomType')], mark='Text', text=S('roomCount'), color=D('roomType'))
+sheet('Rating by room type · 1–5', 'satisfaction', rows=[D('roomType')], cols=[A('meanRating')], color=D('roomType'),
+      text=A('meanRating'), details=[S('responseCount')], sort=(D('roomType'), A('meanRating')))
+sheet('Overall stay rating · 1–5', 'overall', mark='Text', text=A('meanRating'), kpi=True)
+sheet('Would recommend the hotel · %', 'recommend', mark='Text', text=A('recommendPercent'), kpi=True)
 sheet('Helene Christine · annual revenue DKK', 'bar', mark='Text', text=S('RevenueDKK'), kpi=True)
 sheet('Helene Christine · annual units sold', 'bar', mark='Text', text=S('units'), kpi=True)
 sheet('Cocktails · revenue share %', 'bar', mark='Text', text=A('cocktailPercent'), kpi=True)
@@ -360,7 +362,7 @@ sheet('Revenue per drink · DKK', 'drinks', rows=[D('name')], cols=[S('RevenueDK
 sheet('Cocktails & coffee · revenue DKK', 'mix', rows=[D('category')], cols=[S('RevenueDKK')], color=D('category'), text=S('RevenueDKK'))
 
 
-def dashboard(name, width, height, placements, subtitle):
+def dashboard(name, width, height, placements, subtitle, headings=()):
     db = sub(dashboards, 'dashboard', enable_sort_zone_taborder='true', name=name)
     style = sub(db, 'style')
     fmt(sub(style, 'style-rule', element='dashboard'), background_color='#f4efea')
@@ -378,10 +380,13 @@ def dashboard(name, width, height, placements, subtitle):
         z = zone(i, x, y, w, h, name=title, show_title='true')
         zs = sub(z, 'zone-style')
         fmt(zs, background_color='#ffffff', border_color='#ddd2c5', border_style='solid', border_width='1', margin='6', padding='12')
-    footer = zone(len(placements)+3, 24, height-68, width-48, 52, type_v2='text')
+    # Section headings group related worksheets, like the frontend's "Guest satisfaction".
+    for i, (text, x, y, w, h) in enumerate(headings, len(placements)+3):
+        ft = sub(zone(i, x, y, w, h, type_v2='text'), 'formatted-text')
+        sub(ft, 'run', text=text, fontsize='17', fontname='Barlow', fontcolor=BLUE)
+    footer = zone(len(placements)+len(headings)+3, 24, height-68, width-48, 52, type_v2='text')
     ft = sub(footer, 'formatted-text')
-    sub(ft, 'run', text='Source: local REST API / PostgreSQL. 2026 financial data; satisfaction is all-time.\n'
-        'Historical dates and numbered rooms are demonstration allocations. Missing historical guest counts are unknown; no ratings are generated.',
+    sub(ft, 'run', text='Source: local REST API / PostgreSQL. 2026 financial data; satisfaction is all-time.',
         fontsize='10', fontname='Barlow', fontcolor='#596e7f')
     sub(db, 'simple-id', uuid='{' + ident('dashboard/' + name) + '}')
     win = sub(windows, 'window', **{'class': 'dashboard', 'name': name})
@@ -397,10 +402,11 @@ dashboard('Hotel Overview · 2026', 1600, 2200, [
     ('Annual occupancy · %', 24, 252, 500, 130), ('Bookings · 2026', 536, 252, 500, 130), ('Sold room-nights', 1048, 252, 528, 130),
     ('Guest markets & highest-earning countries', 24, 394, 1000, 440), ('Country revenue · DKK', 1036, 394, 540, 440),
     ('Room revenue by type & season', 24, 846, 1000, 430), ('Highest-earning rooms · Top 10', 1036, 846, 540, 430),
-    ('Seasonal data · revenue DKK', 24, 1288, 1000, 400), ('Room inventory by type', 1036, 1288, 540, 400),
-    ('Guests by country · known counts only', 24, 1700, 740, 420), ('Guest satisfaction by room type · all time', 776, 1700, 800, 270),
-    ('Overall stay rating · all time', 776, 1982, 394, 138), ('Would recommend · % · all time', 1182, 1982, 394, 138),
-], 'Hotel operations and performance · annual occupancy is the additional KPI · use worksheets to explore all rooms')
+    ('Seasonal data · revenue DKK', 24, 1288, 1000, 400), ('Room overview', 1036, 1288, 540, 400),
+    ('Guests by country', 24, 1700, 740, 420), ('Rating by room type · 1–5', 776, 1742, 800, 236),
+    ('Overall stay rating · 1–5', 776, 1990, 394, 130), ('Would recommend the hotel · %', 1182, 1990, 394, 130),
+], 'Hotel operations and performance · annual occupancy is the additional KPI · use worksheets to explore all rooms',
+    headings=[('Guest satisfaction', 782, 1700, 788, 38)])
 dashboard('Helene Christine’s Bar · 2026', 1600, 1280, [
     ('Helene Christine · annual revenue DKK', 24, 90, 760, 150), ('Helene Christine · annual units sold', 796, 90, 780, 150),
     ('Cocktails · revenue share %', 24, 252, 370, 140), ('Coffee · revenue share %', 406, 252, 378, 140),
@@ -427,7 +433,7 @@ E.ElementTree(root).write(TARGET, encoding='utf-8', xml_declaration=True)
 print(f'Wrote {TARGET.name}: {len(sources)} native Hyper sources, {len(worksheets)} worksheets, {len(dashboards)} dashboards')
 if args.extracts:
     # Reconcile independent reports before packaging: never join unrelated aggregates.
-    summary = api_cache['http://localhost:3000/api/reports/summary?year=2026']
+    summary = api_cache[API + 'reports/summary?year=2026']
     for key in ['countries', 'rooms', 'seasons']:
         rows = api_cache[evidence[key]['url']]
         total = sum((Decimal(row['roomRevenue']) for row in rows if row['roomRevenue'] is not None), Decimal(0))

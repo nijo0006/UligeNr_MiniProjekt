@@ -10,14 +10,14 @@ the extracts under `exports/tableau/data/`.
 | Assignment / frontend view | Native Tableau worksheet |
 | --- | --- |
 | Guest countries and highest-earning countries | Filled country map shaded by room revenue; separate descending country revenue chart |
-| Guests by country | Known guest counts, with unknown-guest booking counts in detail; missing historical people are not invented |
+| Guests by country | Guests per country, sorted from most to fewest |
 | Revenue per room type and season | Grouped vertical bars, Low / Mid / High; eight frontend room colors |
 | Seasonal figures | Room type × season revenue table, using the same colors |
 | Highest-earning rooms | Ten highest-revenue rooms as horizontal bars; separate all-rooms worksheet |
 | Annual hotel revenue | Hotel, room and bar revenue KPI cards |
 | Additional interesting KPI | Annual occupancy, with booking and sold room-night cards |
-| Inventory | Room counts per type; 214 demonstration rooms |
-| Satisfaction | Rating table by room type, overall stay rating and would-recommend percentage; all-time |
+| Room overview | Room counts per type; 214 rooms |
+| Guest satisfaction | Like the frontend: rating per room type as bars in the room colors, overall stay rating and would-recommend percentage; all-time |
 | Helene Christine's annual sales | Annual bar revenue and units sold |
 | Revenue per drink | Horizontal bars for all supplied drinks |
 | Cocktail / coffee split | API-calculated percentage cards and category revenue bars |
@@ -47,6 +47,9 @@ python3 -m venv /tmp/hotel-tableau-venv
 /tmp/hotel-tableau-venv/bin/pip install tableauhyperapi==0.0.26479
 /tmp/hotel-tableau-venv/bin/python scripts/tableau/build_dashboard.py --extracts
 ```
+
+The script reads the API at http://localhost:3000/api. If the app runs on another
+port (`APP_PORT` in `.env`), pass it with `--api`, e.g. `--api http://localhost:3001/api`.
 
 Regeneration replaces the generated charts and extracts, so preserve a separate
 copy if you have made manual Tableau layout changes. Runtime containers and the
