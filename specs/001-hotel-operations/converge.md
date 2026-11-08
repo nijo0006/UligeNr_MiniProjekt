@@ -481,7 +481,7 @@ Update of the 2026-11-04 check after the Tableau dashboard and shared demo data 
 
 | Item | Status | Where |
 | --- | --- | --- |
-| Interactive Tableau dashboard on the API's report data (US18, FR-020, T033) | Done | `Tableau_Dashboard.twbx`: dashboards *Hotel Overview · 2026* and *Helene Christine’s Bar · 2026*, 23 worksheets covering every assignment KPI |
+| Interactive Tableau dashboard on the API's report data (US18, FR-020, T033) | Done | `Tableau_Dashboard.twbx`: dashboards *Hotel Overview · 2026* and *Helene Christine’s Bar · 2026*, 22 worksheets covering every assignment KPI (Room inventory moved to the frontend only; Guests by country and satisfaction ratings updated) |
 | Tableau values match the API | Done | `exports/tableau/dashboard-data-manifest.json`: countries, rooms and seasons reconcile to room revenue; drinks to bar revenue; components to total revenue |
 | Shared demo bookings, reviews and guest counts | Done | `backend/src/startup/demo-*.json`, loaded once at startup, marked synthetic; `scripts/export-demo-data.sh` only adds data |
 

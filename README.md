@@ -406,9 +406,9 @@ and outstanding feature work.
 
 Open `Tableau_Dashboard.twbx` in the repository root (Tableau Desktop Public Edition).
 It has two dashboards, **Hotel Overview · 2026** and **Helene Christine’s Bar · 2026**,
-with 23 worksheets covering every assignment KPI: guest countries, revenue per room type
+with 22 worksheets covering every assignment KPI: guest countries, revenue per room type
 and season, revenue per country, highest-earning rooms and countries, annual hotel revenue,
-occupancy, inventory, satisfaction, Helene's annual sales, revenue per drink and the
+occupancy, satisfaction, Helene's annual sales, revenue per drink and the
 cocktail/coffee split.
 
 The data comes from the same `GET /api/reports/*` endpoints as the frontend.

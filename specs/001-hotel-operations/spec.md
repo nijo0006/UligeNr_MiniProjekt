@@ -349,11 +349,11 @@ invent person counts, room assignments, or annual allocations missing from K3.
 6. Given one Standard Single room arriving 31 May 2026 for two nights, when price and departure are calculated, then departure is 2 June, the 31 May night costs DKK 1,152, the 1 June night costs DKK 1,339, and total price is DKK 2,491.0; departure day is not charged.
 7. Given two Standard Single rooms for that same stay, when the booking total is calculated, then each room costs DKK 2,491.0 and the booking total is DKK 4,982.0.
 8. Given a new booking with a missing or invalidly formatted booking-holder email, when it is submitted through the browser or API, then it is rejected with an explanation and no booking is created.
-8. Given room 001 is booked from 10 July to 13 July, when a new active stay for room 001 from 12 July to 14 July is submitted, then it is rejected without saving an overlapping booking.
-9. Given room 001 is booked from 10 July to 13 July, when available rooms for a stay arriving 13 July are requested, then that earlier booking does not exclude room 001.
-10. Given the selected stay dates, when room choices are offered, then only room numbers available throughout that stay can be selected.
-11. Given a fresh local application startup, when the booking page is opened, then booking operations are available without login or account creation, and invalid or overlapping bookings are still rejected.
-12. Given valid booking details and available selected rooms, when room validation runs, then no guest-capacity-per-room/type check is applied; guest counts are still retained for reporting.
+9. Given room 001 is booked from 10 July to 13 July, when a new active stay for room 001 from 12 July to 14 July is submitted, then it is rejected without saving an overlapping booking.
+10. Given room 001 is booked from 10 July to 13 July, when available rooms for a stay arriving 13 July are requested, then that earlier booking does not exclude room 001.
+11. Given the selected stay dates, when room choices are offered, then only room numbers available throughout that stay can be selected.
+12. Given a fresh local application startup, when the booking page is opened, then booking operations are available without login or account creation, and invalid or overlapping bookings are still rejected.
+13. Given valid booking details and available selected rooms, when room validation runs, then no guest-capacity-per-room/type check is applied; guest counts are still retained for reporting.
 
 ---
 
@@ -676,7 +676,7 @@ invent person counts, room assignments, or annual allocations missing from K3.
 1. Given unchanged complete source bar data, when source totals are shown, then revenue is DKK 13,448,640.3 and units sold are 179,958 without claiming those undated totals are for one known year.
 2. Given dated daily sales for a year, when annual totals are shown, then revenue and units each equal the sum of that year’s eligible sales.
 3. Given generated historical daily records for 2026, when reconciled by drink across the source year 2026, then each drink retains its source price, total units, and total revenue; combined units are 179,958 and unrounded combined revenue is DKK 13,448,640.34. The original aggregate rows are not added again.
-3. Given a sale without a booking, when totals are calculated, then the sale is included and can be viewed by both Helene Christine and the administrator.
+4. Given a sale without a booking, when totals are calculated, then the sale is included and can be viewed by both Helene Christine and the administrator.
 
 ---
 
