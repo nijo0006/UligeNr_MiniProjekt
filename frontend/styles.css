@@ -262,8 +262,7 @@ th{background:#e5d8d1}
 .overview-dashboard .room-bar-figures strong{font-size:17px}
 .overview-dashboard .dashboard-side table{font-size:13px}
 .overview-dashboard .dashboard-side th,.overview-dashboard .dashboard-side td{padding:13px 12px}
-.overview-dashboard .dashboard-side [aria-labelledby="room-stock-title"] td:last-child{white-space:normal;max-width:120px;font-size:11px}
-.overview-dashboard .dashboard-side [aria-labelledby="room-stock-title"] th:last-child{white-space:normal}
+[aria-labelledby="room-stock-title"] th:last-child{text-align:right}
 .overview-dashboard .dashboard-side .history-panel{padding:22px}
 .overview-dashboard .history-panel h2{font-size:24px;margin:6px 0 12px}
 .overview-dashboard .history-panel #history-status{font-size:12px;line-height:1.7}

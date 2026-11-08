@@ -37,7 +37,7 @@ async function loadDaily(){
     if(![...quantity.options].some(o=>o.value===String(value)))quantity.add(option(String(value)));
     quantity.value=String(value);
     $('#drink-price').textContent=currency(saved?.unitPrice??selected.unitPrice);
-    $('#daily-saved').textContent=saved?`${value} units already saved for this date and drink.${saved.synthetic?' Excel demonstration date.':''}`:'No closing quantity recorded for this date and drink.';
+    $('#daily-saved').textContent=saved?`${value} units already saved for this date and drink.`:'No closing quantity recorded for this date and drink.';
   }catch(e){if(request===dailyRequest)error(e.message);}finally{if(request===dailyRequest)dailyLoading=false;}
 }
 quantity.add(option('0'));extendNumbers(quantity);

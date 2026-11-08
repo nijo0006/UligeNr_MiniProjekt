@@ -46,7 +46,7 @@ function details(){
     $(`#${id}`).textContent=!ready?'—':row?number(row[field]):'—';
   }
   $('#map-country-note').textContent=!ready?'':!row?'No room-revenue records for this country in the selected period.':
-    `${countryCodes[selected]&&features.has(countryCodes[selected])?'':'Not mapped geographically; figures remain available. '}${row.containsSyntheticData?'Includes history with demonstration dates/room assignments.':'Saved operational records.'}${row.unknownGuestBookingCount?' Complete guest count is unknown; known guests are a subtotal.':''}`;
+    `${countryCodes[selected]&&features.has(countryCodes[selected])?'':'Not mapped geographically; figures remain available. '}${row.containsSyntheticData?'Includes history imported from Excel.':'Saved operational records.'}${row.unknownGuestBookingCount?' Complete guest count is unknown; known guests are a subtotal.':''}`;
   $('#map-country-select').value=selected;
   for(const [code,path] of paths){const active=countryName(features.get(code))===selected;path.classList.toggle('is-selected',active);if(path.getAttribute('role')==='button')path.setAttribute('aria-pressed',String(active));}
 }
